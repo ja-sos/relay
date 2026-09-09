@@ -1,9 +1,8 @@
 # baton
 
-Ten Claude Code skills that carry one unit of work from a tracker issue to a finished
-implementation on a pull request, across sessions sharing no context: picking the issue, investigating it, handing it off, building
-it unattended, and reviewing what comes back. Every document any of them writes passes an editing
-gate before it ships.
+Eleven Claude Code skills that carry one unit of work from a tracker issue to a reviewed pull
+request, across sessions that share no context. Every document any of them writes passes an
+editing gate before it ships.
 
 Nothing is hardwired to GitHub. Every tracker and forge command is a named operation, and the
 shipped GitHub defaults are overridable per project or per person.
@@ -21,7 +20,6 @@ claude plugin install baton@relay
 
 ```
 claude plugin marketplace add /path/to/relay
-claude plugin install baton@relay
 ```
 
 ## The skills
@@ -30,6 +28,7 @@ Each is invocable as `/baton:<name>`, and each also fires on its own description
 
 | Skill | Fires when |
 |---|---|
+| `setup` | baton has to be pointed at a tracker other than GitHub |
 | `next-issue` | the next issue to work on has to be chosen rather than named |
 | `file-issue` | review findings need to become issues |
 | `investigate-issue` | an issue needs a cause and an approach before code is written |
@@ -43,8 +42,7 @@ Each is invocable as `/baton:<name>`, and each also fires on its own description
 
 ## Hooks
 
-Two hooks ship alongside the skills, both POSIX `sh` with no `jq`, Python or other
-dependency.
+Two hooks ship alongside the skills, both POSIX `sh`.
 
 | Hook | Event | What it does |
 |---|---|---|
@@ -52,11 +50,15 @@ dependency.
 | `gate-subagent-claim-audit` | `PreToolUse` | adds the `claim-audit` checklist to a subagent dispatch that does not already ask for it |
 
 Neither blocks. Each adds one line of context and every tool call passes through untouched.
-`claude plugin disable baton` stops both.
+`gate-subagent-claim-audit` rewrites the dispatch prompt through `python3`, `python` or `node`
+when one is present, and otherwise asks the dispatching session to carry the requirement
+instead. `claude plugin disable baton` stops both.
 
 ## Pointing it at a different tracker
 
-Operations resolve from three files, later ones overriding earlier by `##` heading:
+`/baton:setup` writes `.claude/baton.md` for the tracker you name and verifies it by running
+the read-only operations. Hand-editing does the same job: operations resolve from three files,
+later ones overriding earlier by `##` heading:
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
@@ -64,8 +66,9 @@ ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ~/.claude/baton.md
 ```
 
-An override replaces its whole `##` section rather than one entry, so restate every operation the
-section owns. `.claude/baton.md` is committed and an unattended cloud run reads it;
+An override replaces its whole `##` section rather than one entry, so restate every operation
+the section owns. A section left out is not overridden at all, so its GitHub commands stay in
+force. `.claude/baton.md` is committed and an unattended cloud run reads it;
 `~/.claude/baton.md` never reaches one.
 
 `reference/defining-backends.md` carries the operation contract.
@@ -73,8 +76,9 @@ section owns. `.claude/baton.md` is committed and an unattended cloud run reads 
 ## Document contracts
 
 `write-deliverables` binds a document type to its reader and its must-include lists. Three
-contracts ship. Add your own in `.claude/doc-types.md` or `~/.claude/doc-types.md`,
-per `skills/write-deliverables/reference/defining-doc-types.md`.
+contracts ship and any type not listed is derived, so a project needs none. Add your own in
+`.claude/doc-types.md` or `~/.claude/doc-types.md`, per
+`skills/write-deliverables/reference/defining-doc-types.md`.
 
 ## Requires
 

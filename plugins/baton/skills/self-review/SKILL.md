@@ -18,6 +18,12 @@ cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
 
+Two failures are stops, not fallbacks: an operation this skill names that no loaded file
+defines, and an operation whose command exits non-zero because its tool is missing or
+unauthenticated. Report the operation name, the command, and
+`${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
+not define - an improvised equivalent writes to a tracker the project did not choose.
+
 ## Whose code this is
 
 The branch was written by an unattended `baton:implement-handoff` run, which committed under the

@@ -21,6 +21,12 @@ cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
 
+Two failures are stops, not fallbacks: an operation this skill names that no loaded file
+defines, and an operation whose command exits non-zero because its tool is missing or
+unauthenticated. Report the operation name, the command, and
+`${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
+not define - an improvised equivalent writes to a tracker the project did not choose.
+
 ## Where the opening turn came from
 
 A launcher usually starts this session, so the opening turn is often machine-generated even
@@ -70,8 +76,9 @@ Run `verify-checkout`; its answer must equal the header's `repo`. A repo that do
 match, or a `base` that is not an ancestor of HEAD, is a stop: the plan addresses code
 this clone does not contain.
 
-Check reachability with `reachable` when a tracker call fails. A credential error there
-is the session, not the plan, and the backend records what each one means.
+Check reachability with `reachable` when a tracker call fails; it separates a credential error
+from an undefined operation. A credential error is the session, not the plan, and the backend
+records what each one means.
 
 ## Step 2 - Branch and build
 
