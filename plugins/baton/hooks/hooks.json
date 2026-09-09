@@ -1,0 +1,20 @@
+{
+  "description": "Reminds the writing discipline, and carries claim-audit into subagent dispatches.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/remind-deliverable-skill.sh\"" }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Task",
+        "hooks": [
+          { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/gate-subagent-claim-audit.sh\"" }
+        ]
+      }
+    ]
+  }
+}
