@@ -51,6 +51,13 @@ grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
 - PASS: 5.
 - FAIL: fewer. Add the missing sections before Step 4.
 
+`## Workflow` is the sixth section and stays out of the file unless the user asks for a step
+its defaults do not give - a reviewer requested on every pull request, a worklog after
+publishing, handoffs kept somewhere other than the tracker. Its defaults resolve through
+whatever `## Tracker` this file defines, so a Jira backend posts handoffs to Jira without
+restating them. Written, the section restates all seven of its operations, because a
+`##` heading replaces its section whole.
+
 ## Step 4 - Verify by running
 
 Run the check table at the end of `reference/defining-backends.md` against the file. Run the
@@ -66,8 +73,8 @@ verify-checkout
 - PASS: every row passes and all four operations return.
 - FAIL: any row fails or any operation errors. Fix the entry and restart Step 4.
 
-Never verify by running `create`, `comment`, `pr-create` or `review-post`. Each one writes to
-the tracker.
+Never verify by running `create`, `comment`, `pr-create`, `review-post`, `post-handoff`,
+`published`, `stopped` or `request-reviewer`. Each one writes to the tracker or the forge.
 
 ## Step 5 - Offer document types
 

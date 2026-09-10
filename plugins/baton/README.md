@@ -71,6 +71,13 @@ the section owns. A section left out is not overridden at all, so its GitHub com
 force. `.claude/baton.md` is committed and an unattended cloud run reads it;
 `~/.claude/baton.md` never reaches one.
 
+An operation is a shell command by default, and `tool:`, `skill:` or `op:` names a tool call,
+a skill or another operation instead - so a tracker reachable only through an MCP connector
+needs no wrapper script. `## Workflow` is the sixth section, holding the steps around the work
+rather than the work itself: where the handoff is posted and found, which engine reviews, who
+is asked to review a pull request, and what runs once one is published. Its defaults resolve
+through `## Tracker`, so retargeting the tracker moves them with it.
+
 `reference/defining-backends.md` carries the operation contract.
 
 ## Document contracts
@@ -86,7 +93,9 @@ contracts ship and any type not listed is derived, so a project needs none. Add 
 refuses to record a base that has not been pushed, since the session that reads the handoff
 clones rather than shares the disk.
 
-`/code-review` drives `self-review` and `review-pr`, and runs inside `implement-handoff`.
+A review engine: `self-review`, `review-pr` and `implement-handoff` all run the `code-review`
+operation, whose default is `/code-review`. A project with its own review skill names it there
+and edits none of the three.
 
 ## License
 

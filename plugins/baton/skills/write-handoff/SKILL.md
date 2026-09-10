@@ -20,16 +20,18 @@ cat ~/.claude/baton.md 2>/dev/null
 ```
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
-defines, and an operation whose command exits non-zero because its tool is missing or
-unauthenticated. Report the operation name, the command, and
+defines, and an operation that fails because its tool is missing or unauthenticated - a
+command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
+the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
 not define - an improvised equivalent writes to a tracker the project did not choose.
 
 ## Step 1 - Place
 
-The handoff is one comment on the issue, posted with `comment` once Step 3 has written the
-body. It opens with the marker and heading, so that a session finds it and everyone else on
-the issue reads it as a work order rather than a decision the project has taken:
+The handoff is one record against the issue, posted with `post-handoff` once Step 3 has
+written the body - a comment by default, and whatever the backend says otherwise. It opens
+with the marker and heading, so that a session finds it and everyone else on the issue
+reads it as a work order rather than a decision the project has taken:
 
 ```
 <!-- claude-handoff -->
@@ -42,7 +44,7 @@ Work no issue drives has nowhere to anchor. A session on another machine reaches
 tracker and nothing else - no file of this machine's, and no path that resolves. Open the
 issue first; `baton:file-issue` covers that.
 
-Post a second comment for rework rather than editing the first, which alone carries the
+Post a second handoff for rework rather than editing the first, which alone carries the
 approach that failed and the constraint that ruled the alternatives out.
 
 ## Step 2 - Header
@@ -86,7 +88,9 @@ reads it.
 
 ## Done
 
-Print the locator `comment` returns, which addresses this comment rather than the issue.
+Print the locator `post-handoff` returns, which addresses this handoff rather than the
+issue. Print it as it came back, unparsed: only the backend's own `fetch-handoff` has to
+understand its shape.
 
 An issue splits into several handoffs whenever its fix lands as more than one change, so
 the issue number addresses none of them and whatever launches the work takes the locator.

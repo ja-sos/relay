@@ -19,8 +19,9 @@ cat ~/.claude/baton.md 2>/dev/null
 ```
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
-defines, and an operation whose command exits non-zero because its tool is missing or
-unauthenticated. Report the operation name, the command, and
+defines, and an operation that fails because its tool is missing or unauthenticated - a
+command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
+the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
 not define - an improvised equivalent writes to a tracker the project did not choose.
 
@@ -30,8 +31,13 @@ Without an issue number, resolve one with `baton:next-issue`, put it and everyth
 to the user, and wait for confirmation before going on. A resolver returning none is a stop:
 an empty answer means every candidate is already scoped, not that the choice falls to you.
 
-Run `view` against the issue. An earlier comment may already hold an investigation or a
-handoff. Read it before starting another.
+Run `view` against the issue. An earlier comment may already hold an investigation. Read it
+before starting another.
+
+Run `has-handoff` too. When its output carries the handoff marker, read that handoff, put it
+to the user with what it already covers, and go no further without their say-so. An issue
+waiting on an implementation run is settled work, and investigating it again ends in a second
+plan and a second run against the same change.
 
 Take the `Found at <sha> on <branch>` line from the body and diff the files it cites:
 
@@ -103,9 +109,13 @@ Implementation belongs in its own session against its own checkout. Ask which of
 backend's `## Launcher` entries to use, and start only what the answer names. Report what
 each would do and create nothing when the answer is none of them.
 
+The entry carries a `<locator>` or a `<comment url>` placeholder; substitute the locator
+Step 5 returned for either one. A launcher that starts with anything else starts a session
+with no handoff to read.
+
 ## Done
 
 Stop before editing any file the repo tracks.
 
 Report the issue number, the Step 2 outcome, the cause in one line, the chosen approach
-in one line, the comment URL, and where the implementation is running.
+in one line, the handoff locator, and where the implementation is running.

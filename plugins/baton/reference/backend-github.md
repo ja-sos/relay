@@ -137,3 +137,28 @@ first; a reply payload is `{"body": "<text>"}`:
   `--bg` and `--print` conflict, because `--print` leaves no session for
   `claude attach <id>` to open. The command returns a short id taken by
   `claude agents --json`, `claude logs <id>` and `claude stop <id>`.
+
+## Workflow
+
+- **post-handoff:**     op: comment <id> <path>
+- **has-handoff:**      op: view <id>
+- **code-review:**      skill: /code-review <target>
+- **request-reviewer:** none
+- **review-wait:**      10
+- **published:**        op: comment <id> <path>
+- **stopped:**          op: comment <id> <path>
+
+Every entry here resolves through `## Tracker`, so a project that has retargeted the
+tracker moves these with it and restates none of them.
+
+`post-handoff` returns the locator `fetch-handoff` is later given. On this backend that is
+`comment`'s stdout URL, which carries every substitution `fetch-handoff` takes: `<owner>`
+and `<repo>` are its path, and `<comment-id>` the digits of its trailing
+`#issuecomment-<n>`.
+
+`has-handoff` prints the issue with its comments, and the caller scopes the answer to the
+`<!-- claude-handoff -->` marker in that output.
+
+`request-reviewer` is `none`, so the review round does not run. `gh pr edit <id>
+--add-reviewer @copilot` turns it on; `review-wait` is then how long the round waits for
+that reviewer, in minutes.
