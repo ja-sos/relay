@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "relay": {
+      "source": {
+        "source": "github",
+        "repo": "ja-sos/relay"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "baton@relay": true
+  }
+}

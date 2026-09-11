@@ -15,40 +15,60 @@ earlier by `##` heading:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
+command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
 
+The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
+file opens with the check that confirms its tools, and says when no route is left.
+
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
-defines, and an operation whose command exits non-zero because its tool is missing or
-unauthenticated. Report the operation name, the command, and
+defines, and an operation that fails because its tool is missing or unauthenticated - a
+command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
+the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
 not define - an improvised equivalent writes to a tracker the project did not choose.
 
 ## Step 1 - Place
 
-The handoff is one comment on the issue, posted with `comment` once Step 3 has written the
-body. It opens with the marker and heading, so that a session finds it and everyone else on
-the issue reads it as a work order rather than a decision the project has taken:
+The handoff is one record against the issue, posted with `post-handoff` once Steps 2-4 have
+written it - a comment by default, and whatever the backend says otherwise. The marker is
+what `has-handoff` finds. The update follows it, and the handoff sits collapsed beneath,
+labelled as a work order rather than a decision the project has taken:
 
-```
+````
 <!-- claude-handoff -->
-## Implementation handoff
+## Investigation
 
-*What one implementation run will attempt.*
+<update - Step 4>
+
+<details>
+<summary>Implementation handoff - what one implementation run will attempt</summary>
+
 ```
+<header - Step 2>
+```
+
+<body - Step 3>
+
+</details>
+````
+
+Keep the blank lines inside `<details>` as shown. Without the one after `<summary>`, GitHub
+renders the fenced header as literal backticks.
 
 Work no issue drives has nowhere to anchor. A session on another machine reaches the
 tracker and nothing else - no file of this machine's, and no path that resolves. Open the
 issue first; `baton:file-issue` covers that.
 
-Post a second comment for rework rather than editing the first, which alone carries the
+Post a second handoff for rework rather than editing the first, which alone carries the
 approach that failed and the constraint that ruled the alternatives out.
 
 ## Step 2 - Header
 
-Below the heading, five lines inside a fenced block - a tracker renders consecutive lines
-as one paragraph, so an unfenced header arrives as prose:
+First inside the collapsed section, five lines in a fenced block - a tracker renders
+consecutive lines as one paragraph, so an unfenced header arrives as prose:
 
 ```
 repo:   <owner>/<name>
@@ -84,9 +104,21 @@ Name nothing that exists only on this machine. Cite code as repo-relative `file:
 absolute path, a home directory or a hostname resolves to nothing in the session that
 reads it.
 
+## Step 4 - Update
+
+Write the update under `baton:write-deliverables` as a separate document.
+Its reader is the issue's participants, not the implementation run. It carries the cause, the
+approach chosen and what it rules out, and the next step.
+
+Every claim in the update is one the handoff also makes. `fetch-handoff` returns the whole
+comment, so the run reads the update too, and a claim found only there reaches the run
+without the handoff's reasoning.
+
 ## Done
 
-Print the locator `comment` returns, which addresses this comment rather than the issue.
+Print the locator `post-handoff` returns, which addresses this handoff rather than the
+issue. Print it as it came back, unparsed: only the backend's own `fetch-handoff` has to
+understand its shape.
 
 An issue splits into several handoffs whenever its fix lands as more than one change, so
 the issue number addresses none of them and whatever launches the work takes the locator.

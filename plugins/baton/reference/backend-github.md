@@ -2,7 +2,9 @@
 
 Maps every operation the baton skills call to a GitHub command. These are the shipped
 defaults; override any section in `.claude/baton.md` or `~/.claude/baton.md`, to the
-contract `defining-backends.md` sets.
+contract `defining-backends.md` sets. Where `gh` is missing or `gh api user` fails,
+`backend-github-mcp.md` replaces `## Tracker`, `## Forge` and `## Review` with the same
+operations over the GitHub MCP tools.
 
 ## Tracker
 
@@ -137,3 +139,32 @@ first; a reply payload is `{"body": "<text>"}`:
   `--bg` and `--print` conflict, because `--print` leaves no session for
   `claude attach <id>` to open. The command returns a short id taken by
   `claude agents --json`, `claude logs <id>` and `claude stop <id>`.
+
+## Workflow
+
+- **post-handoff:**     op: comment <id> <path>
+- **has-handoff:**      op: view <id>
+- **code-review:**      skill: /code-review <target>
+- **request-reviewer:** none
+- **review-wait:**      10
+- **published:**        op: comment <id> <path>
+- **stopped:**          op: comment <id> <path>
+
+Every entry here resolves through `## Tracker`, so a project that has retargeted the
+tracker moves these with it and restates none of them.
+
+`post-handoff` returns the locator `fetch-handoff` is later given. On this backend that is
+the comment's URL - `comment`'s stdout, or its `url` field under the MCP route.
+`<owner>` and `<repo>` are the URL's two path segments after the host, replacing the
+derived ones; `<comment-id>` is the digits of the trailing `#issuecomment-<n>`, and `<id>`
+the number after `/issues/`.
+
+`has-handoff` prints the issue with its comments, and the caller scopes the answer to the
+`<!-- claude-handoff -->` marker in that output.
+
+`request-reviewer` is `none`, so the review round does not run. `gh pr edit <id>
+--add-reviewer @copilot` turns it on; `review-wait` is then how long the round waits for
+that reviewer, in minutes. Copilot's reviews carry the login
+`copilot-pull-request-reviewer[bot]` in `review-list`. Under the MCP route the round does
+not run, its request included: the wait needs `review-list` and `pr-comments` as shell
+commands.

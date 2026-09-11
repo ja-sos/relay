@@ -14,13 +14,18 @@ Every operation named below comes from the backend. Load it, later files overrid
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
+command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
 
+The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
+file opens with the check that confirms its tools, and says when no route is left.
+
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
-defines, and an operation whose command exits non-zero because its tool is missing or
-unauthenticated. Report the operation name, the command, and
+defines, and an operation that fails because its tool is missing or unauthenticated - a
+command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
+the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
 not define - an improvised equivalent writes to a tracker the project did not choose.
 
@@ -45,8 +50,8 @@ reviewing your own side's work means applying fixes, not commenting on them.
 
 ## Step 2 - Review
 
-Run `/code-review` with the pull request number as its target, so the diff comes from the forge
-rather than local git - the branch may be unchecked-out, behind, or on a fork.
+Run `code-review` with the pull request number as its `<target>`, so the diff comes from the
+forge rather than local git - the branch may be unchecked-out, behind, or on a fork.
 
 Every claim in the pull request body is an unverified assertion. What was tested, why an approach
 was chosen, which edge cases are covered: check each against the diff. A body never resolves a

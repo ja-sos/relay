@@ -6,21 +6,26 @@ description: Use when reviewing the branch an unattended implement-handoff run p
 # Self review
 
 Review a branch an unattended run produced, before it reaches another person. Applies when
-`baton:implement-handoff` wrote the branch. A branch a person wrote goes to `/code-review`
-directly - the premise here is that every artifact on the branch is agent output.
+`baton:implement-handoff` wrote the branch. A branch a person wrote goes to the review
+engine directly - the premise here is that every artifact on the branch is agent output.
 
 Every operation named below comes from the backend. Load it, later files overriding earlier by
 `##` heading:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
+command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
 
+The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
+file opens with the check that confirms its tools, and says when no route is left.
+
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
-defines, and an operation whose command exits non-zero because its tool is missing or
-unauthenticated. Report the operation name, the command, and
+defines, and an operation that fails because its tool is missing or unauthenticated - a
+command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
+the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
 not define - an improvised equivalent writes to a tracker the project did not choose.
 
@@ -52,13 +57,19 @@ into every subagent prompt the review spawns, not only the first.
 
 ## Step 1 - Review
 
-Run `pr-view` for the current branch. When a pull request exists, review its diff; when none
-does, review the full branch diff against the merge target, so every commit on the branch is
-covered rather than only uncommitted edits.
+Run `pr-view` for the current branch, and compare the pull request's head commit with
+`git rev-parse HEAD`:
 
-Run `/code-review` over that diff, carrying the provenance rule into it. Findings land as fixes
-in the working tree, never as comments on the pull request: the branch is yours to fix, not yours
-to have written.
+- Equal: review the pull request's diff.
+- Different: one side holds commits the other lacks, and either target misses them. Report
+  both commits and ask which to review before running anything.
+- No pull request: review the full branch diff against the merge target, so every commit on
+  the branch is covered rather than only uncommitted edits.
+
+Run `code-review` over that diff, with the pull request number as its `<target>` - or the
+branch name for the local branch - carrying the provenance rule into it. Findings land
+as fixes in the working tree, never as comments on the pull request: the branch is yours to
+fix, not yours to have written.
 
 ## Step 2 - The gate
 

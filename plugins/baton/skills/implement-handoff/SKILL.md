@@ -1,12 +1,13 @@
 ---
 name: implement-handoff
-description: Use when a handoff describes work that is ready to build - launched as "/baton:implement-handoff <handoff comment URL>", usually by a session that investigate-issue started. Turns one handoff into a reviewed pull request and runs unattended.
+description: Use when a handoff describes work that is ready to build - launched as "/baton:implement-handoff <handoff locator>", usually by a session that investigate-issue started. Turns one handoff into a reviewed pull request and runs unattended.
 ---
 
 # Implement handoff
 
-Turn one handoff into a reviewed pull request. The argument is the locator of the issue
-comment carrying the handoff; everything else comes from that comment.
+Turn one handoff into a reviewed pull request. The argument is the handoff locator, in
+whatever shape this backend's `post-handoff` returns; everything else comes from the
+handoff `fetch-handoff` resolves it to.
 
 Nobody is watching. Ask no questions - `AskUserQuestion` has no one to answer it, and a
 session waiting on input makes no progress. Nothing reaches the user except the pull
@@ -17,13 +18,18 @@ earlier by `##` heading:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
+command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
 
+The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
+file opens with the check that confirms its tools, and says when no route is left.
+
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
-defines, and an operation whose command exits non-zero because its tool is missing or
-unauthenticated. Report the operation name, the command, and
+defines, and an operation that fails because its tool is missing or unauthenticated - a
+command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
+the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
 not define - an improvised equivalent writes to a tracker the project did not choose.
 
@@ -44,7 +50,8 @@ Invoking this skill is the request to commit and publish, so the standing rule a
 unasked does not cover the run. These need no confirmation:
 
 - `git add`, `git commit` and `git push -u origin <branch>` on the branch the handoff names.
-- `pr-create` on that branch, and `comment` on the issue.
+- `pr-create` on that branch; `request-reviewer`, `thread-reply` and `pr-comment` on the
+  pull request it opens; `published` and `stopped` on the issue.
 - Deviating from the handoff's approach where the code contradicts it, so long as Step 5's
   body names the deviation.
 
@@ -53,7 +60,9 @@ the ask that would authorize it:
 
 - Force-push, in any form.
 - Pushing to the default branch, or to any branch the handoff does not name.
-- Merging the pull request, marking a draft ready, or adding a reviewer.
+- Merging the pull request, marking a draft ready, or adding a reviewer beyond what
+  `request-reviewer` names. That operation is the project's standing answer to who reviews
+  this, given ahead of the run, so Step 6 runs it without asking.
 
 Those are actions. A judgement this run can make on the evidence - which approach the
 code supports, whether a review finding holds - is one it must make rather than end the turn
@@ -64,8 +73,10 @@ prompts for it.
 
 ## Step 1 - Load
 
-Run `fetch-handoff` on the locator. Its header gives `repo`, `base`, `issue`, `closes`
-and `branch`. Verify the checkout before the first edit:
+Run `fetch-handoff` on the locator. Where the entry takes `<id>` or `<comment-id>`, derive
+each from the locator as the backend's notes on `fetch-handoff` say. The handoff's
+header gives `repo`, `base`, `issue`, `closes` and `branch`. Verify the checkout before the
+first edit:
 
 ```
 git cat-file -e <base>^{commit} 2>/dev/null || git fetch origin
@@ -102,8 +113,8 @@ stop.
 
 ## Step 4 - Review
 
-Run `/code-review` with no level argument and apply what it finds. Run the tests again
-afterwards.
+Run `code-review` with an empty `<target>`, so it reviews the working tree this run wrote.
+Apply what it finds, and run the tests again afterwards.
 
 ## Step 5 - Pull request
 
@@ -122,15 +133,60 @@ whatever else is outstanding:
 | `closes: yes` | the backend's `closes` line |
 | `closes: no` | the backend's `refs` line |
 
-Post the URL back with `comment` once `pr-create` returns it.
+Keep what `pr-create` returns. Step 6 addresses the pull request by it and Step 7 reports
+it, and nothing else in the run recovers it.
 
-## Stopping without a pull request
+## Step 6 - Review round
 
-Every stop above shares one shape: push nothing, open no pull request, and run `comment`
-with one file naming the step and what stopped it. Then end the turn. The session stays
-open, so a reply there resumes the run from the answer.
+Skip this step when `request-reviewer` is `none`, which is the shipped default.
+
+The wait runs `review-list` and `pr-comments` from a shell loop. When either one does not
+resolve to a single shell command, run no part of this step - no reviewer is requested
+either - and say so in Step 7's file.
+
+1. Run `review-list` and `pr-comments`, and keep their combined output.
+2. Run `request-reviewer` on the pull request.
+3. Wait until a successful run of both returns output different from the kept copy, or
+   until `review-wait` minutes have passed, capped at 60. This is one notification at one
+   moment, so run a POSIX `sh` loop through Bash with `run_in_background`: it runs both
+   every 30 seconds and exits when the output differs or when the wait runs out, counted
+   in iterations so it needs no `timeout` binary. `Monitor` does the same job where the
+   backend allows that tool, with `timeout_ms` set to the wait in milliseconds - but it is
+   built for a stream of events and stays armed to its timeout after the one that
+   matters, so the loop is the default. A foreground `sleep` is neither:
+   the harness blocks a standalone one and names these two ways to wait.
+4. When the new output holds no review by the reviewer `request-reviewer` named, keep it
+   as the copy and return to item 3 for what is left of the wait.
+5. On timeout, go to Step 7 with a file saying the review did not arrive. A reviewer that
+   answers later is `baton:address-review`'s to handle, not this run's.
+6. Otherwise read `review-bodies`, `pr-comments` and `review-threads` - the three are one
+   set, and a reviewer that writes its findings in a summary body is invisible to the other
+   two. Apply the findings that hold, run the tests again - a red suite is a stop - answer
+   each thread with `thread-reply` and anything that arrived outside a thread with
+   `pr-comment`, and push once.
+
+One round, with no re-request. A finding that holds is yours to judge on the diff, the
+same as a Step 4 finding - `request-reviewer` names who reviews, not who decides.
+
+## Step 7 - Report
+
+Run `published` with the issue id, the pull request URL from Step 5, and one file saying
+what shipped: the URL, the branch, the test result, any deviation Step 2 recorded, and
+whether Step 6 ran, timed out, or was skipped.
+
+## Stopping
+
+Every stop above takes one of two shapes, set by whether Step 5 has opened the pull request:
+
+- Before it: push nothing, open no pull request, and run `stopped` with one file naming the
+  step and what stopped it.
+- After it, in Step 6 or 7: push nothing further and leave the pull request open. Run
+  `stopped` with one file naming the step, what stopped it, and the pull request URL - only
+  Step 7's `published` would otherwise carry that URL to the issue.
+
+Then end the turn. The session stays open, so a reply there resumes the run from the answer.
 
 ## Done
 
 Both exits end here. Report the pull request URL, the branch and the test result - or the
-blocker and the step it stopped at.
+blocker, the step it stopped at, and the pull request URL when Step 5 opened one.
