@@ -32,17 +32,31 @@ not define - an improvised equivalent writes to a tracker the project did not ch
 
 ## Step 1 - Place
 
-The handoff is one record against the issue, posted with `post-handoff` once Step 3 has
-written the body - a comment by default, and whatever the backend says otherwise. It opens
-with the marker and heading, so that a session finds it and everyone else on the issue
-reads it as a work order rather than a decision the project has taken:
+The handoff is one record against the issue, posted with `post-handoff` once Steps 2-4 have
+written it - a comment by default, and whatever the backend says otherwise. The marker is
+what `has-handoff` finds. The update follows it, and the handoff sits collapsed beneath,
+labelled as a work order rather than a decision the project has taken:
 
-```
+````
 <!-- claude-handoff -->
-## Implementation handoff
+## Investigation
 
-*What one implementation run will attempt.*
+<update - Step 4>
+
+<details>
+<summary>Implementation handoff - what one implementation run will attempt</summary>
+
 ```
+<header - Step 2>
+```
+
+<body - Step 3>
+
+</details>
+````
+
+Keep the blank lines inside `<details>` as shown. Without the one after `<summary>`, GitHub
+renders the fenced header as literal backticks.
 
 Work no issue drives has nowhere to anchor. A session on another machine reaches the
 tracker and nothing else - no file of this machine's, and no path that resolves. Open the
@@ -53,8 +67,8 @@ approach that failed and the constraint that ruled the alternatives out.
 
 ## Step 2 - Header
 
-Below the heading, five lines inside a fenced block - a tracker renders consecutive lines
-as one paragraph, so an unfenced header arrives as prose:
+First inside the collapsed section, five lines in a fenced block - a tracker renders
+consecutive lines as one paragraph, so an unfenced header arrives as prose:
 
 ```
 repo:   <owner>/<name>
@@ -89,6 +103,16 @@ Record only what cannot be settled until implementation is under way.
 Name nothing that exists only on this machine. Cite code as repo-relative `file:line`; an
 absolute path, a home directory or a hostname resolves to nothing in the session that
 reads it.
+
+## Step 4 - Update
+
+Write the update under `baton:write-deliverables` as a separate document.
+Its reader is the issue's participants, not the implementation run. It carries the cause, the
+approach chosen and what it rules out, and the next step.
+
+Every claim in the update is one the handoff also makes. `fetch-handoff` returns the whole
+comment, so the run reads the update too, and a claim found only there reaches the run
+without the handoff's reasoning.
 
 ## Done
 
