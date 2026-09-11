@@ -19,10 +19,13 @@ ls .claude/baton.md ~/.claude/baton.md 2>/dev/null
 command -v gh
 ```
 
+When `command -v gh` prints nothing, run `ToolSearch select:mcp__github__get_me` as well;
+the tool coming back means the GitHub MCP tools are present.
+
 | Found | Action |
 |---|---|
-| No backend file, `gh` present | Stop. The shipped defaults run as they are, and a copy of them is a second file to keep in sync. |
-| No backend file, no `gh` | Step 2. |
+| No backend file; `gh` or the GitHub MCP tools present | Stop. The shipped defaults run as they are - through `gh`, or through `reference/backend-github-mcp.md` - and a copy of them is a second file to keep in sync. |
+| No backend file, neither present | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
 
 ## Step 2 - Load the contract

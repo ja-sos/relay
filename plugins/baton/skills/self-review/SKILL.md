@@ -14,9 +14,13 @@ Every operation named below comes from the backend. Load it, later files overrid
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
+command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
+
+The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
+file opens with the check that confirms its tools, and says when no route is left.
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
 defines, and an operation that fails because its tool is missing or unauthenticated - a
@@ -57,9 +61,10 @@ Run `pr-view` for the current branch. When a pull request exists, review its dif
 does, review the full branch diff against the merge target, so every commit on the branch is
 covered rather than only uncommitted edits.
 
-Run `code-review` over that diff, carrying the provenance rule into it. Findings land as fixes
-in the working tree, never as comments on the pull request: the branch is yours to fix, not yours
-to have written.
+Run `code-review` over that diff, with the pull request number as its `<target>` - or the
+branch name when no pull request exists - carrying the provenance rule into it. Findings land
+as fixes in the working tree, never as comments on the pull request: the branch is yours to
+fix, not yours to have written.
 
 ## Step 2 - The gate
 

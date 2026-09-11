@@ -1,17 +1,19 @@
 # Defining a backend
 
 Every tracker and forge command the skills run is a named **operation**. The skills ship
-GitHub defaults, so a repo using `gh` needs no configuration. Overriding an operation
-points the skills at a different tracker without editing any skill.
+GitHub defaults, so a GitHub repo needs no configuration: they run through `gh`, or
+through the GitHub MCP tools where `gh` is missing. Overriding an operation points the
+skills at a different tracker without editing any skill.
 
 ## Where overrides live
 
-The skills read three files, in this order:
+The skills read up to four files, in this order:
 
 ```
-${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md   shipped GitHub defaults
-.claude/baton.md                                     project backend; committed, so an unattended run sees it
-~/.claude/baton.md                                   personal defaults across all projects
+${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md       shipped GitHub defaults
+${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md   the same through the GitHub MCP tools; read only when `gh` is missing or `gh api user` fails
+.claude/baton.md                                         project backend; committed, so an unattended run sees it
+~/.claude/baton.md                                       personal defaults across all projects
 ```
 
 A `##` heading is the key, and a matching heading replaces the shipped section
@@ -54,19 +56,28 @@ whatever they look like. A prefix names something else:
 | `skill: /<name> <args>` | invoke that skill |
 | `op: <operation> <args>` | run another operation of this backend, with these substitutions |
 | a nested bullet list | each bullet is one entry in any of the forms above, run in order; the first failure stops the rest |
-| `none` | skip the step. Valid in `## Workflow` only - elsewhere an operation left undefined stays a stop |
+| `none` | skip the step. Valid for `request-reviewer` only - any other operation set to `none` is undefined |
 
-`none` and undefined are not the same answer. `none` says the project has decided this
-step does not run; undefined says the backend is incomplete, and every skill treats it as
-a stop.
+`none` and undefined are not the same answer. `none` says the project has decided the
+review round does not run; undefined says the backend is incomplete, and every skill
+treats it as a stop.
 
 `tool:` exists so that a tracker reachable only through an MCP connector needs no CLI and
 no second set of credentials. Inside its JSON, `<body>` is the text of the file at
 `<path>`, JSON-escaped: a tool call has no shell to redirect a file into, so an operation
 taking `<path>` sends `<body>` instead.
 
-`<locator>` stands for whatever `post-handoff` returned, entire and unparsed - a comment
-URL, a bare id, a file path. Only the backend's own `fetch-handoff` has to understand it.
+`<locator>` stands for whatever `post-handoff` returned, passed whole - a comment URL, a
+bare id, a file path. Only the backend has to understand it: where `fetch-handoff` takes
+`<id>` or `<comment-id>`, the backend's notes say how each comes from the locator.
+
+Four placeholders are open to every entry, derived rather than passed by the caller:
+
+| Placeholder | Value |
+|---|---|
+| `<owner>` `<repo>` | `verify-checkout`'s answer, split at the slash |
+| `<branch>` | `git branch --show-current` |
+| `<default-branch>` | `git symbolic-ref --short refs/remotes/origin/HEAD`, without its `origin/` |
 
 | Operation | Called by | Substitutes |
 |---|---|---|
@@ -77,12 +88,12 @@ URL, a bare id, a file path. Only the backend's own `fetch-handoff` has to under
 | `view` | `investigate-issue` Step 1 | `<id>` |
 | `close-fixed` / `close-invalid` | `investigate-issue` Step 2 | `<id>` |
 | `comment` | the `## Workflow` defaults of `post-handoff`, `published` and `stopped` | `<id>` `<path>` |
-| `fetch-handoff` | `implement-handoff` Step 1 | `<owner>` `<repo>` `<comment-id>` `<locator>` |
+| `fetch-handoff` | `implement-handoff` Step 1 | `<owner>` `<repo>` `<id>` `<comment-id>` `<locator>` |
 | `reachable` | `implement-handoff` Step 1 | - |
 | `verify-checkout` | `implement-handoff` Step 1 | - |
 | `pr-create` | `implement-handoff` Step 5 | `<title>` `<path>` |
 | `pr-view` | `self-review` Step 1, `review-pr` Step 1, `address-review` Step 1 | `<id>` |
-| `pr-update` | `self-review` Step 4, `address-review` Step 5 | `<path>` |
+| `pr-update` | `self-review` Step 4, `address-review` Step 5 | `<id>` `<path>` |
 | `review-list` | `review-pr` Step 4, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
 | `review-post` | `review-pr` Step 4 | `<owner>` `<repo>` `<id>` `<path>` |
 | `review-bodies` | `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
@@ -102,6 +113,8 @@ URL, a bare id, a file path. Only the backend's own `fetch-handoff` has to under
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
 author filtering belongs inside the command, since it is part of what the operation collects.
+A `tool:` entry cannot filter its output, so the backend's notes name the filter and the
+caller applies it.
 
 The last seven are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
 and `stopped` are `op: comment <id> <path>` - so a backend that has overridden `## Tracker`
@@ -173,13 +186,17 @@ must not swallow the only notice that the run finished.
 | Placeholders spelled | `<id>` not `<issue>`; an unrecognised placeholder is passed through literally |
 | Body arrives as a file | each operation taking `<path>` reads the file rather than a string, or sends `<body>` when it is a `tool:` entry |
 | Runs standalone | paste the command with real values into a shell; it must succeed there first |
-| Tool entries called | a `tool:` entry is checked by calling that tool with real values, since it has no shell form to paste |
+| Tool entries called | call each `tool:` entry of a read operation with real values, since it has no shell form to paste; never call one `baton:setup` Step 4 forbids running |
 
 A backend is done when every row passes.
 
 ## Tools an unattended run needs
 
-A cloud `## Launcher` entry lists the tools its session may use, and a run cannot load one
-the list omits. A backend with `tool:` entries adds `ToolSearch` and each tool it names.
-A backend that turns the review round on needs no extra tool: its wait is a `Bash` loop,
-which every entry already allows. Adding `Monitor` there lets the round use that instead.
+A cloud session can have the `mcp__github__*` tools and no `gh`; the shipped defaults then
+run through `backend-github-mcp.md`. A cloud run whose `## Launcher` entry's `allowed_tools`
+held only `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep` and `Skill` loaded `ToolSearch`
+and the GitHub MCP tools it needed, and called them with no permission denial.
+
+Under that route `review-list` and `pr-comments` are `tool:` entries, so the review round
+does not run: its wait is a `Bash` loop. With `gh`, the round needs no tool beyond `Bash`,
+which every entry allows; adding `Monitor` to the list lets the round use that instead.

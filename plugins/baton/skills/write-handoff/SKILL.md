@@ -15,9 +15,13 @@ earlier by `##` heading:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
+command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
+
+The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
+file opens with the check that confirms its tools, and says when no route is left.
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
 defines, and an operation that fails because its tool is missing or unauthenticated - a

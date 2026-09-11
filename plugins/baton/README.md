@@ -57,11 +57,12 @@ instead. `claude plugin disable baton` stops both.
 ## Pointing it at a different tracker
 
 `/baton:setup` writes `.claude/baton.md` for the tracker you name and verifies it by running
-the read-only operations. Hand-editing does the same job: operations resolve from three files,
-later ones overriding earlier by `##` heading:
+the read-only operations. Hand-editing does the same job: operations resolve from up to four
+files, later ones overriding earlier by `##` heading:
 
 ```
 ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
+${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md   read only when gh is missing or cannot reach GitHub
 .claude/baton.md
 ~/.claude/baton.md
 ```
@@ -89,9 +90,10 @@ contracts ship and any type not listed is derived, so a project needs none. Add 
 
 ## Requires
 
-`gh`, authenticated, for the shipped defaults. A repo with an `origin` remote: `write-handoff`
-refuses to record a base that has not been pushed, since the session that reads the handoff
-clones rather than shares the disk.
+`gh`, authenticated, for the shipped defaults - or, in a session without it, the GitHub MCP
+tools, which `reference/backend-github-mcp.md` runs the same operations through. A repo with
+an `origin` remote: `write-handoff` refuses to record a base that has not been pushed, since
+the session that reads the handoff clones rather than shares the disk.
 
 A review engine: `self-review`, `review-pr` and `implement-handoff` all run the `code-review`
 operation, whose default is `/code-review`. A project with its own review skill names it there

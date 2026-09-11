@@ -2,7 +2,9 @@
 
 Maps every operation the baton skills call to a GitHub command. These are the shipped
 defaults; override any section in `.claude/baton.md` or `~/.claude/baton.md`, to the
-contract `defining-backends.md` sets.
+contract `defining-backends.md` sets. Where `gh` is missing or `gh api user` fails,
+`backend-github-mcp.md` replaces `## Tracker`, `## Forge` and `## Review` with the same
+operations over the GitHub MCP tools.
 
 ## Tracker
 
@@ -152,13 +154,14 @@ Every entry here resolves through `## Tracker`, so a project that has retargeted
 tracker moves these with it and restates none of them.
 
 `post-handoff` returns the locator `fetch-handoff` is later given. On this backend that is
-`comment`'s stdout URL, which carries every substitution `fetch-handoff` takes: `<owner>`
-and `<repo>` are its path, and `<comment-id>` the digits of its trailing
-`#issuecomment-<n>`.
+the comment's URL - `comment`'s stdout, or its `url` field under the MCP route.
+`<comment-id>` is the digits of the URL's trailing `#issuecomment-<n>`, and `<id>` the
+number after `/issues/`.
 
 `has-handoff` prints the issue with its comments, and the caller scopes the answer to the
 `<!-- claude-handoff -->` marker in that output.
 
 `request-reviewer` is `none`, so the review round does not run. `gh pr edit <id>
 --add-reviewer @copilot` turns it on; `review-wait` is then how long the round waits for
-that reviewer, in minutes.
+that reviewer, in minutes. Under the MCP route the round does not run, its request
+included: the wait needs `review-list` and `pr-comments` as shell commands.

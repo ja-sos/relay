@@ -18,9 +18,13 @@ earlier by `##` heading:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
+command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
+
+The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
+file opens with the check that confirms its tools, and says when no route is left.
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
 defines, and an operation that fails because its tool is missing or unauthenticated - a
@@ -46,8 +50,8 @@ Invoking this skill is the request to commit and publish, so the standing rule a
 unasked does not cover the run. These need no confirmation:
 
 - `git add`, `git commit` and `git push -u origin <branch>` on the branch the handoff names.
-- `pr-create` on that branch, and `request-reviewer`, `published` and `stopped` on what
-  each one addresses.
+- `pr-create` on that branch; `request-reviewer`, `thread-reply` and `pr-comment` on the
+  pull request it opens; `published` and `stopped` on the issue.
 - Deviating from the handoff's approach where the code contradicts it, so long as Step 5's
   body names the deviation.
 
@@ -69,8 +73,10 @@ prompts for it.
 
 ## Step 1 - Load
 
-Run `fetch-handoff` on the locator. Its header gives `repo`, `base`, `issue`, `closes`
-and `branch`. Verify the checkout before the first edit:
+Run `fetch-handoff` on the locator. Where the entry takes `<id>` or `<comment-id>`, derive
+each from the locator as the backend's notes on `fetch-handoff` say. The handoff's
+header gives `repo`, `base`, `issue`, `closes` and `branch`. Verify the checkout before the
+first edit:
 
 ```
 git cat-file -e <base>^{commit} 2>/dev/null || git fetch origin
@@ -134,28 +140,28 @@ it, and nothing else in the run recovers it.
 
 Skip this step when `request-reviewer` is `none`, which is the shipped default.
 
-The wait runs `review-list` as a shell command, so the round needs it to be a shell entry.
-When it is a `tool:` entry, run no part of this step - no reviewer is requested either -
-and say so in Step 7's file.
+The wait runs `review-list` and `pr-comments` from a shell loop. When either one does not
+resolve to a single shell command, run no part of this step - no reviewer is requested
+either - and say so in Step 7's file.
 
-1. Run `review-list` and keep its output.
+1. Run `review-list` and `pr-comments`, and keep their combined output.
 2. Run `request-reviewer` on the pull request.
-3. Wait until a successful `review-list` returns output different from the kept copy, or
-   until `review-wait` minutes have passed. This is one notification at one moment, so run
-   a POSIX `sh` loop through Bash with `run_in_background`: it calls `review-list` every 30
-   seconds and exits both when the output differs and after `review-wait` minutes, counted
+3. Wait until a successful run of both returns output different from the kept copy, or
+   until `review-wait` minutes have passed, capped at 60. This is one notification at one
+   moment, so run a POSIX `sh` loop through Bash with `run_in_background`: it runs both
+   every 30 seconds and exits when the output differs or when the wait runs out, counted
    in iterations so it needs no `timeout` binary. `Monitor` does the same job where the
-   backend allows that tool, with `timeout_ms` set to `review-wait` minutes in
-   milliseconds - but it is built for a stream of events and stays armed to its timeout
-   after the one that matters, so the loop is the default. A foreground `sleep` is neither:
+   backend allows that tool, with `timeout_ms` set to the wait in milliseconds - but it is
+   built for a stream of events and stays armed to its timeout after the one that
+   matters, so the loop is the default. A foreground `sleep` is neither:
    the harness blocks a standalone one and names these two ways to wait.
 4. On timeout, go to Step 7 with a file saying the review did not arrive. A reviewer that
    answers later is `baton:address-review`'s to handle, not this run's.
 5. Otherwise read `review-bodies`, `pr-comments` and `review-threads` - the three are one
    set, and a reviewer that writes its findings in a summary body is invisible to the other
-   two. Apply the findings that hold, run the tests again, answer each thread with
-   `thread-reply` and anything that arrived outside a thread with `pr-comment`, and push
-   once.
+   two. Apply the findings that hold, run the tests again - a red suite is a stop - answer
+   each thread with `thread-reply` and anything that arrived outside a thread with
+   `pr-comment`, and push once.
 
 One round, with no re-request. A finding that holds is yours to judge on the diff, the
 same as a Step 4 finding - `request-reviewer` names who reviews, not who decides.
@@ -166,13 +172,19 @@ Run `published` with the issue id, the pull request URL from Step 5, and one fil
 what shipped: the URL, the branch, the test result, any deviation Step 2 recorded, and
 whether Step 6 ran, timed out, or was skipped.
 
-## Stopping without a pull request
+## Stopping
 
-Every stop above shares one shape: push nothing, open no pull request, and run `stopped`
-with one file naming the step and what stopped it. Then end the turn. The session stays
-open, so a reply there resumes the run from the answer.
+Every stop above takes one of two shapes, set by whether Step 5 has opened the pull request:
+
+- Before it: push nothing, open no pull request, and run `stopped` with one file naming the
+  step and what stopped it.
+- After it, in Step 6 or 7: push nothing further and leave the pull request open. Run
+  `stopped` with one file naming the step, what stopped it, and the pull request URL - only
+  Step 7's `published` would otherwise carry that URL to the issue.
+
+Then end the turn. The session stays open, so a reply there resumes the run from the answer.
 
 ## Done
 
 Both exits end here. Report the pull request URL, the branch and the test result - or the
-blocker and the step it stopped at.
+blocker, the step it stopped at, and the pull request URL when Step 5 opened one.
