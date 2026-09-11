@@ -155,13 +155,16 @@ tracker moves these with it and restates none of them.
 
 `post-handoff` returns the locator `fetch-handoff` is later given. On this backend that is
 the comment's URL - `comment`'s stdout, or its `url` field under the MCP route.
-`<comment-id>` is the digits of the URL's trailing `#issuecomment-<n>`, and `<id>` the
-number after `/issues/`.
+`<owner>` and `<repo>` are the URL's two path segments after the host, replacing the
+derived ones; `<comment-id>` is the digits of the trailing `#issuecomment-<n>`, and `<id>`
+the number after `/issues/`.
 
 `has-handoff` prints the issue with its comments, and the caller scopes the answer to the
 `<!-- claude-handoff -->` marker in that output.
 
 `request-reviewer` is `none`, so the review round does not run. `gh pr edit <id>
 --add-reviewer @copilot` turns it on; `review-wait` is then how long the round waits for
-that reviewer, in minutes. Under the MCP route the round does not run, its request
-included: the wait needs `review-list` and `pr-comments` as shell commands.
+that reviewer, in minutes. Copilot's reviews carry the login
+`copilot-pull-request-reviewer[bot]` in `review-list`. Under the MCP route the round does
+not run, its request included: the wait needs `review-list` and `pr-comments` as shell
+commands.

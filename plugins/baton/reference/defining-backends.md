@@ -69,7 +69,8 @@ taking `<path>` sends `<body>` instead.
 
 `<locator>` stands for whatever `post-handoff` returned, passed whole - a comment URL, a
 bare id, a file path. Only the backend has to understand it: where `fetch-handoff` takes
-`<id>` or `<comment-id>`, the backend's notes say how each comes from the locator.
+`<owner>`, `<repo>`, `<id>` or `<comment-id>`, the backend's notes say how each comes from
+the locator.
 
 Four placeholders are open to every entry, derived rather than passed by the caller:
 
@@ -77,7 +78,7 @@ Four placeholders are open to every entry, derived rather than passed by the cal
 |---|---|
 | `<owner>` `<repo>` | `verify-checkout`'s answer, split at the slash |
 | `<branch>` | `git branch --show-current` |
-| `<default-branch>` | `git symbolic-ref --short refs/remotes/origin/HEAD`, without its `origin/` |
+| `<default-branch>` | `git symbolic-ref --short refs/remotes/origin/HEAD`, without its `origin/`; where that exits non-zero, the name after `refs/heads/` in the `ref:` line of `git ls-remote --symref origin HEAD` |
 
 | Operation | Called by | Substitutes |
 |---|---|---|

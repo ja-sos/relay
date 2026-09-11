@@ -155,9 +155,11 @@ either - and say so in Step 7's file.
    built for a stream of events and stays armed to its timeout after the one that
    matters, so the loop is the default. A foreground `sleep` is neither:
    the harness blocks a standalone one and names these two ways to wait.
-4. On timeout, go to Step 7 with a file saying the review did not arrive. A reviewer that
+4. When the new output holds no review by the reviewer `request-reviewer` named, keep it
+   as the copy and return to item 3 for what is left of the wait.
+5. On timeout, go to Step 7 with a file saying the review did not arrive. A reviewer that
    answers later is `baton:address-review`'s to handle, not this run's.
-5. Otherwise read `review-bodies`, `pr-comments` and `review-threads` - the three are one
+6. Otherwise read `review-bodies`, `pr-comments` and `review-threads` - the three are one
    set, and a reviewer that writes its findings in a summary body is invisible to the other
    two. Apply the findings that hold, run the tests again - a red suite is a stop - answer
    each thread with `thread-reply` and anything that arrived outside a thread with

@@ -10,15 +10,11 @@ Before the first operation, load the tools:
 ToolSearch select:mcp__github__get_me,mcp__github__issue_read,mcp__github__issue_write,mcp__github__list_issues,mcp__github__add_issue_comment,mcp__github__list_label,mcp__github__create_pull_request,mcp__github__list_pull_requests,mcp__github__pull_request_read,mcp__github__update_pull_request,mcp__github__pull_request_review_write,mcp__github__add_comment_to_pending_review,mcp__github__add_reply_to_pull_request_comment
 ```
 
-- PASS: `mcp__github__get_me` comes back.
-- FAIL: no GitHub route is left. Stop, and report that `gh` is missing or unauthenticated
-  and the GitHub MCP tools are not loaded. Report it in the session: `stopped` and every
-  other write to the tracker have no route either. The exception is a project whose
-  `.claude/baton.md` or `~/.claude/baton.md` restates `## Tracker`, `## Forge` and
-  `## Review` all; it needs neither route.
-
-A tool missing from the result fails the operations that call it, and the skill's own stop
-rule applies to them.
+- PASS: every tool named comes back.
+- FAIL: each entry below calling a tool missing from the result fails. Stop when the skill
+  reaches one of those entries - directly or through `op:` - under its own stop rule, and
+  not before. Name `gh` as missing or unauthenticated and the tool as not loaded. When
+  `stopped` resolves to a failing entry too, report the stop in the session only.
 
 ## Tracker
 
@@ -48,13 +44,15 @@ include the `login` that `get_me` returned.
 `comment` returns `{"id", "url"}`, and `url` is the comment's URL - the locator
 `post-handoff` reports.
 
-`fetch-handoff` takes the locator apart: `<id>` is the number after `/issues/` and
-`<comment-id>` the digits of the trailing `#issuecomment-<n>`. The handoff is the `body` of
-the returned comment whose `id` equals `<comment-id>`; raise `page` by one until it appears.
+`fetch-handoff` takes the locator apart: `<owner>` and `<repo>` are the two path segments
+after the host, `<id>` is the number after `/issues/` and `<comment-id>` the digits of the
+trailing `#issuecomment-<n>`. The locator's `<owner>` and `<repo>` replace the derived
+ones. The handoff is the `body` of the returned comment whose `id` equals `<comment-id>`;
+raise `page` by one until it appears.
 
 ## Forge
 
-- **verify-checkout:** git remote get-url origin | sed -E 's#\.git$##; s#.*[/:]([^/:]+/[^/]+)$#\1#'
+- **verify-checkout:** { git remote get-url upstream 2>/dev/null || git remote get-url origin; } | sed -E 's#\.git$##; s#.*[/:]([^/:]+/[^/]+)$#\1#'
 - **pr-create:**       tool: mcp__github__create_pull_request {"owner": "<owner>", "repo": "<repo>", "title": "<title>", "head": "<branch>", "base": "<default-branch>", "body": "<body>"}
 - **pr-view:**
   - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "head": "<owner>:<branch>", "state": "open"}
@@ -63,8 +61,9 @@ the returned comment whose `id` equals `<comment-id>`; raise `page` by one until
 - **closes:**          Closes #<id>
 - **refs:**            Refs #<id>
 
-`verify-checkout` prints `<owner>/<repo>` from the `origin` URL, in its HTTPS, SSH and
-proxied forms alike, with no GitHub call.
+`verify-checkout` prints `<owner>/<repo>` from the `upstream` remote's URL, or from
+`origin`'s where there is no `upstream`, in HTTPS, SSH and proxied forms alike, with no
+GitHub call.
 
 `pr-create` returns `{"id", "url"}`, and `url` is the pull request's URL.
 
@@ -90,7 +89,8 @@ describes - and spreads it over three calls. The first opens a pending review, a
 payload's `commit_id` as `commitID`. The second runs once per `comments` entry, adding its
 `path`, `line`, `side` and `body`, and `start_line` as `startLine`. The third submits,
 adding the payload's `event` and `body`. A review left pending is invisible, so a failure
-after the first call is a stop.
+after the first call is a stop, and its report says a pending review is open on the pull
+request for the user to submit or discard in GitHub.
 
 The user objects these tools return carry a `login` and no `type`. For `review-bodies`,
 keep the reviews with a non-empty `body` whose author's `login` does not end in `[bot]`; for

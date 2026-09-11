@@ -57,12 +57,17 @@ into every subagent prompt the review spawns, not only the first.
 
 ## Step 1 - Review
 
-Run `pr-view` for the current branch. When a pull request exists, review its diff; when none
-does, review the full branch diff against the merge target, so every commit on the branch is
-covered rather than only uncommitted edits.
+Run `pr-view` for the current branch, and compare the pull request's head commit with
+`git rev-parse HEAD`:
+
+- Equal: review the pull request's diff.
+- Different: one side holds commits the other lacks, and either target misses them. Report
+  both commits and ask which to review before running anything.
+- No pull request: review the full branch diff against the merge target, so every commit on
+  the branch is covered rather than only uncommitted edits.
 
 Run `code-review` over that diff, with the pull request number as its `<target>` - or the
-branch name when no pull request exists - carrying the provenance rule into it. Findings land
+branch name for the local branch - carrying the provenance rule into it. Findings land
 as fixes in the working tree, never as comments on the pull request: the branch is yours to
 fix, not yours to have written.
 
