@@ -37,10 +37,6 @@ time as it does over the MCP tools. Step 1 reads both forms the same way.
 `GH_TOKEN`, which the proxy leaves as the sentinel `proxy-injected` while substituting
 real credentials on outbound requests. `reachable` is the check that works.
 
-`gh issue view <id> --comments` printed nothing and exited 0 under gh 2.100.0, while
-`gh issue view <id>` printed the issue. The cause is unknown. It makes `view`, and so
-`has-handoff`, unreliable on this route.
-
 ## Forge
 
 - **verify-checkout:** gh repo view --json nameWithOwner -q .nameWithOwner
