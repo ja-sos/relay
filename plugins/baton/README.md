@@ -61,8 +61,8 @@ the read-only operations. Hand-editing does the same job: operations resolve fro
 files, later ones overriding earlier by `##` heading:
 
 ```
-${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
-${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md   read only when gh is missing or cannot reach GitHub
+${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md      GitHub over the GitHub MCP tools
+${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md   its three GitHub sections as gh commands; read only where the route check selects it
 .claude/baton.md
 ~/.claude/baton.md
 ```
@@ -90,10 +90,10 @@ contracts ship and any type not listed is derived, so a project needs none. Add 
 
 ## Requires
 
-`gh`, authenticated, for the shipped defaults - or, in a session without it, the GitHub MCP
-tools, which `reference/backend-github-mcp.md` runs the same operations through. A repo with
-an `origin` remote: `write-handoff` refuses to record a base that has not been pushed, since
-the session that reads the handoff clones rather than shares the disk.
+The GitHub MCP tools for the shipped defaults - or, in a session without them, `gh`
+authenticated, which `reference/backend-github-gh.md` runs the same operations through. A
+repo with an `origin` remote: `write-handoff` refuses to record a base that has not been
+pushed, since the session that reads the handoff clones rather than shares the disk.
 
 A review engine: `self-review`, `review-pr` and `implement-handoff` all run the `code-review`
 operation, whose default is `/code-review`. A project with its own review skill names it there

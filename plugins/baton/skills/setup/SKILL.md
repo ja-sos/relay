@@ -16,16 +16,15 @@ spellings.
 
 ```
 ls .claude/baton.md ~/.claude/baton.md 2>/dev/null
-command -v gh
 ```
 
-When `command -v gh` prints nothing, run `ToolSearch select:mcp__github__get_me` as well;
-the tool coming back means the GitHub MCP tools are present.
+Run the route check that opens `${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md`. Its
+routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 
 | Found | Action |
 |---|---|
-| No backend file; `gh` or the GitHub MCP tools present | Stop. The shipped defaults run as they are - through `gh`, or through `reference/backend-github-mcp.md` - and a copy of them is a second file to keep in sync. |
-| No backend file, neither present | Step 2. |
+| No backend file; route 1 or 2 selected | Stop. The shipped defaults run as they are - through the GitHub MCP tools, or through `reference/backend-github-gh.md` - and a copy of them is a second file to keep in sync. |
+| No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
 
 ## Step 2 - Load the contract
@@ -33,10 +32,14 @@ the tool coming back means the GitHub MCP tools are present.
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
+cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-The first fixes the operation table and the placeholder spellings; the second is the structure
-to copy. Ask which tracker and forge the project uses when the request names neither.
+The first fixes the operation table and the placeholder spellings; the other two are the
+structure to copy - `backend-github.md` for a tracker reached through an MCP connector,
+`backend-github-gh.md` for one reached through a CLI, whose shell entries a retarget to
+another CLI tracker starts from. Ask which tracker and forge the project uses when the
+request names neither.
 
 ## Step 3 - Write the file
 
@@ -45,7 +48,7 @@ clones the repo and never sees a home directory.
 
 Restate all five sections - `## Tracker`, `## Categories`, `## Forge`, `## Review`,
 `## Launcher` - and every operation each one owns. A section left out is not overridden at all,
-so its shipped GitHub heading stays loaded and those operations keep running `gh`.
+so its shipped GitHub heading stays loaded and those operations keep running against GitHub.
 
 ```
 grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
@@ -72,6 +75,9 @@ list-mine
 list-categories
 verify-checkout
 ```
+
+Where the file's notes say `list-categories` answers one `<category>` at a time, run it with
+the label from the first row of the file's `## Categories` table.
 
 - PASS: every row passes and all four operations return.
 - FAIL: any row fails or any operation errors. Fix the entry and restart Step 4.

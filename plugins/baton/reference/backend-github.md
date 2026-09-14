@@ -1,34 +1,86 @@
 # GitHub backend
 
-Maps every operation the baton skills call to a GitHub command. These are the shipped
+Maps every operation the baton skills call to a GitHub call. These are the shipped
 defaults; override any section in `.claude/baton.md` or `~/.claude/baton.md`, to the
-contract `defining-backends.md` sets. Where `gh` is missing or `gh api user` fails,
-`backend-github-mcp.md` replaces `## Tracker`, `## Forge` and `## Review` with the same
-operations over the GitHub MCP tools.
+contract `defining-backends.md` sets. `## Tracker`, `## Forge` and `## Review` run
+through the GitHub MCP tools. Where that route fails the check below and `gh` is
+authenticated, `backend-github-gh.md` replaces those three sections with the same operations
+as `gh` commands.
+
+Before the first operation, load the tools:
+
+```
+ToolSearch select:mcp__github__get_me,mcp__github__issue_read,mcp__github__issue_write,mcp__github__list_issues,mcp__github__add_issue_comment,mcp__github__get_label,mcp__github__create_pull_request,mcp__github__list_pull_requests,mcp__github__pull_request_read,mcp__github__update_pull_request,mcp__github__pull_request_review_write,mcp__github__add_comment_to_pending_review,mcp__github__add_reply_to_pull_request_comment
+```
+
+Then pick the route, in this order:
+
+1. Every tool named comes back, `mcp__github__get_me` succeeds, and
+   `mcp__github__list_issues {"owner": "<owner>", "repo": "<repo>", "perPage": 1}` returns,
+   with `<owner>` and `<repo>` from `verify-checkout` below: this file's sections stand as
+   they are. `get_me` is this route's `reachable`, as `gh api user` is the other's. It takes
+   no repository, so only `list_issues` shows the MCP account can read this one.
+2. Otherwise, where `command -v gh >/dev/null && gh api user >/dev/null 2>&1` succeeds,
+   load `backend-github-gh.md`. It replaces `## Tracker`, `## Forge` and `## Review`; the
+   other three sections here stay in force.
+3. Otherwise keep this file's entries. Each one fails under the skill's stop rule when the
+   skill reaches it - directly or through `op:` - and not before, where its tool did not
+   load or cannot read this repository. Name the part of route 1 that failed - a tool not
+   loaded, `get_me`, or `list_issues` - and `gh` as absent or unauthenticated. When
+   `stopped` resolves to a failing entry too, report the stop in the session only.
+
+`backend-github-gh.md` loads second, ahead of `.claude/baton.md` and `~/.claude/baton.md`.
+Later files replace earlier ones by `##` heading, so loaded last it would overwrite a
+project's own `## Tracker` with `gh` commands.
 
 ## Tracker
 
-- **list-categories:** gh label list
-- **list-open:**       gh issue list --state open --limit 500
-- **list-mine:**       gh issue list --assignee @me --state open --limit 100
-- **create:**          gh issue create --title "<title>" --label "<category>" --body-file <path>
-- **view:**            gh issue view <id> --comments
-- **close-fixed:**     gh issue close <id> --reason completed
-- **close-invalid:**   gh issue close <id> --reason "not planned"
-- **comment:**         gh issue comment <id> --body-file <path>
-- **fetch-handoff:**   gh api repos/<owner>/<repo>/issues/comments/<comment-id> --jq .body
-- **reachable:**       gh api user
+- **list-categories:** tool: mcp__github__get_label {"owner": "<owner>", "repo": "<repo>", "name": "<category>"}
+- **list-open:**        tool: mcp__github__list_issues {"owner": "<owner>", "repo": "<repo>", "state": "OPEN", "perPage": 100}
+- **list-mine:**
+  - tool: mcp__github__get_me {}
+  - tool: mcp__github__list_issues {"owner": "<owner>", "repo": "<repo>", "state": "OPEN", "orderBy": "CREATED_AT", "direction": "DESC", "perPage": 100}
+- **create:**           tool: mcp__github__issue_write {"method": "create", "owner": "<owner>", "repo": "<repo>", "title": "<title>", "labels": ["<category>"], "body": "<body>"}
+- **view:**
+  - tool: mcp__github__issue_read {"method": "get", "owner": "<owner>", "repo": "<repo>", "issue_number": <id>}
+  - tool: mcp__github__issue_read {"method": "get_comments", "owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "perPage": 100}
+- **close-fixed:**      tool: mcp__github__issue_write {"method": "update", "owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "state": "closed", "state_reason": "completed"}
+- **close-invalid:**    tool: mcp__github__issue_write {"method": "update", "owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "state": "closed", "state_reason": "not_planned"}
+- **comment:**          tool: mcp__github__add_issue_comment {"owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "body": "<body>"}
+- **fetch-handoff:**    tool: mcp__github__issue_read {"method": "get_comments", "owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "perPage": 100, "page": 1}
+- **reachable:**        tool: mcp__github__get_me {}
 
-`comment` prints the created comment's URL on stdout, and that is the locator `write-handoff`
-reports. Do not re-derive it by listing an issue's comments: the listing is paginated, so the
-newest comment is not the last entry of the first page.
+`mcp__github__list_label` enumerates a repository's labels, but it belongs to the server's
+`labels` toolset, which a connection sending no `X-MCP-Toolsets` header does not enable.
+`get_label` is in the default `issues` toolset, so `list-categories` uses it and answers
+for one category at a time: run it once per row of `## Categories`, substituting
+that row's label as `<category>`. That is the only question `file-issue` Step 1 puts to it,
+and taking the rows as they come means this entry needs no restating when a project renames
+its categories.
 
-`list-open` caps the dedupe `file-issue` runs against, so it is set well above the open-issue
-count of any repo these skills are pointed at.
+A `<category>` the repository does not carry comes back not-found. That is this operation's
+answer - the missing category Step 1 stops and asks about - and not a backend failure: the
+tool loaded and replied. Reserve the stop rule for a tool that never loaded or could not
+authorize.
 
-`gh auth status` reports failure in every cloud session: it validates the literal
-`GH_TOKEN`, which the proxy leaves as the sentinel `proxy-injected` while substituting
-real credentials on outbound requests. `reachable` is the check that works.
+`list_issues` returns at most 100 issues a call, so `list-open` and `list-mine` both page:
+pass the response's `pageInfo.endCursor` as `after` while `pageInfo.hasNextPage` is true.
+`list-open` stops at 500, well above the open-issue count of any repo these skills are
+pointed at, since it caps the dedupe `file-issue` runs against; `list-mine` reads every
+page, because the assignee filter below runs on each page's issues. `issue_read` with
+`get_comments` pages with `page` instead: read on while a page comes back with 100 comments.
+
+`list_issues` has no assignee filter. For `list-mine`, keep the issues whose `assignees`
+include the `login` that `get_me` returned.
+
+`comment` returns `{"id", "url"}`, and `url` is the comment's URL - the locator
+`post-handoff` reports.
+
+`fetch-handoff` takes the locator apart: `<owner>` and `<repo>` are the two path segments
+after the host, `<id>` is the number after `/issues/` and `<comment-id>` the digits of the
+trailing `#issuecomment-<n>`. The locator's `<owner>` and `<repo>` replace the derived
+ones. The handoff is the `body` of the returned comment whose `id` equals `<comment-id>`;
+raise `page` by one until it appears.
 
 ## Categories
 
@@ -40,14 +92,26 @@ real credentials on outbound requests. `reachable` is the check that works.
 
 ## Forge
 
-- **verify-checkout:** gh repo view --json nameWithOwner -q .nameWithOwner
-- **pr-create:**       gh pr create --title "<title>" --body-file <path>
-- **pr-view:**         gh pr view <id> --json number,url,body,author,headRefName,headRefOid,isDraft
-- **pr-update:**       gh pr edit --body-file <path>
+- **verify-checkout:** { git remote get-url upstream 2>/dev/null || git remote get-url origin; } | sed -E 's#\.git$##; s#.*[/:]([^/:]+/[^/]+)$#\1#'
+- **pr-create:**       tool: mcp__github__create_pull_request {"owner": "<owner>", "repo": "<repo>", "title": "<title>", "head": "<head-owner>:<branch>", "base": "<default-branch>", "body": "<body>"}
+- **pr-view:**
+  - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "head": "<head-owner>:<branch>", "state": "open"}
+  - tool: mcp__github__pull_request_read {"method": "get", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
+- **pr-update:**       tool: mcp__github__update_pull_request {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "body": "<body>"}
 - **closes:**          Closes #<id>
 - **refs:**            Refs #<id>
 
-`pr-view` takes an empty `<id>` to mean the pull request for the current branch.
+`verify-checkout` prints `<owner>/<repo>` from the `upstream` remote's URL, or from
+`origin`'s where there is no `upstream`, in HTTPS, SSH and proxied forms alike, with no
+GitHub call. `pr-create` and `pr-view` name the branch by `<head-owner>` instead, the owner
+in `origin`'s URL: in a fork clone `<owner>` is the upstream repository's owner, which does
+not hold the branch.
+
+`pr-create` returns `{"id", "url"}`, and `url` is the pull request's URL.
+
+`pr-view` with an `<id>` runs only its second entry. With `<id>` empty, the first finds the
+open pull request for the current branch and its `number` is the second entry's `<id>`; an
+empty list means the branch has no open pull request.
 
 A 403 naming `add_repo` means the session holds no grant for the repo, not that the
 credentials are wrong. Attach the repo at `access: push`; the read default covers neither
@@ -55,46 +119,47 @@ the API calls nor the push.
 
 ## Review
 
-- **review-list:**     gh api repos/<owner>/<repo>/pulls/<id>/reviews
-- **review-post:**     gh api -X POST repos/<owner>/<repo>/pulls/<id>/reviews --input <path>
-- **review-bodies:**   gh api repos/<owner>/<repo>/pulls/<id>/reviews --jq '.[] | select(.body != "" and .user.type == "User") | {id, user: .user.login, state, body}'
-- **pr-comments:**     gh api repos/<owner>/<repo>/issues/<id>/comments --jq '.[] | select(.user.type == "User") | {id, user: .user.login, body}'
-- **review-threads:**  see the query below
-- **thread-reply:**    gh api -X POST repos/<owner>/<repo>/pulls/<id>/comments/<comment-id>/replies --input <path>
-- **pr-comment:**      gh pr comment <id> --body-file <path>
+- **review-list:**     tool: mcp__github__pull_request_read {"method": "get_reviews", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
+- **review-post:**
+  - tool: mcp__github__pull_request_review_write {"method": "create", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
+  - tool: mcp__github__add_comment_to_pending_review {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "subjectType": "LINE"}
+  - tool: mcp__github__pull_request_review_write {"method": "submit_pending", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
+- **review-bodies:**   tool: mcp__github__pull_request_read {"method": "get_reviews", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
+- **pr-comments:**     tool: mcp__github__pull_request_read {"method": "get_comments", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
+- **review-threads:**  tool: mcp__github__pull_request_read {"method": "get_review_comments", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "perPage": 100}
+- **thread-reply:**    tool: mcp__github__add_reply_to_pull_request_comment {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "commentId": <comment-id>, "body": "<body>"}
+- **pr-comment:**      tool: mcp__github__add_issue_comment {"owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "body": "<body>"}
 
-Feedback lands on three surfaces and two are invisible to the inline-comment endpoint.
-`review-bodies` and `pr-comments` carry only what people wrote: a bot delivers its findings as
-inline threads, and its summary body is boilerplate. `pr-comments` uses the `issues` path because
-every pull request is also an issue - it is the only endpoint returning top-level notes that
-belong to no review.
+Feedback lands on three surfaces and two are invisible to the inline-comment call.
+`review-bodies` and `pr-comments` carry only what people wrote: a bot delivers its findings
+as inline threads, and its summary body is boilerplate. `pr-comments` reads the top-level
+notes that belong to no review - the surface neither of the other two returns.
 
-`review-threads` needs GraphQL, since `isResolved` has no REST equivalent, and `databaseId` is the
-id `thread-reply` takes while GraphQL's own `id` is not. `<owner>` and `<repo>` are not substituted
-here the way they are on `gh api repos/...`, so they are passed:
-
-```
-gh api graphql -f owner=<owner> -f repo=<repo> -F pr=<id> -f query='
-query($owner:String!,$repo:String!,$pr:Int!){ repository(owner:$owner,name:$repo){ pullRequest(number:$pr){
-  reviewThreads(first:100){ nodes { isResolved path
-    comments(first:20){ nodes { databaseId body author{login} } } } } } } }' \
---jq '.data.repository.pullRequest.reviewThreads.nodes[]'
-```
-
-`review-post` and `thread-reply` read a JSON file. A review payload carries the summary and every
-inline comment in one call, and a second call adds a second summary rather than replacing the
-first; a reply payload is `{"body": "<text>"}`:
+`review-post` reads the payload file at `<path>` and spreads it over three calls. The
+payload carries the summary and every inline comment:
 
 ```json
-{"commit_id": "<headRefOid, re-read immediately before posting>",
+{"commit_id": "<the pull request's head SHA, re-read immediately before posting>",
  "event": "COMMENT",
  "body": "<summary>",
  "comments": [{"path": "<file>", "line": 42, "side": "RIGHT", "body": "<finding>"}]}
 ```
 
-`commit_id` is required and a push invalidates every anchor built against an older one. Omitting
-`event` leaves the review PENDING and invisible. A multi-line comment adds `start_line` beside
-`line`.
+The first call opens a pending review, adding the payload's `commit_id` as `commitID`. The
+second runs once per `comments` entry, adding its `path`, `line`, `side` and `body`, and
+`start_line` as `startLine` for a multi-line comment. The third submits, adding the
+payload's `event` and `body`. `commit_id` is required and a push invalidates every anchor
+built against an older one. A review left pending is invisible, so a failure after the
+first call is a stop, and its report says a pending review is open on the pull request for
+the user to submit or discard in GitHub.
+
+The user objects these tools return carry a `login` and no `type`. For `review-bodies`,
+keep the reviews with a non-empty `body` whose author's `login` does not end in `[bot]`; for
+`pr-comments`, the comments whose author's `login` does not end in `[bot]`.
+
+`review-threads` returns each thread's `is_resolved` and its comments, which carry an
+`html_url` but no numeric id. The `<comment-id>` `thread-reply` takes is the number after
+`#discussion_r` in a thread comment's `html_url`.
 
 ## Launcher
 
@@ -154,7 +219,7 @@ Every entry here resolves through `## Tracker`, so a project that has retargeted
 tracker moves these with it and restates none of them.
 
 `post-handoff` returns the locator `fetch-handoff` is later given. On this backend that is
-the comment's URL - `comment`'s stdout, or its `url` field under the MCP route.
+the comment's URL - `comment`'s `url` field, or its stdout under the `gh` route.
 `<owner>` and `<repo>` are the URL's two path segments after the host, replacing the
 derived ones; `<comment-id>` is the digits of the trailing `#issuecomment-<n>`, and `<id>`
 the number after `/issues/`.
@@ -162,9 +227,12 @@ the number after `/issues/`.
 `has-handoff` prints the issue with its comments, and the caller scopes the answer to the
 `<!-- claude-handoff -->` marker in that output.
 
-`request-reviewer` is `none`, so the review round does not run. `gh pr edit <id>
---add-reviewer @copilot` turns it on; `review-wait` is then how long the round waits for
-that reviewer, in minutes. Copilot's reviews carry the login
-`copilot-pull-request-reviewer[bot]` in `review-list`. Under the MCP route the round does
-not run, its request included: the wait needs `review-list` and `pr-comments` as shell
-commands.
+`request-reviewer` is `none`, so the review round does not run. Either form turns it on:
+
+- `tool: mcp__github__request_copilot_review {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}`
+- `gh pr edit <id> --add-reviewer @copilot`
+
+`review-wait` is then how long the round waits for that reviewer, in minutes. Copilot's
+reviews carry the login `copilot-pull-request-reviewer[bot]` in `review-list`. The `gh`
+fallback swaps no `## Workflow` entry, so a project that sets `request-reviewer` keeps
+whichever form it wrote on both routes - pick the one its sessions can run.

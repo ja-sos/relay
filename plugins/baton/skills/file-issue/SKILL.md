@@ -14,13 +14,24 @@ earlier by `##` heading:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
-command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
+```
+
+That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
+opens with the check that picks the route. Run the check before reading on. Where it selects
+the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
+file next, so it replaces those three sections:
+
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
+```
+
+Where neither route is available, `backend-github.md` says what that means. Either way, the
+project's own files load last:
+
+```
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
-
-The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
-file opens with the check that confirms its tools, and says when no route is left.
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
 defines, and an operation that fails because its tool is missing or unauthenticated - a
@@ -40,8 +51,11 @@ git branch --show-current
 
 Record the SHA. Line numbers rot; the SHA is what keeps `src/hub.c:117` resolvable.
 
-Run `list-categories` and `list-open`. Stop and ask when a category named in the backend's
-`## Categories` table is missing from what `list-categories` returns. Never create one.
+Run `list-categories` and `list-open`. Where the backend's notes say `list-categories`
+answers one `<category>` at a time, run it once per row of the backend's `## Categories`
+table, with that row's label. Stop and ask when a category named in that table is missing
+from what `list-categories` returns, or comes back not-found from its own run. Never create
+one.
 
 ## Step 2 - Split
 
