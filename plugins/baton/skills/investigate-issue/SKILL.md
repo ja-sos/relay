@@ -18,8 +18,8 @@ cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 
 That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
 opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - those tools absent, `gh` authenticated - load that route's file next, so
-it replaces those three sections:
+the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
+file next, so it replaces those three sections:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md

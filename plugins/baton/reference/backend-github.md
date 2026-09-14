@@ -3,9 +3,9 @@
 Maps every operation the baton skills call to a GitHub call. These are the shipped
 defaults; override any section in `.claude/baton.md` or `~/.claude/baton.md`, to the
 contract `defining-backends.md` sets. `## Tracker`, `## Forge` and `## Review` run
-through the GitHub MCP tools. Where those tools are absent and `gh` is authenticated,
-`backend-github-gh.md` replaces those three sections with the same operations as `gh`
-commands.
+through the GitHub MCP tools. Where that route fails the check below and `gh` is
+authenticated, `backend-github-gh.md` replaces those three sections with the same operations
+as `gh` commands.
 
 Before the first operation, load the tools:
 
@@ -15,14 +15,18 @@ ToolSearch select:mcp__github__get_me,mcp__github__issue_read,mcp__github__issue
 
 Then pick the route, in this order:
 
-1. Every tool named comes back and `mcp__github__get_me` succeeds: this file's sections
-   stand as they are. `get_me` is this route's `reachable`, as `gh api user` is the other's.
+1. Every tool named comes back, `mcp__github__get_me` succeeds, and
+   `mcp__github__list_issues {"owner": "<owner>", "repo": "<repo>", "perPage": 1}` returns,
+   with `<owner>` and `<repo>` from `verify-checkout` below: this file's sections stand as
+   they are. `get_me` is this route's `reachable`, as `gh api user` is the other's. It takes
+   no repository, so only `list_issues` shows the MCP account can read this one.
 2. Otherwise, where `command -v gh >/dev/null && gh api user >/dev/null 2>&1` succeeds,
    load `backend-github-gh.md`. It replaces `## Tracker`, `## Forge` and `## Review`; the
    other three sections here stay in force.
-3. Otherwise keep this file's entries. Each one calling a tool that did not load fails
-   under the skill's stop rule when the skill reaches it - directly or through `op:` - and
-   not before. Name the tool as not loaded and `gh` as absent or unauthenticated. When
+3. Otherwise keep this file's entries. Each one fails under the skill's stop rule when the
+   skill reaches it - directly or through `op:` - and not before, where its tool did not
+   load or cannot read this repository. Name the part of route 1 that failed - a tool not
+   loaded, `get_me`, or `list_issues` - and `gh` as absent or unauthenticated. When
    `stopped` resolves to a failing entry too, report the stop in the session only.
 
 `backend-github-gh.md` loads second, ahead of `.claude/baton.md` and `~/.claude/baton.md`.
@@ -46,8 +50,10 @@ project's own `## Tracker` with `gh` commands.
 - **fetch-handoff:**    tool: mcp__github__issue_read {"method": "get_comments", "owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "perPage": 100, "page": 1}
 - **reachable:**        tool: mcp__github__get_me {}
 
-The MCP tools have no call that enumerates a repository's labels, so `list-categories`
-answers for one category at a time: run it once per row of `## Categories`, substituting
+`mcp__github__list_label` enumerates a repository's labels, but it belongs to the server's
+`labels` toolset, which a connection sending no `X-MCP-Toolsets` header does not enable.
+`get_label` is in the default `issues` toolset, so `list-categories` uses it and answers
+for one category at a time: run it once per row of `## Categories`, substituting
 that row's label as `<category>`. That is the only question `file-issue` Step 1 puts to it,
 and taking the rows as they come means this entry needs no restating when a project renames
 its categories.
@@ -60,9 +66,9 @@ authorize.
 `list_issues` returns at most 100 issues a call, so `list-open` and `list-mine` both page:
 pass the response's `pageInfo.endCursor` as `after` while `pageInfo.hasNextPage` is true.
 `list-open` stops at 500, well above the open-issue count of any repo these skills are
-pointed at, since it caps the dedupe `file-issue` runs against; `list-mine` pages until the
-assigned issues run out. `issue_read` with `get_comments` pages with `page` instead: read
-on while a page comes back with 100 comments.
+pointed at, since it caps the dedupe `file-issue` runs against; `list-mine` reads every
+page, because the assignee filter below runs on each page's issues. `issue_read` with
+`get_comments` pages with `page` instead: read on while a page comes back with 100 comments.
 
 `list_issues` has no assignee filter. For `list-mine`, keep the issues whose `assignees`
 include the `login` that `get_me` returned.
@@ -87,9 +93,9 @@ raise `page` by one until it appears.
 ## Forge
 
 - **verify-checkout:** { git remote get-url upstream 2>/dev/null || git remote get-url origin; } | sed -E 's#\.git$##; s#.*[/:]([^/:]+/[^/]+)$#\1#'
-- **pr-create:**       tool: mcp__github__create_pull_request {"owner": "<owner>", "repo": "<repo>", "title": "<title>", "head": "<branch>", "base": "<default-branch>", "body": "<body>"}
+- **pr-create:**       tool: mcp__github__create_pull_request {"owner": "<owner>", "repo": "<repo>", "title": "<title>", "head": "<head-owner>:<branch>", "base": "<default-branch>", "body": "<body>"}
 - **pr-view:**
-  - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "head": "<owner>:<branch>", "state": "open"}
+  - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "head": "<head-owner>:<branch>", "state": "open"}
   - tool: mcp__github__pull_request_read {"method": "get", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
 - **pr-update:**       tool: mcp__github__update_pull_request {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "body": "<body>"}
 - **closes:**          Closes #<id>
@@ -97,7 +103,9 @@ raise `page` by one until it appears.
 
 `verify-checkout` prints `<owner>/<repo>` from the `upstream` remote's URL, or from
 `origin`'s where there is no `upstream`, in HTTPS, SSH and proxied forms alike, with no
-GitHub call.
+GitHub call. `pr-create` and `pr-view` name the branch by `<head-owner>` instead, the owner
+in `origin`'s URL: in a fork clone `<owner>` is the upstream repository's owner, which does
+not hold the branch.
 
 `pr-create` returns `{"id", "url"}`, and `url` is the pull request's URL.
 

@@ -22,8 +22,8 @@ cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 
 That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
 opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - those tools absent, `gh` authenticated - load that route's file next, so
-it replaces those three sections:
+the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
+file next, so it replaces those three sections:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
@@ -153,7 +153,7 @@ Skip this step when `request-reviewer` is `none`, which is the shipped default. 
 only thing that skips it: the round runs on whatever entry form `## Review` uses.
 
 1. Run `review-list` and `pr-comments`, and keep their combined output.
-2. Run `request-reviewer` on the pull request.
+2. Run `request-reviewer` on the pull request, and record `date +%s` as the wait's start.
 3. Wait until a successful run of both returns output different from the kept copy, or
    until `review-wait` minutes have passed, capped at 60. The wait takes one of two forms,
    picked by how this backend defines `review-list` and `pr-comments`:
@@ -165,7 +165,8 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    - **Anything else** - a `tool:` entry, a nested list, an `op:`. Run `sleep 60` through
      Bash with `run_in_background`. On its notification run both operations in their
      defined form and compare with the kept copy: output that differs goes to item 4,
-     output that matches sleeps again, until `review-wait` sleeps have run.
+     output that matches sleeps again. The wait runs out when `date +%s` exceeds the start
+     by the wait's minutes times 60, however many sleeps that took.
 
    A foreground `sleep` is neither form - the harness blocks a standalone one and names
    `run_in_background` as the way to wait. `Monitor` does the first form's job where the

@@ -18,14 +18,13 @@ spellings.
 ls .claude/baton.md ~/.claude/baton.md 2>/dev/null
 ```
 
-Run `ToolSearch select:mcp__github__get_me` first; the tool coming back means the GitHub
-MCP tools are present, which is the shipped route. Only when it does not come back does
-`command -v gh` decide anything.
+Run the route check that opens `${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md`. Its
+routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 
 | Found | Action |
 |---|---|
-| No backend file; the GitHub MCP tools or `gh` present | Stop. The shipped defaults run as they are - through those tools, or through `reference/backend-github-gh.md` - and a copy of them is a second file to keep in sync. |
-| No backend file, neither present | Step 2. |
+| No backend file; route 1 or 2 selected | Stop. The shipped defaults run as they are - through the GitHub MCP tools, or through `reference/backend-github-gh.md` - and a copy of them is a second file to keep in sync. |
+| No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
 
 ## Step 2 - Load the contract
@@ -76,6 +75,9 @@ list-mine
 list-categories
 verify-checkout
 ```
+
+Where the file's notes say `list-categories` answers one `<category>` at a time, run it with
+the label from the first row of the file's `## Categories` table.
 
 - PASS: every row passes and all four operations return.
 - FAIL: any row fails or any operation errors. Fix the entry and restart Step 4.

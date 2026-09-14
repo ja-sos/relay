@@ -72,13 +72,21 @@ bare id, a file path. Only the backend has to understand it: where `fetch-handof
 `<owner>`, `<repo>`, `<id>` or `<comment-id>`, the backend's notes say how each comes from
 the locator.
 
-Four placeholders are open to every entry, derived rather than passed by the caller:
+Five placeholders are open to every entry, derived rather than passed by the caller:
 
 | Placeholder | Value |
 |---|---|
 | `<owner>` `<repo>` | `verify-checkout`'s answer, split at the slash |
+| `<head-owner>` | the owner in `origin`'s URL, printed by the command below |
 | `<branch>` | `git branch --show-current` |
 | `<default-branch>` | `git symbolic-ref --short refs/remotes/origin/HEAD`, without its `origin/`; where that exits non-zero, the name after `refs/heads/` in the `ref:` line of `git ls-remote --symref origin HEAD` |
+
+```
+git remote get-url origin | sed -E 's#\.git$##; s#.*[/:]([^/:]+)/[^/]+$#\1#'
+```
+
+`<head-owner>` differs from `<owner>` in a fork clone: `verify-checkout` answers with the
+upstream repository, and the branch is pushed to `origin`.
 
 | Operation | Called by | Substitutes |
 |---|---|---|
@@ -174,7 +182,7 @@ whole and the five left at their defaults would otherwise be undefined:
 - **post-handoff:**     op: comment <id> <path>
 - **has-handoff:**      op: view <id>
 - **code-review:**      skill: /code-review <target>
-- **request-reviewer:** gh pr edit <id> --add-reviewer @copilot
+- **request-reviewer:** tool: mcp__github__request_copilot_review {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
 - **review-wait:**      20
 - **published:**
   - op: comment <id> <path>

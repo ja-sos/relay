@@ -2,7 +2,7 @@
 
 The shipped `## Tracker`, `## Forge` and `## Review` sections as `gh` commands, replacing
 the GitHub MCP entries in `backend-github.md`. A skill reads this file only when that
-file's route check selects it: the MCP tools are absent and `gh api user` succeeds.
+file's route check selects it: the MCP route fails that check and `gh api user` succeeds.
 
 This file loads second, ahead of `.claude/baton.md` and `~/.claude/baton.md`. It defines
 those three sections and nothing else - `## Categories`, `## Launcher` and `## Workflow`
