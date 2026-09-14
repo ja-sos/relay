@@ -18,13 +18,24 @@ earlier by `##` heading:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
-command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
+```
+
+That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
+opens with the check that picks the route. Run the check before reading on. Where it selects
+the `gh` fallback - those tools absent, `gh` authenticated - load that route's file next, so
+it replaces those three sections:
+
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
+```
+
+Where neither route is available, `backend-github.md` says what that means. Either way, the
+project's own files load last:
+
+```
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
-
-The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
-file opens with the check that confirms its tools, and says when no route is left.
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
 defines, and an operation that fails because its tool is missing or unauthenticated - a
@@ -138,23 +149,29 @@ it, and nothing else in the run recovers it.
 
 ## Step 6 - Review round
 
-Skip this step when `request-reviewer` is `none`, which is the shipped default.
-
-The wait runs `review-list` and `pr-comments` from a shell loop. When either one does not
-resolve to a single shell command, run no part of this step - no reviewer is requested
-either - and say so in Step 7's file.
+Skip this step when `request-reviewer` is `none`, which is the shipped default. That is the
+only thing that skips it: the round runs on whatever entry form `## Review` uses.
 
 1. Run `review-list` and `pr-comments`, and keep their combined output.
 2. Run `request-reviewer` on the pull request.
 3. Wait until a successful run of both returns output different from the kept copy, or
-   until `review-wait` minutes have passed, capped at 60. This is one notification at one
-   moment, so run a POSIX `sh` loop through Bash with `run_in_background`: it runs both
-   every 30 seconds and exits when the output differs or when the wait runs out, counted
-   in iterations so it needs no `timeout` binary. `Monitor` does the same job where the
-   backend allows that tool, with `timeout_ms` set to the wait in milliseconds - but it is
-   built for a stream of events and stays armed to its timeout after the one that
-   matters, so the loop is the default. A foreground `sleep` is neither:
-   the harness blocks a standalone one and names these two ways to wait.
+   until `review-wait` minutes have passed, capped at 60. The wait takes one of two forms,
+   picked by how this backend defines `review-list` and `pr-comments`:
+   - **Both a single shell command.** Run a POSIX `sh` loop through Bash with
+     `run_in_background`: it runs both every 30 seconds and exits when the output differs
+     or when the wait runs out, counted in iterations so it needs no `timeout` binary. The
+     polling happens inside the shell, so the loop notifies once, at the moment that
+     matters.
+   - **Anything else** - a `tool:` entry, a nested list, an `op:`. Run `sleep 60` through
+     Bash with `run_in_background`. On its notification run both operations in their
+     defined form and compare with the kept copy: output that differs goes to item 4,
+     output that matches sleeps again, until `review-wait` sleeps have run.
+
+   A foreground `sleep` is neither form - the harness blocks a standalone one and names
+   `run_in_background` as the way to wait. `Monitor` does the first form's job where the
+   backend allows that tool, with `timeout_ms` set to the wait in milliseconds, but it is
+   built for a stream of events and stays armed to its timeout after the one that matters,
+   so the loop is the default.
 4. When the new output holds no review by the reviewer `request-reviewer` named, keep it
    as the copy and return to item 3 for what is left of the wait.
 5. On timeout, go to Step 7 with a file saying the review did not arrive. A reviewer that
@@ -172,7 +189,8 @@ same as a Step 4 finding - `request-reviewer` names who reviews, not who decides
 
 Run `published` with the issue id, the pull request URL from Step 5, and one file saying
 what shipped: the URL, the branch, the test result, any deviation Step 2 recorded, and
-whether Step 6 ran, timed out, or was skipped.
+whether Step 6 ran, timed out, or was skipped - skipped meaning only that
+`request-reviewer` is `none`.
 
 ## Stopping
 

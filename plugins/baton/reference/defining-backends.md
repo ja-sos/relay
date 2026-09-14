@@ -1,19 +1,19 @@
 # Defining a backend
 
-Every tracker and forge command the skills run is a named **operation**. The skills ship
-GitHub defaults, so a GitHub repo needs no configuration: they run through `gh`, or
-through the GitHub MCP tools where `gh` is missing. Overriding an operation points the
-skills at a different tracker without editing any skill.
+Every tracker and forge call the skills make is a named **operation**. The skills ship
+GitHub defaults, so a GitHub repo needs no configuration: they run through the GitHub MCP
+tools, or through `gh` in a session without those tools. Overriding an operation points
+the skills at a different tracker without editing any skill.
 
 ## Where overrides live
 
 The skills read up to four files, in this order:
 
 ```
-${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md       shipped GitHub defaults
-${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md   the same through the GitHub MCP tools; read only when `gh` is missing or `gh api user` fails
-.claude/baton.md                                         project backend; committed, so an unattended run sees it
-~/.claude/baton.md                                       personal defaults across all projects
+${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md      shipped GitHub defaults, over the GitHub MCP tools
+${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md   the same three sections as `gh` commands; read only where that file's route check selects it
+.claude/baton.md                                        project backend; committed, so an unattended run sees it
+~/.claude/baton.md                                      personal defaults across all projects
 ```
 
 A `##` heading is the key, and a matching heading replaces the shipped section
@@ -82,7 +82,7 @@ Four placeholders are open to every entry, derived rather than passed by the cal
 
 | Operation | Called by | Substitutes |
 |---|---|---|
-| `list-categories` | `file-issue` Step 1 | - |
+| `list-categories` | `file-issue` Step 1 | `<category>` |
 | `list-open` | `file-issue` Step 1 | - |
 | `list-mine` | `next-issue` Step 1 | - |
 | `create` | `file-issue` Step 5 | `<title>` `<category>` `<path>` |
@@ -133,6 +133,12 @@ backend that allows that tool.
 `list-mine` returns the issues assigned to the user in the order they should be picked up;
 the tracker's own ranking belongs in that command, not in the skill reading its output.
 
+`list-categories` either returns every category the tracker offers, or answers for one
+`<category>` at a time - a tracker with no call that enumerates its labels can only do the
+second. The backend's notes say which, and a caller that gets the second form runs the
+operation once per row of `## Categories`. Either way `file-issue` Step 1 asks the same
+question: is a category from that table missing from the tracker.
+
 `<path>` is always a file. A tracker CLI that takes body text on the command line mangles
 backticks and fenced blocks through the shell, so an operation that cannot read a file
 needs a wrapper that does.
@@ -154,7 +160,9 @@ its third column is restated rather than inherited:
 
 Retargeting the tracker itself means restating `## Tracker` with the other tool's
 commands, keeping the operation names and placeholders exactly as the table above spells
-them. The shipped defaults in `reference/backend-github.md` are the template to copy from.
+them. The shipped defaults are the template to copy from:
+`reference/backend-github.md` for a tracker reached through an MCP connector,
+`reference/backend-github-gh.md` for one reached through a CLI.
 
 Turning the review round on, and logging time after the pull request is published. All
 seven `## Workflow` operations are restated, because the heading replaces the section
@@ -193,11 +201,13 @@ A backend is done when every row passes.
 
 ## Tools an unattended run needs
 
-A cloud session can have the `mcp__github__*` tools and no `gh`; the shipped defaults then
-run through `backend-github-mcp.md`. A cloud run whose `## Launcher` entry's `allowed_tools`
+A cloud session can have the `mcp__github__*` tools and no `gh`, which is why the shipped
+defaults run through those tools. A cloud run whose `## Launcher` entry's `allowed_tools`
 held only `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep` and `Skill` loaded `ToolSearch`
 and the GitHub MCP tools it needed, and called them with no permission denial.
 
-Under that route `review-list` and `pr-comments` are `tool:` entries, so the review round
-does not run: its wait is a `Bash` loop. With `gh`, the round needs no tool beyond `Bash`,
-which every entry allows; adding `Monitor` to the list lets the round use that instead.
+The review round runs on either route. Where `review-list` and `pr-comments` are `tool:`
+entries its wait is a background `sleep 60` and the operations run between sleeps; where
+they are single shell commands the wait is a `Bash` loop that polls inside the shell.
+Either form needs no tool beyond `Bash`, which every entry allows; adding `Monitor` to the
+list lets the shell form use that instead.

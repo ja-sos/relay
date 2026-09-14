@@ -15,13 +15,24 @@ earlier by `##` heading:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
-command -v gh >/dev/null && gh api user >/dev/null 2>&1 || cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-mcp.md
+```
+
+That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
+opens with the check that picks the route. Run the check before reading on. Where it selects
+the `gh` fallback - those tools absent, `gh` authenticated - load that route's file next, so
+it replaces those three sections:
+
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
+```
+
+Where neither route is available, `backend-github.md` says what that means. Either way, the
+project's own files load last:
+
+```
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 ```
-
-The second line loads the GitHub MCP route when `gh` is missing or cannot reach GitHub. That
-file opens with the check that confirms its tools, and says when no route is left.
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
 defines, and an operation that fails because its tool is missing or unauthenticated - a
