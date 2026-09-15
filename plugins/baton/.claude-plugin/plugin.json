@@ -1,6 +1,6 @@
 {
   "name": "baton",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Carry one unit of work from tracker issue to pull request across sessions that share no context: file, investigate, hand off, implement - each document passing a writing gate first. Tracker and forge commands are configurable; GitHub ships as the default.",
   "author": {
     "name": "ja-sos"

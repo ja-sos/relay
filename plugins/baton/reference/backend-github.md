@@ -177,7 +177,8 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
    "session_context": {
      "model": "<the model this session is running>",
      "sources": [{"git_repository": {"url": "https://github.com/<owner>/<repo>"}}],
-     "allowed_tools": ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Skill"]},
+     "allowed_tools": ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Skill",
+                       "EnterWorktree", "ExitWorktree"]},
    "events": [{"data": {
      "uuid": "<fresh lowercase v4 uuid>", "session_id": "", "type": "user",
      "parent_tool_use_id": null,
@@ -196,10 +197,17 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   prompt, so re-pointing the routine cannot disturb it. `action: "list_runs"` returns the
   run's session URL; `action: "get_run_log"` reads the run, permission denials included.
 
-- **local:** `cd <repo root> && claude --bg --worktree <branch> "/baton:implement-handoff <comment url>"`
+  `EnterWorktree` and `ExitWorktree` are on the list because `implement-handoff` Step 2
+  creates the run's worktree and Step 7 removes it. A cloud run has a disposable clone to
+  itself and isolates from nothing, and that cost is accepted rather than made conditional.
 
-  Check the repo ignores `.claude/` first, since an unignored `.claude/` leaves the new
-  worktree in `git status`, where an autonomous `git add -A` commits it:
+- **local:** `cd <repo root> && claude --bg "/baton:implement-handoff <comment url>"`
+
+  No `--worktree <branch>`: `implement-handoff` Step 2 creates the run's worktree itself,
+  and inside a session started with that flag `EnterWorktree` refuses with "Already in a
+  worktree session." Check the repo ignores `.claude/` first all the same, since Step 2's
+  worktree still lands under `.claude/worktrees/` and an unignored `.claude/` leaves it in
+  `git status`, where an autonomous `git add -A` commits it:
   `git check-ignore -q .claude/ || echo "add .claude/ to .gitignore first"`.
   `--bg` and `--print` conflict, because `--print` leaves no session for
   `claude attach <id>` to open. The command returns a short id taken by
