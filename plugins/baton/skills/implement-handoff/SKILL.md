@@ -61,6 +61,10 @@ Invoking this skill is the request to commit and publish, so the standing rule a
 unasked does not cover the run. These need no confirmation:
 
 - `git add`, `git commit` and `git push -u origin <branch>` on the branch the handoff names.
+- `EnterWorktree` at Step 2, and `ExitWorktree` at Step 7 - `remove` with
+  `discard_changes: true` once both of that step's checks pass, `keep` otherwise. Their tool
+  descriptions otherwise hold `EnterWorktree` to an explicit instruction and `ExitWorktree`
+  to the user asking; for this run, these two steps are that instruction.
 - `pr-create` on that branch; `request-reviewer`, `thread-reply` and `pr-comment` on the
   pull request it opens; `published` and `stopped` on the issue.
 - Deviating from the handoff's approach where the code contradicts it, so long as Step 5's
@@ -104,12 +108,48 @@ records what each one means.
 
 ## Step 2 - Branch and build
 
+Each call below is skipped on its own condition, because neither survives a second run.
+Skip `EnterWorktree` when the session is already in a worktree, which is what a differing
+pair here means - a launcher that started the session in one, or a turn resuming from a stop:
+
+```
+git rev-parse --git-dir
+git rev-parse --git-common-dir
+```
+
+Skip `git switch -c` when HEAD is already on `<branch>`. A turn resuming from a stop skips
+both and goes straight to the build. Test the pair rather than the branch name: a fresh run
+in a clone that happens to sit on `<branch>` would otherwise skip isolation entirely and
+build in the working tree it was meant to leave alone.
+
+Otherwise give the run a worktree of its own, so two runs started in one checkout do not
+edit one working tree. Call `EnterWorktree` with a `name` of `<issue>-<6 hex>` - the six
+characters `od -An -N3 -tx1 /dev/urandom | tr -d ' \n'` prints, so `5-a1b2c3` for issue 5.
+The worktree lands at `.claude/worktrees/<name>` on a branch of its own, and the session
+moves into it. Every step from here works there; Step 1's checks ran before it, in the
+directory the session started in.
+
+The name comes from the issue rather than the branch because a branch-named directory is
+long enough to push a test binary's path past the 259 characters Windows `CreateProcess`
+accepts, and the run then reports a failing suite in which no test failed. The random suffix
+keeps two handoffs on one issue in separate directories.
+
+Seeding is `EnterWorktree`'s and not this step's: a worktree checks out tracked files only,
+and it copies in whatever the project lists in `.worktreeinclude`. That list is the
+project's to write, and it is a prerequisite rather than a detail - a gitignored
+`.claude/settings.local.json` that is not on it does not follow the session into the
+worktree, and the run stalls on a permission prompt with nobody there to answer.
+
 ```
 git switch -c <branch> <base>
 ```
 
-Continue when HEAD is already on `<branch>`. Follow the approach the handoff records.
-Constraints written beside the alternatives it lists already rule those out.
+This exiting non-zero because `<branch>` already exists is a stop: an earlier run on this
+clone left the branch behind, and clearing it is the user's - the worktree path in that
+run's `stopped` file is where its work is.
+
+Follow the approach the handoff records. Constraints written beside the alternatives it
+lists already rule those out.
 
 An approach that does not survive contact with the code is yours to re-cut. A pull request
 naming its deviation is worth more than a stop naming the problem: the deviation gets
@@ -188,10 +228,34 @@ same as a Step 4 finding - `request-reviewer` names who reviews, not who decides
 
 ## Step 7 - Report
 
-Run `published` with the issue id, the pull request URL from Step 5, and one file saying
-what shipped: the URL, the branch, the test result, any deviation Step 2 recorded, and
-whether Step 6 ran, timed out, or was skipped - skipped meaning only that
-`request-reviewer` is `none`.
+Remove the worktree first, and only once `origin` holds everything in it:
+
+```
+git status --porcelain
+git fetch origin <branch>
+git rev-parse HEAD
+git rev-parse origin/<branch>
+```
+
+No output from the first and two equal revisions from the last two: call `ExitWorktree`
+with `action: "remove"` and `discard_changes: true`. `remove` refuses without that flag
+once the worktree's branch holds a commit, and these checks are what stands in for the
+confirmation it asks for. What it then reports discarding is that branch, not `<branch>`:
+removal deletes the worktree directory and the branch `EnterWorktree` opened, while
+`<branch>` keeps its commits and `origin` already has them.
+
+Either check failing: call `ExitWorktree` with `action: "keep"`. Whatever the check found
+exists nowhere but that directory.
+
+`git status --porcelain` counts untracked files, so a build artifact the run left behind
+sends it down the `keep` path. That is the right way to be wrong: the same output is also
+how a source file the run wrote but never added looks, and `remove` cannot be undone.
+
+Then run `published` with the issue id, the pull request URL from Step 5, and one file
+saying what shipped: the URL, the branch, the test result, any deviation Step 2 recorded,
+and whether Step 6 ran, timed out, or was skipped - skipped meaning only that
+`request-reviewer` is `none`. After a `keep`, that file also names the worktree path
+`.claude/worktrees/<name>` and which of the two checks failed.
 
 ## Stopping
 
@@ -203,7 +267,15 @@ Every stop above takes one of two shapes, set by whether Step 5 has opened the p
   `stopped` with one file naming the step, what stopped it, and the pull request URL - only
   Step 7's `published` would otherwise carry that URL to the issue.
 
-Then end the turn. The session stays open, so a reply there resumes the run from the answer.
+No stop calls `ExitWorktree`. A stop is where work sits unpushed, and Step 7's two checks
+are the only thing that establishes it does not. The `stopped` file names the worktree path
+`.claude/worktrees/<name>` wherever the worktree still stands: the work is there, and so is
+the `<branch>` a relaunch in the same clone would collide with at Step 2. A stop after Step
+7's removal is the one with no path to name.
+
+Then end the turn. The session stays open, so a reply there resumes the run from the answer
+- still in the worktree and still on `<branch>`, which is what Step 2 skips its two calls
+for.
 
 ## Done
 
