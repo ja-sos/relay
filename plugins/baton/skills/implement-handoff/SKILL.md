@@ -178,10 +178,9 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
 5. On timeout, go to Step 7 with a file saying the review did not arrive. A reviewer that
    answers later is `baton:address-review`'s to handle, not this run's.
 6. Otherwise collect the round as `baton:address-review` Step 2 does - `review-bodies`,
-   `pr-comments` and `review-threads`, with the author filters the backend defines, except
-   that the reviewer `request-reviewer` named is never filtered out, whatever its login -
-   and keep the findings its Step 3 admits to the inventory. Read those two steps rather
-   than invoking the skill, which would run its own Step 1 and stop at its Step 3:
+   `pr-comments` and `review-threads`, with the author filters the backend defines - and
+   keep the findings its Step 3 admits to the inventory. Read those two steps rather than
+   invoking the skill, which would run its own Step 1 and stop at its Step 3:
 
    ```
    cat ${CLAUDE_PLUGIN_ROOT}/skills/address-review/SKILL.md
