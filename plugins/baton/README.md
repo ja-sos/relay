@@ -98,7 +98,8 @@ pushed, since the session that reads the handoff clones rather than shares the d
 
 A review engine: `self-review`, `review-pr` and `implement-handoff` all run the `code-review`
 operation, whose default is `/code-review`. A project with its own review skill names it there
-and edits none of the three.
+and edits none of the three. That entry may also be a nested list, pairing the review skill
+with an `agent:` compliance reviewer that checks the handoff's acceptance criteria.
 
 ## License
 

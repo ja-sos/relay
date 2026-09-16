@@ -62,7 +62,9 @@ reviewing your own side's work means applying fixes, not commenting on them.
 ## Step 2 - Review
 
 Run `code-review` with the pull request number as its `<target>`, so the diff comes from the
-forge rather than local git - the branch may be unchecked-out, behind, or on a fork.
+forge rather than local git - the branch may be unchecked-out, behind, or on a fork. Pass
+`<locator>` empty: this skill reviews someone else's pull request and holds no handoff, so an
+entry that checks acceptance criteria has none to read.
 
 Every claim in the pull request body is an unverified assertion. What was tested, why an approach
 was chosen, which edge cases are covered: check each against the diff. A body never resolves a

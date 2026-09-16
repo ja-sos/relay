@@ -1,5 +1,8 @@
 #!/bin/sh
-# PreToolUse on Task: carry the claim-audit discipline into every subagent dispatch.
+# PreToolUse on the subagent dispatch tool: carry the claim-audit discipline into every
+# dispatch. The matcher in hooks.json is `^(Task|Agent)$`, since harness builds differ on which
+# name that tool carries and the payload shape is the same either way. The anchors matter:
+# `Task|Agent` alone also matches ListAgents and every TaskCreate/TaskGet/TaskStop sibling.
 #
 # Why a hook and not skill text: subagent reviewers are where unsupported claims come from - a
 # fresh agent with no context reports "confirmed" without a citation. A rule living in the
@@ -41,6 +44,12 @@ raw=$(cat) || exit 0
 
 # Skip when the dispatching skill already asked for the audit in its own prompt.
 printf '%s' "$raw" | grep -qi 'claim-audit' && exit 0
+
+# Skip a payload carrying no prompt at all. The matcher should keep those out, but a harness
+# that spells the dispatch tool a third way, or a settings.json copying the matcher without its
+# anchors, would otherwise reach the dispatcher-addressed fallback below from a call that
+# dispatches nothing.
+printf '%s' "$raw" | grep -q '"prompt"' || exit 0
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." 2>/dev/null && pwd) || exit 0
 skill="$root/skills/claim-audit/SKILL.md"

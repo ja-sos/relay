@@ -1,5 +1,5 @@
 {
-  "description": "Reminds the writing discipline, and carries claim-audit into subagent dispatches.",
+  "description": "Reminds the writing discipline, and carries claim-audit into subagent dispatches. The PreToolUse matcher covers both names the subagent dispatch tool carries across harness builds - Task and Agent - because a matcher naming only one leaves the dispatches of the other ungated. It is anchored: unanchored, the same alternation also matches ListAgents, TaskCreate and the rest of the Task family, none of which dispatch anything.",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -10,7 +10,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Task",
+        "matcher": "^(Task|Agent)$",
         "hooks": [
           { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/gate-subagent-claim-audit.sh\"" }
         ]

@@ -66,8 +66,12 @@ unasked does not cover the run. These need no confirmation:
   `discard_changes: true` once both of that step's checks pass, `keep` otherwise. Their tool
   descriptions otherwise hold `EnterWorktree` to an explicit instruction and `ExitWorktree`
   to the user asking; for this run, these two steps are that instruction.
-- `pr-create` on that branch; `request-reviewer`, `thread-reply` and `pr-comment` on the
-  pull request it opens; `started`, `published` and `stopped` on the issue.
+- `pr-create` on that branch; `pr-update`, `request-reviewer`, `thread-reply` and
+  `pr-comment` on the pull request it opens; `started`, `published` and `stopped` on the
+  issue.
+- Dispatching the subagents Step 4 runs - the claim audit, and a reviewer an `agent:` entry
+  names. They read and report; nothing they return reaches the tracker or the forge except
+  through a step above.
 - Deviating from the handoff's approach where the code contradicts it, so long as Step 5's
   body names the deviation.
 
@@ -113,6 +117,14 @@ Resolve `started` against the loaded backend files before the first call below: 
 no loaded file defines is a stop, and a stop reached after `EnterWorktree` leaves the run's
 worktree standing, once per relaunch. Resolving it here is not calling it - the call runs at
 the branch cut below, where the run has committed to changing code.
+
+Find the subagent dispatch tool in the same breath, and for the same reason. Harness builds
+differ on its name - `Agent` in some, `Task` in others - and a launcher's `allowed_tools`
+naming neither leaves Step 4 with no way to run its claim audit. Look for it in this session's
+tools now and stop where it is absent, naming the tool and
+`${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. That stop costs a run that has not
+built anything; the same stop at Step 4 discards a finished, tested, reviewed branch that was
+never pushed.
 
 Two of the calls below are skipped on a condition of their own, because neither survives a
 second run. Skip `EnterWorktree` when the session is already in a worktree, which is what a
@@ -183,10 +195,92 @@ Add tests that fail against `<base>` and pass against the change. Follow the con
 of the tests already in the repo. Run the repo's full test command; a red suite is a
 stop.
 
-## Step 4 - Review
+## Step 4 - Review loop and claim audit
 
-Run `code-review` with an empty `<target>`, so it reviews the working tree this run wrote.
-Apply what it finds, and run the tests again afterwards.
+Run `code-review` with an empty `<target>`, so it reviews the working tree this run wrote,
+and with `<locator>` set to the handoff locator this session opened with. An entry that
+checks acceptance criteria reads them from the handoff there; the shipped entry names
+neither placeholder in its prompt and ignores both.
+
+### Severity
+
+The loop needs a severity the stopping rule can read, and `code-review` resolves to whatever
+engine the project named, on whatever scale that engine uses. So the run classifies every
+finding itself, against this table, before deciding anything. Where an engine attaches a
+severity of its own, it is evidence about the finding and not the answer: map it onto a row
+here, and where it maps onto none, class the finding from what it says.
+
+| Severity | The finding says |
+|---|---|
+| Critical | The change is wrong or unsafe as written - a defect this diff introduces, a security hole, data loss, or a contradiction of an acceptance criterion the handoff set. |
+| Important | The change works, and a reviewer would still send it back - a case it fails to handle, a statement in code or docs it leaves false, a missing test for behaviour the handoff names. |
+| Minor | Everything else - style, naming, a cleanup in code this diff did not touch. |
+
+Severity is about the finding, not about how hard it is to fix. A Critical finding the run
+cannot fix stays Critical and goes in the body as one.
+
+### The loop
+
+1. Apply every Critical and Important finding the run can fix. Apply a Minor one only where
+   the fix is smaller than the paragraph explaining why it was left.
+2. Run the repo's full test command. A red suite is a stop, the same as Step 3's, at every
+   turn of the loop.
+3. Run `code-review` again, with the same `<target>` and `<locator>`.
+
+The loop ends when a round leaves no Critical or Important finding the run can fix, or when
+three `code-review` rounds have run, whichever comes first. The opening run above is the first
+of those three, so item 3 fires at most twice. Neither exit is a stop.
+
+The cap ends the reviewing, not the fixing. Every round's findings go through items 1 and 2,
+the third round's included: apply what it found, run the tests, then end without a fourth
+`code-review`. What the cap costs is a review of those last fixes, and the Step 5 body says so
+wherever the loop ended that way - a reviewer reading it then knows which hunks nothing looked
+at twice.
+
+A finding the run cannot fix is one whose fix falls outside the handoff's scope, contradicts
+a decision the handoff recorded, or needs an answer nobody here can give. Say which: "could
+not fix" on its own tells a reviewer nothing.
+
+Every finding still standing when the loop ends goes in the Step 5 body - the Critical and
+Important ones the run could not fix, and each Minor one it left - with its severity and the
+reason it stands.
+
+### The claim audit
+
+The loop leaves the run holding a set of claims it is about to put in front of a reviewer:
+what the tests did, what the change covers, each deviation from the handoff and the evidence
+that forced it. The run wrote the code, so it is the worst-placed context to judge them.
+
+Before the push, dispatch a fresh subagent with the dispatch tool Step 2 found - one whose
+context did not write this code - and give it:
+
+- the instruction to run `baton:claim-audit`, naming the **resolved absolute path** of
+  `${CLAUDE_PLUGIN_ROOT}/skills/claim-audit/SKILL.md`. Expand the variable here and paste the
+  path it prints: the dispatched agent's shell does not carry this session's environment, so
+  the unexpanded form reads as a literal and the audit runs without its checklist. A path
+  rather than the skill name, because an agent type carrying no `Skill` tool can still `Read`;
+- every claim the run intends to make, quoted as it will appear in the body: the test command
+  and its result, what the change covers and what it leaves alone, each deviation and its
+  evidence, and each finding the loop left standing.
+
+Name the skill in that prompt. The plugin's `PreToolUse` hook on the dispatch tool appends its
+own audit instruction to a dispatch that does not mention `claim-audit`, and stands down for
+one that does (`hooks/gate-subagent-claim-audit.sh`), so naming it is what keeps the wording
+this step asks for rather than the hook's.
+
+The audit's verdict on each claim decides what the body may say:
+
+| Verdict | In the body |
+|---|---|
+| ACCEPTED | stated as it stands |
+| CORRECTED | rewritten to the corrected form |
+| RETRACTED | left out |
+| LABELLED unverified | moved under the body's `## Not verified here` heading |
+
+A dispatch that fails here is a stop. Step 2 has already established the tool exists, so a
+failure at this point is the dispatch and not the launcher. Writing the body without the audit
+is not the fallback: an unaudited claim is what this step exists to keep out of the pull
+request.
 
 ## Step 5 - Pull request
 
@@ -196,6 +290,14 @@ git push -u origin <branch>
 
 Write the body under `baton:write-deliverables`, as a **PR description**, to a file in
 the scratchpad directory. Run `pr-create` with that file.
+
+The body states only what Step 4's audit accepted, in the form it accepted it. A corrected
+claim is rewritten, a retracted one is left out, and every claim the audit could only label
+unverified goes under a `## Not verified here` heading - listed rather than dropped, so a
+reviewer knows which claims to probe. No such claim means no such heading.
+
+The findings the loop left standing go in the body as well, each with its severity and the
+reason it stands.
 
 The issue reference comes from the header, because a merged `closes` shuts an issue
 whatever else is outstanding:
@@ -253,9 +355,25 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    and that is a stop rather than an empty inventory.
 
    Step 3's end-of-turn stop is not this run's: judge each finding here. Apply the findings
-   that hold, run the tests again - a red suite is a stop - answer each thread with
-   `thread-reply` and anything that arrived outside a thread with `pr-comment`, and push
-   once.
+   that hold and run the repo's full test command over them - a red suite is a stop. Run it
+   here rather than leaving it to the loop below: that loop's test run sits after the findings
+   it applies, so a round applying none skips it, and these fixes would reach the pull request
+   with no suite over them.
+
+   Then run Step 4 over those fixes: its loop with a fresh cap of three `code-review` rounds -
+   a red suite at any of its test runs is a stop too - and its claim audit over the claims
+   these fixes add or change, which is a second dispatch and not a re-reading of the first
+   audit's table.
+
+   Then, in this order: push once, run `pr-update` with a rewritten body, and answer each
+   thread with `thread-reply` and anything that arrived outside a thread with `pr-comment`.
+   The rewritten body is written the way Step 5 writes one, and carries everything Step 5's
+   body carried: the claims this round's audit accepted, the `## Not verified here` list as it
+   now stands, the findings still standing when this round's loop ended, and - the one line
+   easiest to lose - the same issue reference Step 5's table chose. `pr-update` replaces the
+   body whole rather than appending to it, so a rewrite that drops a `closes` line leaves a
+   pull request that no longer shuts its issue on merge. The body describes the branch as it is
+   now, and never narrates the round that changed it.
 
 One round, with no re-request. A finding that holds is yours to judge on the diff, the
 same as a Step 4 finding - `request-reviewer` names who reviews, not who decides.
