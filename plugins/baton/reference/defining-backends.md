@@ -214,6 +214,14 @@ defaults run through those tools. A cloud run whose `## Launcher` entry's `allow
 held only `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep` and `Skill` loaded `ToolSearch`
 and the GitHub MCP tools it needed, and called them with no permission denial.
 
+`implement-handoff` adds `EnterWorktree` and `ExitWorktree` to that need: Step 2 creates the
+run's worktree and Step 7 removes it. A `## Launcher` entry that names `allowed_tools` at all
+names those two, and an entry written before baton 0.1.3 does not - add them to it, or its
+runs stop on a tool they cannot call, at Step 2 or at Step 7. An entry that starts the
+session in a worktree already, `claude --worktree` among them, names both as well: Step 2
+skips `EnterWorktree` there, which refuses a second worktree, and Step 7 calls
+`ExitWorktree`, which removes the worktree the launcher created.
+
 The review round runs on either route. Where `review-list` and `pr-comments` are `tool:`
 entries its wait is a background `sleep 60` and the operations run between sleeps; where
 they are single shell commands the wait is a `Bash` loop that polls inside the shell.
