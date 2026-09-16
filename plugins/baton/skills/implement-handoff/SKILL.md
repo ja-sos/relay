@@ -60,7 +60,8 @@ decides: re-cut the approach against what the tree shows and carry on.
 Invoking this skill is the request to commit and publish, so the standing rule against pushing
 unasked does not cover the run. These need no confirmation:
 
-- `git add`, `git commit` and `git push -u origin <branch>` on the branch the handoff names.
+- `git add`, `git commit` and `git push -u origin <branch>` on the branch the handoff names,
+  or on the name Step 2 substitutes where that branch already exists.
 - `EnterWorktree` at Step 2, and `ExitWorktree` at Step 7 - `remove` with
   `discard_changes: true` once both of that step's checks pass, `keep` otherwise. Their tool
   descriptions otherwise hold `EnterWorktree` to an explicit instruction and `ExitWorktree`
@@ -113,14 +114,14 @@ Skip `EnterWorktree` when the session is already in a worktree, which is what a 
 pair here means - a launcher that started the session in one, or a turn resuming from a stop:
 
 ```
-git rev-parse --git-dir
-git rev-parse --git-common-dir
+git rev-parse --path-format=absolute --git-dir --git-common-dir
 ```
 
-Skip `git switch -c` when HEAD is already on `<branch>`. A turn resuming from a stop skips
-both and goes straight to the build. Test the pair rather than the branch name: a fresh run
-in a clone that happens to sit on `<branch>` would otherwise skip isolation entirely and
-build in the working tree it was meant to leave alone.
+Skip `git switch -c` when HEAD is already on `<branch>`, testing it after `EnterWorktree` in
+the directory the build runs in, never in the one the session started in. A turn resuming
+from a stop skips both and goes straight to the build. Test the pair rather than the branch
+name: a fresh run in a clone that happens to sit on `<branch>` would otherwise skip
+isolation entirely and build in the working tree it was meant to leave alone.
 
 Otherwise give the run a worktree of its own, so two runs started in one checkout do not
 edit one working tree. Call `EnterWorktree` with a `name` of `<issue>-<6 hex>` - the six
@@ -144,9 +145,13 @@ worktree, and the run stalls on a permission prompt with nobody there to answer.
 git switch -c <branch> <base>
 ```
 
-This exiting non-zero because `<branch>` already exists is a stop: an earlier run on this
-clone left the branch behind, and clearing it is the user's - the worktree path in that
-run's `stopped` file is where its work is.
+This exiting non-zero because `<branch>` already exists is neither a stop nor a reuse: run
+it again with `<branch>-<6 hex>`, six fresh characters from the command above, until one
+succeeds. From there `<branch>` means the name that succeeded - Step 5 pushes it, Step 7
+fetches it, and Step 5's body and Step 7's report both name it beside the name the handoff
+asked for.
+
+Build on the existing branch only where the handoff says to.
 
 Follow the approach the handoff records. Constraints written beside the alternatives it
 lists already rule those out.
@@ -240,9 +245,9 @@ git rev-parse origin/<branch>
 No output from the first and two equal revisions from the last two: call `ExitWorktree`
 with `action: "remove"` and `discard_changes: true`. `remove` refuses without that flag
 once the worktree's branch holds a commit, and these checks are what stands in for the
-confirmation it asks for. What it then reports discarding is that branch, not `<branch>`:
-removal deletes the worktree directory and the branch `EnterWorktree` opened, while
-`<branch>` keeps its commits and `origin` already has them.
+confirmation it asks for. The count it then reports - `Discarded 1 commit` - is not a
+statement about `<branch>`: removal deletes the worktree directory and the branch
+`EnterWorktree` opened, while `<branch>` keeps its commits and `origin` already has them.
 
 Either check failing: call `ExitWorktree` with `action: "keep"`. Whatever the check found
 exists nowhere but that directory.
@@ -269,9 +274,9 @@ Every stop above takes one of two shapes, set by whether Step 5 has opened the p
 
 No stop calls `ExitWorktree`. A stop is where work sits unpushed, and Step 7's two checks
 are the only thing that establishes it does not. The `stopped` file names the worktree path
-`.claude/worktrees/<name>` wherever the worktree still stands: the work is there, and so is
-the `<branch>` a relaunch in the same clone would collide with at Step 2. A stop after Step
-7's removal is the one with no path to name.
+`.claude/worktrees/<name>` wherever the worktree still stands, and the branch the run built
+on: the work is in that directory, and a relaunch in the same clone takes a new name at Step
+2 rather than that branch. A stop after Step 7's removal is the one with no path to name.
 
 Then end the turn. The session stays open, so a reply there resumes the run from the answer
 - still in the worktree and still on `<branch>`, which is what Step 2 skips its two calls
