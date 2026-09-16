@@ -56,12 +56,12 @@ whatever they look like. A prefix names something else:
 | `skill: /<name> <args>` | invoke that skill |
 | `op: <operation> <args>` | run another operation of this backend, with these substitutions |
 | a nested bullet list | each bullet is one entry in any of the forms above, run in order; the first failure stops the rest |
-| `none` | skip the step. Valid for `started` and `request-reviewer` only - any other operation set to `none` is undefined |
+| `none` | skip the step. Valid for `started`, `request-reviewer` and `wrap-up` only - any other operation set to `none` is undefined |
 
 `none` and undefined are not the same answer. `none` says the project has decided the step
 does not run - that no tracker transition marks the start of implementation, that the review
-round does not run; undefined says the backend is incomplete, and every skill treats it as a
-stop.
+round does not run, that no step runs when a person-attended flow ends; undefined says the
+backend is incomplete, and every skill treats it as a stop.
 
 `tool:` exists so that a tracker reachable only through an MCP connector needs no CLI and
 no second set of credentials. Inside its JSON, `<body>` is the text of the file at
@@ -120,6 +120,7 @@ upstream repository, and the branch is pushed to `origin`.
 | `review-wait` | `implement-handoff` Step 6 | - |
 | `published` | `implement-handoff` Step 7 | `<id>` `<path>` `<pr-url>` |
 | `stopped` | `implement-handoff` stop path | `<id>` `<path>` |
+| `wrap-up` | `investigate-issue` Step 6, `review-pr` Step 5, `address-review` Done, `self-review` Step 4 | `<skill>` `<id>` `<pr-url>` `<head-branch>` |
 
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
@@ -127,7 +128,7 @@ author filtering belongs inside the command, since it is part of what the operat
 A `tool:` entry cannot filter its output, so the backend's notes name the filter and the
 caller applies it.
 
-The last eight are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
+The last nine are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
 and `stopped` are `op: comment <id> <path>` - so a backend that has overridden `## Tracker`
 for Jira posts all three to Jira without naming them at all.
 
@@ -135,6 +136,24 @@ for Jira posts all three to Jira without naming them at all.
 name `started` at all, which leaves it undefined rather than `none`, and
 `implement-handoff` stops at Step 2 - add `- **started:**          none` to that section,
 or the entry the project's tracker moves its ticket with.
+
+`wrap-up` is the ninth, added in baton 0.1.6, and a `## Workflow` written before it leaves
+it undefined the same way - `investigate-issue`, `review-pr`, `address-review` and
+`self-review` then stop at their last step. Add `- **wrap-up:**          none` to that
+section, or the entry the project runs when an attended flow ends.
+
+`wrap-up` is each of those four skills' final action, and it runs on the path where the user
+declines the last push or post as well: the flow ended either way. `<skill>` is the calling
+skill's name without the `baton:` prefix. `<id>` is the issue number for
+`investigate-issue` and the pull request number for the other three, and `<pr-url>` and
+`<head-branch>` are the pull request's URL and head branch from `pr-view`, both empty for
+`investigate-issue`. `self-review` on a branch carrying no pull request passes an empty
+`<id>` and `<pr-url>`, and the current branch as `<head-branch>`.
+
+`<head-branch>` is passed by the caller rather than derived, unlike `<branch>` above:
+`review-pr` reviews a pull request whose head may not be checked out, so the checked-out
+branch is the wrong answer there. A `wrap-up` that fails is reported by name; the skill
+leaves everything it already published in place and does not retry.
 
 `has-handoff` answers whether an issue already carries a handoff. Its default runs `view`,
 and the caller scopes the answer by looking for the handoff marker in that output; a
@@ -146,7 +165,9 @@ the cap also keeps the wait inside `Monitor`'s `timeout_ms` maximum of 3600000 m
 backend that allows that tool.
 
 `list-mine` returns the issues assigned to the user in the order they should be picked up;
-the tracker's own ranking belongs in that command, not in the skill reading its output.
+the tracker's own ranking belongs in that command, not in the skill reading its output. Both
+shipped GitHub routes order it oldest first, so the longest-waiting assigned issue is the one
+`next-issue` offers.
 
 `list-categories` either returns every category the tracker offers, or answers for one
 `<category>` at a time - a tracker with no call that enumerates its labels can only do the
@@ -180,8 +201,8 @@ them. The shipped defaults are the template to copy from:
 `reference/backend-github-gh.md` for one reached through a CLI.
 
 Turning the review round on, and logging time after the pull request is published. All
-eight `## Workflow` operations are restated, because the heading replaces the section
-whole and the five left at their defaults would otherwise be undefined:
+nine `## Workflow` operations are restated, because the heading replaces the section
+whole and the six left at their defaults would otherwise be undefined:
 
 ```markdown
 ## Workflow
@@ -196,6 +217,7 @@ whole and the five left at their defaults would otherwise be undefined:
   - op: comment <id> <path>
   - tool: jira_add_worklog {"issueKey": "<id>", "comment": "Shipped <pr-url>"}
 - **stopped:**          op: comment <id> <path>
+- **wrap-up:**          none
 ```
 
 `published` runs two entries in order, and the comment goes first: a worklog that fails

@@ -120,6 +120,15 @@ the review rounds.
 
 When the user declines the push, say what that leaves undone rather than moving on.
 
+Either way, run `wrap-up` as the last action of the run, with `self-review` as `<skill>`. With
+a pull request open, `<id>` is its number and `<pr-url>` and `<head-branch>` its URL and head
+branch, from Step 1's `pr-view`; where Step 1 found none, `<id>` and `<pr-url>` are empty and
+`<head-branch>` is the current branch. The decline path runs it too: the review ended either
+way. `none` is its shipped default, and that value skips the call.
+
+A `wrap-up` that fails is reported by name. Whatever was already pushed stays pushed, and
+nothing is retried.
+
 ## Red flags - you are deferring to an agent
 
 - "The description says this was covered", "the author chose X for a reason", "presumably

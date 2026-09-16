@@ -128,6 +128,15 @@ The entry carries a `<locator>` or a `<comment url>` placeholder; substitute the
 Step 5 returned for either one. A launcher that starts with anything else starts a session
 with no handoff to read.
 
+Then run `wrap-up` as the last action of the run, with `investigate-issue` as `<skill>` and
+the issue number as `<id>`. `<pr-url>` and `<head-branch>` are empty: no pull request exists
+yet, and the implementation run cuts its own branch. It runs where the answer names no
+launcher too - the investigation ended either way, and the handoff is on the issue whether or
+not a run was started. `none` is its shipped default, and that value skips the call.
+
+A `wrap-up` that fails is reported by name. The handoff stays posted, a launched run keeps
+running, and nothing is retried.
+
 ## Done
 
 Stop before editing any file the repo tracks.
