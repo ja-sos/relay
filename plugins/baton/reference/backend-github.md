@@ -207,7 +207,7 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   list names both so the run has the dispatch tool under either name. Whether routine creation
   accepts a tool name its build does not carry is untested; where it rejects one, creation
   fails, and removing the name that build lacks is the fix. Both names were added in baton
-  0.1.6: a `## Launcher` entry copied from this file before then, into a project's
+  0.1.7: a `## Launcher` entry copied from this file before then, into a project's
   `.claude/baton.md` or a personal `~/.claude/baton.md`, names neither and stops its runs at
   Step 2.
 

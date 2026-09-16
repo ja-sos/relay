@@ -308,7 +308,7 @@ and the GitHub MCP tools it needed, and called them with no permission denial.
 dispatches a subagent whose context did not write the code, and an `agent:` entry in
 `code-review` dispatches one too. Harness builds differ on that tool's name - `Agent` in some,
 `Task` in others - so a `## Launcher` entry that names `allowed_tools` at all names both and
-lets a build ignore the name it does not carry. An entry written before baton 0.1.6 names
+lets a build ignore the name it does not carry. An entry written before baton 0.1.7 names
 neither - add them, or its runs stop at Step 2, which looks for the tool before the build
 rather than leaving Step 4 to discard one. A personal `~/.claude/baton.md` restating
 `## Launcher` carries its own `allowed_tools` and needs the same edit by hand: it lives

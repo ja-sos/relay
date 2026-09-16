@@ -10,7 +10,7 @@
       "name": "baton",
       "source": "./plugins/baton",
       "description": "Carry one unit of work from tracker issue to pull request across sessions that share no context: file, investigate, hand off, implement - each document passing a writing gate first. Tracker and forge commands are configurable; GitHub ships as the default.",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "license": "MIT"
     }
   ]
