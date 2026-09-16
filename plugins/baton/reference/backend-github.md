@@ -201,13 +201,14 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   creates the run's worktree and Step 7 removes it. A cloud run has a disposable clone to
   itself and isolates from nothing, and that cost is accepted rather than made conditional.
 
-  `Agent` and `Task` are the two names the subagent dispatch tool carries across harness
-  builds, and the list names both so the run has it whichever build it lands on; a build
-  ignores the name it does not carry. Step 4's claim audit dispatches a subagent whose context
-  did not write the code, and a `code-review` entry may itself be an `agent:` one. They were
-  added in baton 0.1.6: a `## Launcher` entry copied from this file before then, into a
-  project's `.claude/baton.md` or a personal `~/.claude/baton.md`, names neither and stops its
-  runs at Step 2.
+  `Agent` and `Task` are on the list because Step 4's claim audit dispatches a subagent whose
+  context did not write the code, and a `code-review` entry may itself be an `agent:` one. The
+  list names both so the run has the dispatch tool under either name. Whether routine creation
+  accepts a tool name its build does not carry is untested; where it rejects one, creation
+  fails, and removing the name that build lacks is the fix. Both names were added in baton
+  0.1.6: a `## Launcher` entry copied from this file before then, into a project's
+  `.claude/baton.md` or a personal `~/.claude/baton.md`, names neither and stops its runs at
+  Step 2.
 
 - **local:** `cd <repo root> && claude --bg "/baton:implement-handoff <comment url>"`
 
@@ -251,10 +252,10 @@ the number after `/issues/`.
 when the implementation run cuts its branch. A tracker that has one defines the transition
 here, and the operation takes `<id>` alone.
 
-`code-review` reviews the working tree where `<target>` is empty and a pull request number
-otherwise, and ignores `<locator>`: `/code-review` checks correctness, not a handoff's
-acceptance criteria. A project that wants those checked keeps this entry and pairs it with an
-`agent:` one in a nested list - `defining-backends.md` carries the example.
+`code-review` reviews the working tree where `<target>` is empty, and otherwise the pull
+request number or branch `<target>` names. It ignores `<locator>`: `/code-review` checks
+correctness, not a handoff's acceptance criteria. A project that wants those checked keeps
+this entry and pairs it with an `agent:` one in a nested list - `defining-backends.md` carries the example.
 
 `request-reviewer` is `none`, so the review round does not run. Either form turns it on:
 

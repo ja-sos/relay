@@ -360,19 +360,27 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    it applies, so a round applying none skips it, and these fixes would reach the pull request
    with no suite over them.
 
-   Then run Step 4 over those fixes: its loop with a fresh cap of three `code-review` rounds -
-   a red suite at any of its test runs is a stop too - and its claim audit over the claims
-   these fixes add or change, which is a second dispatch and not a re-reading of the first
-   audit's table.
+   Then commit those fixes and run Step 4 over them with `<target>` set to `<branch>` rather
+   than empty, committing each loop round's fixes before the `code-review` that follows them.
+   After Step 5's push an empty `<target>` shows only uncommitted fixes, and the compliance
+   entry `defining-backends.md` pairs with `code-review` marks UNMET every criterion no hunk
+   in front of it satisfies - which is every criterion the pushed commits already meet. Step 4 runs here with a fresh
+   cap of three `code-review` rounds - a red suite at any of its test runs is a stop too - and
+   its claim audit over the claims these fixes add or change, which is a second dispatch and
+   not a re-reading of the first audit's table.
 
    Then, in this order: push once, run `pr-update` with a rewritten body, and answer each
    thread with `thread-reply` and anything that arrived outside a thread with `pr-comment`.
-   The rewritten body is written the way Step 5 writes one, and carries everything Step 5's
-   body carried: the claims this round's audit accepted, the `## Not verified here` list as it
-   now stands, the findings still standing when this round's loop ended, and - the one line
-   easiest to lose - the same issue reference Step 5's table chose. `pr-update` replaces the
-   body whole rather than appending to it, so a rewrite that drops a `closes` line leaves a
-   pull request that no longer shuts its issue on merge. The body describes the branch as it is
+   The rewritten body is written the way Step 5 writes one, and starts from Step 5's body
+   rather than from this round alone, because this round's audit rules only on the claims
+   these fixes add or change. A claim from Step 5's body stays unless this round's audit ruled
+   on it, and then takes the form Step 4's verdict table gives. A finding from Step 5's body
+   stays unless a fix this round resolved it. To those the body adds the claims this round's
+   audit accepted, the findings this round's loop left standing, the `## Not verified here`
+   list as it now stands, and - the one line easiest to lose - the same issue reference Step
+   5's table chose. `pr-update` replaces the body whole rather than appending to it, so a
+   rewrite that drops a `closes` line leaves a pull request that no longer shuts its issue on
+   merge. The body describes the branch as it is
    now, and never narrates the round that changed it.
 
 One round, with no re-request. A finding that holds is yours to judge on the diff, the
