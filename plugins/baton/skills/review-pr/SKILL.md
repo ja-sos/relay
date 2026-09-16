@@ -91,6 +91,18 @@ Re-read the head SHA immediately before posting: a push since Step 1 invalidates
 built against the older one. Then run `review-post` once, and report the review URL with which
 anchors landed.
 
+## Step 5 - Wrap up
+
+Run `wrap-up` as the last action of the run, with `review-pr` as `<skill>`, the pull request
+number as `<id>`, and its URL and head branch as `<pr-url>` and `<head-branch>` - both from
+Step 1's `pr-view`, because the pull request under review may not be the checked-out branch.
+
+It runs on the path where the user declines to post, too: the review ended either way, and a
+step that fires only on the posting path measures half the work. `none` is its shipped
+default, and that value skips the call, as does a backend that leaves `wrap-up` undefined.
+
+A `wrap-up` that fails is reported by name. The review stays posted and nothing is retried.
+
 ## Red flags
 
 - Reviewing before the resolved target has been stated.

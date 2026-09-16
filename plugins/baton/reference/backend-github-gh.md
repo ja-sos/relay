@@ -12,7 +12,7 @@ stay as `backend-github.md` gives them.
 
 - **list-categories:** gh label list --limit 100
 - **list-open:**       gh issue list --state open --limit 500
-- **list-mine:**       gh issue list --assignee @me --state open --limit 100
+- **list-mine:**       gh issue list --assignee @me --state open --limit 100 --search "sort:created-asc"
 - **create:**          gh issue create --title "<title>" --label "<category>" --body-file <path>
 - **view:**            gh issue view <id> --comments
 - **close-fixed:**     gh issue close <id> --reason completed
@@ -32,6 +32,10 @@ it carries a limit too.
 
 `list-categories` returns every label here, rather than answering for one `<category>` at a
 time as it does over the MCP tools. Step 1 reads both forms the same way.
+
+`list-mine` carries `--search "sort:created-asc"` because `gh issue list` defaults to
+newest first, and the first issue it returns is the one `next-issue` picks up: oldest
+assigned issue first, matching the MCP route's `"direction": "ASC"`.
 
 `gh auth status` reports failure in every cloud session: it validates the literal
 `GH_TOKEN`, which the proxy leaves as the sentinel `proxy-injected` while substituting

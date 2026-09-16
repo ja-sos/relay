@@ -118,3 +118,12 @@ Write the pull request body and every reply under `baton:write-deliverables`, th
 
 Every inventory row is answered or declined with its reasoning. Report what changed, what was
 pushed back on, and anything still open.
+
+Then run `wrap-up` as the last action of the run, with `address-review` as `<skill>`, the pull
+request number as `<id>`, and its URL and head branch as `<pr-url>` and `<head-branch>`, from
+Step 1's `pr-view`.
+
+It runs on the path where the user declines the push, too: the round ended either way. `none`
+is its shipped default, and that value skips the call, as does a backend that leaves `wrap-up`
+undefined. A `wrap-up` that fails is reported by
+name - the replies and the push stay as they are, and nothing is retried.
