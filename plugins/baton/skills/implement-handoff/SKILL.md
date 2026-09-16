@@ -109,6 +109,11 @@ records what each one means.
 
 ## Step 2 - Branch and build
 
+Resolve `started` against the loaded backend files before the first call below: an operation
+no loaded file defines is a stop, and a stop reached after `EnterWorktree` leaves the run's
+worktree standing, once per relaunch. Resolving it here is not calling it - the call runs at
+the branch cut below, where the run has committed to changing code.
+
 Two of the calls below are skipped on a condition of their own, because neither survives a
 second run. Skip `EnterWorktree` when the session is already in a worktree, which is what a
 differing pair here means - a launcher that started the session in one, or a turn resuming
@@ -120,8 +125,8 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir
 
 Skip `git switch -c` when HEAD is already on `<branch>`, testing it after `EnterWorktree` in
 the directory the build runs in, never in the one the session started in. A turn resuming
-from a stop skips both and goes straight to the build. Test the pair rather than the branch
-name: a fresh run in a clone that happens to sit on `<branch>` would otherwise skip
+from a stop skips all three and goes straight to the build. Test the pair rather than the
+branch name: a fresh run in a clone that happens to sit on `<branch>` would otherwise skip
 isolation entirely and build in the working tree it was meant to leave alone.
 
 Otherwise give the run a worktree of its own, so two runs started in one checkout do not
@@ -147,9 +152,10 @@ condition rather than one of its own: skipped exactly where `git switch -c` is s
 exactly where it runs. `none` is its shipped default, and that value skips the call the way
 it skips Step 6's. That gate, and not `EnterWorktree`'s, is what holds the call to one per
 branch this run cuts - a turn resuming from a stop skips all three, while a launcher that
-started the session in a worktree skips only `EnterWorktree` and still cuts the branch. It
-runs above the block rather than inside the retry below, which would fire it once per
-attempt.
+started the session in a worktree skips only `EnterWorktree` and still cuts the branch -
+unless that worktree already sits on `<branch>`, which is indistinguishable from a resume
+and skipped as one. It runs above the block rather than inside the retry below, which would
+fire it once per attempt.
 
 ```
 git switch -c <branch> <base>

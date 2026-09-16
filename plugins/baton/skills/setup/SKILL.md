@@ -65,6 +65,15 @@ whatever `## Tracker` this file defines, so a Jira backend posts handoffs to Jir
 restating them. Written, the section restates all eight of its operations, because a
 `##` heading replaces its section whole.
 
+```
+grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|code-review\|request-reviewer\|review-wait\|published\|stopped\):\*\*' .claude/baton.md
+```
+
+- PASS: 8, or 0 where the file has no `## Workflow`.
+- FAIL: anything between. Add the missing operations before Step 4. An operation left out is
+  undefined rather than defaulted, and `implement-handoff` stops at Step 2 in an unattended
+  run - Step 4 cannot catch it, because it never runs the writing operations.
+
 ## Step 4 - Verify by running
 
 Run the check table at the end of `reference/defining-backends.md` against the file. Run the
