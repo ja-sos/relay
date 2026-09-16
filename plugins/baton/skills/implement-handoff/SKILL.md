@@ -113,10 +113,13 @@ records what each one means.
 
 ## Step 2 - Branch and build
 
-Resolve `started` against the loaded backend files before the first call below: an operation
-no loaded file defines is a stop, and a stop reached after `EnterWorktree` leaves the run's
-worktree standing, once per relaunch. Resolving it here is not calling it - the call runs at
-the branch cut below, where the run has committed to changing code.
+Resolve `started` and `verify` against the loaded backend files before the first call below:
+an operation no loaded file defines is a stop, and a stop reached after `EnterWorktree`
+leaves the run's worktree standing, once per relaunch. Resolving them here is not calling
+them - `started` runs at the branch cut below, where the run has committed to changing code,
+and `verify` first runs at Step 3. `verify` is resolved this early for that same reason: a
+`## Workflow` written before baton 0.1.8 leaves it undefined, and finding that out at Step 3
+strands a worktree that already holds the work.
 
 Find the subagent dispatch tool in the same breath, and for the same reason. Harness builds
 differ on its name - `Agent` in some, `Task` in others - and a launcher's `allowed_tools`
@@ -189,11 +192,34 @@ naming its deviation is worth more than a stop naming the problem: the deviation
 reviewed, the stop waits for someone to look. Record what changed and the evidence that
 forced it, for the Step 5 body.
 
-## Step 3 - Test
+## Step 3 - Test and verify
 
-Add tests that fail against `<base>` and pass against the change. Follow the conventions
-of the tests already in the repo. Run the repo's full test command; a red suite is a
-stop.
+Add tests that fail against `<base>` and pass against the change, whatever the handoff
+carries. Where it numbers acceptance criteria, each criterion gets at least one of them. The
+exception is a criterion the handoff marks as out of any test's reach: the handoff's commands
+prove that one, and Step 5's body names it as untested. Follow the conventions of the tests
+already in the repo.
+
+Then run two checks, in this order:
+
+1. The commands the handoff names beside its acceptance criteria. These prove the outcome
+   this change was asked for; `verify` checks the repo, not that outcome.
+2. `verify`, the project's own sequence over the whole repo. Its shipped value is the
+   literal `repo-tests`, meaning the repo's whole suite as the run finds it; any other
+   value runs in the form `defining-backends.md` gives it.
+
+A failure of either is a stop.
+
+Nothing is committed until both pass - here, and again at each later point this pair runs.
+A `verify` sequence that rewrites files - a formatter pass - does so before any of its
+checks, the order `defining-backends.md` gives, so the tree its checks last passed on is the
+tree Step 5 pushes. A sequence whose rewrite runs after its checks pushes a tree no check ran
+against.
+
+A handoff naming neither is run with `verify` alone. A handoff posted before baton 0.1.7
+names neither, and one posted under 0.1.7 names criteria without commands; stopping on
+either would strand them. A handoff naming one
+and not the other runs what it names; Step 5's body records which of the two the run had.
 
 ## Step 4 - Review loop and claim audit
 
@@ -223,8 +249,8 @@ cannot fix stays Critical and goes in the body as one.
 
 1. Apply every Critical and Important finding the run can fix. Apply a Minor one only where
    the fix is smaller than the paragraph explaining why it was left.
-2. Run the repo's full test command. A red suite is a stop, the same as Step 3's, at every
-   turn of the loop.
+2. Run the handoff's commands and `verify`, in that order. A failure of either is a stop,
+   the same as Step 3's, at every turn of the loop.
 3. Run `code-review` again, with the same `<target>` and `<locator>`.
 
 The loop ends when a round leaves no Critical or Important finding the run can fix, or when
@@ -232,7 +258,7 @@ three `code-review` rounds have run, whichever comes first. The opening run abov
 of those three, so item 3 fires at most twice. Neither exit is a stop.
 
 The cap ends the reviewing, not the fixing. Every round's findings go through items 1 and 2,
-the third round's included: apply what it found, run the tests, then end without a fourth
+the third round's included: apply what it found, run both checks, then end without a fourth
 `code-review`. What the cap costs is a review of those last fixes, and the Step 5 body says so
 wherever the loop ended that way - a reviewer reading it then knows which hunks nothing looked
 at twice.
@@ -259,8 +285,8 @@ context did not write this code - and give it:
   path it prints: the dispatched agent's shell does not carry this session's environment, so
   the unexpanded form reads as a literal and the audit runs without its checklist. A path
   rather than the skill name, because an agent type carrying no `Skill` tool can still `Read`;
-- every claim the run intends to make, quoted as it will appear in the body: the test command
-  and its result, what the change covers and what it leaves alone, each deviation and its
+- every claim the run intends to make, quoted as it will appear in the body: the handoff's
+  commands and `verify` with their results, what the change covers and what it leaves alone, each deviation and its
   evidence, and each finding the loop left standing.
 
 Name the skill in that prompt. The plugin's `PreToolUse` hook on the dispatch tool appends its
@@ -289,12 +315,23 @@ git push -u origin <branch>
 ```
 
 Write the body under `baton:write-deliverables`, as a **PR description**, to a file in
-the scratchpad directory. Run `pr-create` with that file.
+the scratchpad directory. Two things the run knows and a reviewer cannot recover go in it:
+
+- The handoff's "Not verified here" list where it carries one, copied as it stands under
+  the body's `## Not verified here` heading.
+  Each entry names a screen, a control and an expected result, and Step 3 covered none of
+  them - the list is what tells a reviewer which of them to open.
+- What Step 3 had to check against: the handoff's acceptance criteria and the commands
+  that prove them, with each criterion no test covers named as such, or - where it named
+  neither - a sentence saying so, and that `verify` alone checked the change.
+
+Run `pr-create` with that file.
 
 The body states only what Step 4's audit accepted, in the form it accepted it. A corrected
 claim is rewritten, a retracted one is left out, and every claim the audit could only label
 unverified goes under a `## Not verified here` heading - listed rather than dropped, so a
-reviewer knows which claims to probe. No such claim means no such heading.
+reviewer knows which claims to probe. With no such claim and no handoff list, there is no
+such heading.
 
 The findings the loop left standing go in the body as well, each with its severity and the
 reason it stands.
@@ -355,17 +392,17 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    and that is a stop rather than an empty inventory.
 
    Step 3's end-of-turn stop is not this run's: judge each finding here. Apply the findings
-   that hold and run the repo's full test command over them - a red suite is a stop. Run it
-   here rather than leaving it to the loop below: that loop's test run sits after the findings
-   it applies, so a round applying none skips it, and these fixes would reach the pull request
-   with no suite over them.
+   that hold and run the handoff's commands and `verify` over them - a failure of either is a
+   stop. Run them here rather than leaving them to the loop below: that loop's checks sit after
+   the findings it applies, so a round applying none skips them, and these fixes would reach
+   the pull request with nothing run over them.
 
    Then commit those fixes and run Step 4 over them with `<target>` set to `<branch>` rather
    than empty, committing each loop round's fixes before the `code-review` that follows them.
    After Step 5's push an empty `<target>` shows only uncommitted fixes, and the compliance
    entry `defining-backends.md` pairs with `code-review` marks UNMET every criterion no hunk
    in front of it satisfies - which is every criterion the pushed commits already meet. Step 4 runs here with a fresh
-   cap of three `code-review` rounds - a red suite at any of its test runs is a stop too - and
+   cap of three `code-review` rounds - a failure at any of its checks is a stop too - and
    its claim audit over the claims these fixes add or change, which is a second dispatch and
    not a re-reading of the first audit's table.
 
@@ -412,8 +449,9 @@ sends it down the `keep` path. That is the right way to be wrong: the same outpu
 how a source file the run wrote but never added looks, and `remove` cannot be undone.
 
 Then run `published` with the issue id, the pull request URL from Step 5, and one file
-saying what shipped: the URL, the branch, the test result, any deviation Step 2 recorded,
-and whether Step 6 ran, timed out, or was skipped - skipped meaning only that
+saying what shipped: the URL, the branch, how the handoff's commands and `verify` came out,
+any deviation Step 2 recorded, and whether Step 6 ran, timed out, or was skipped - skipped
+meaning only that
 `request-reviewer` is `none`. After a `keep`, that file also names the worktree path
 `.claude/worktrees/<name>` and which of the two checks failed.
 
@@ -439,5 +477,6 @@ for.
 
 ## Done
 
-Both exits end here. Report the pull request URL, the branch and the test result - or the
-blocker, the step it stopped at, and the pull request URL when Step 5 opened one.
+Both exits end here. Report the pull request URL, the branch and how the handoff's commands
+and `verify` came out - or the blocker, the step it stopped at, and the pull request URL
+when Step 5 opened one.

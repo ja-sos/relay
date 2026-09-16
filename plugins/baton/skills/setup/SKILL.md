@@ -59,17 +59,18 @@ grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
 
 `## Workflow` is the sixth section and stays out of the file unless the user asks for a step
 its defaults do not give - a ticket moved to in-progress when implementation starts, a
-reviewer requested on every pull request, a worklog after publishing, something logged when
-an attended flow ends, handoffs kept somewhere other than the tracker. Its defaults resolve
+pre-push sequence of the project's own rather than its test command alone, a reviewer
+requested on every pull request, a worklog after publishing, something logged when an
+attended flow ends, handoffs kept somewhere other than the tracker. Its defaults resolve
 through whatever `## Tracker` this file defines, so a Jira backend posts handoffs to Jira
-without restating them. Written, the section restates all nine of its operations, because a
+without restating them. Written, the section restates all ten of its operations, because a
 `##` heading replaces its section whole.
 
 ```
-grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|code-review\|request-reviewer\|review-wait\|published\|stopped\|wrap-up\):\*\*' .claude/baton.md
+grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|verify\|code-review\|request-reviewer\|review-wait\|published\|stopped\|wrap-up\):\*\*' .claude/baton.md
 ```
 
-- PASS: 9, or 0 where the file has no `## Workflow`.
+- PASS: 10, or 0 where the file has no `## Workflow`.
 - FAIL: anything between. Add the missing operations before Step 4. An operation left out is
   undefined rather than defaulted, and the skill that calls it stops - `implement-handoff` at
   Step 2 in an unattended run. Step 4 cannot catch it, because it never runs the writing
@@ -96,7 +97,8 @@ the label from the first row of the file's `## Categories` table.
 
 Never verify by running `create`, `comment`, `pr-create`, `review-post`, `post-handoff`,
 `started`, `published`, `stopped`, `wrap-up` or `request-reviewer`. Each one writes to the
-tracker or the forge.
+tracker or the forge. Never run `verify` either: a project's sequence may rewrite files in the
+user's checkout.
 
 ## Step 5 - Offer document types
 

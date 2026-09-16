@@ -233,6 +233,7 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 - **post-handoff:**     op: comment <id> <path>
 - **has-handoff:**      op: view <id>
 - **started:**          none
+- **verify:**           repo-tests
 - **code-review:**      skill: /code-review <target>
 - **request-reviewer:** none
 - **review-wait:**      10
@@ -266,6 +267,11 @@ request number or branch `<target>` names. It ignores `<locator>`: `/code-review
 correctness, not a handoff's acceptance criteria. A project that wants those checked keeps
 this entry and pairs it with an `agent:` one in a nested list - `defining-backends.md` carries
 the example.
+
+`verify` is `repo-tests`, the literal standing for the repo's full test command as the run
+finds it - GitHub says nothing about how a project is built, so there is no better default
+to ship. A project that mandates a pre-push sequence writes it here, and that sequence then
+runs at every point `implement-handoff` checks its work.
 
 `request-reviewer` is `none`, so the review round does not run. Either form turns it on:
 
