@@ -39,7 +39,7 @@ project's own `## Tracker` with `gh` commands.
 - **list-open:**        tool: mcp__github__list_issues {"owner": "<owner>", "repo": "<repo>", "state": "OPEN", "perPage": 100}
 - **list-mine:**
   - tool: mcp__github__get_me {}
-  - tool: mcp__github__list_issues {"owner": "<owner>", "repo": "<repo>", "state": "OPEN", "orderBy": "CREATED_AT", "direction": "DESC", "perPage": 100}
+  - tool: mcp__github__list_issues {"owner": "<owner>", "repo": "<repo>", "state": "OPEN", "orderBy": "CREATED_AT", "direction": "ASC", "perPage": 100}
 - **create:**           tool: mcp__github__issue_write {"method": "create", "owner": "<owner>", "repo": "<repo>", "title": "<title>", "labels": ["<category>"], "body": "<body>"}
 - **view:**
   - tool: mcp__github__issue_read {"method": "get", "owner": "<owner>", "repo": "<repo>", "issue_number": <id>}
@@ -71,7 +71,8 @@ page, because the assignee filter below runs on each page's issues. `issue_read`
 `get_comments` pages with `page` instead: read on while a page comes back with 100 comments.
 
 `list_issues` has no assignee filter. For `list-mine`, keep the issues whose `assignees`
-include the `login` that `get_me` returned.
+include the `login` that `get_me` returned. Its `ASC` order is the pick order `next-issue`
+reads off the top: oldest assigned issue first.
 
 `comment` returns `{"id", "url"}`, and `url` is the comment's URL - the locator
 `post-handoff` reports.
@@ -235,6 +236,7 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 - **review-wait:**      10
 - **published:**        op: comment <id> <path>
 - **stopped:**          op: comment <id> <path>
+- **wrap-up:**          none
 
 Every entry here resolves through `## Tracker`, so a project that has retargeted the
 tracker moves these with it and restates none of them.
@@ -252,10 +254,16 @@ the number after `/issues/`.
 when the implementation run cuts its branch. A tracker that has one defines the transition
 here, and the operation takes `<id>` alone.
 
+`wrap-up` is `none` as well: nothing on GitHub needs writing when `investigate-issue`,
+`review-pr`, `address-review` or `self-review` finishes, each having already posted what it
+produced. A project that logs time, notifies a channel or closes out a ticket when an
+attended flow ends defines that here.
+
 `code-review` reviews the working tree where `<target>` is empty, and otherwise the pull
 request number or branch `<target>` names. It ignores `<locator>`: `/code-review` checks
 correctness, not a handoff's acceptance criteria. A project that wants those checked keeps
-this entry and pairs it with an `agent:` one in a nested list - `defining-backends.md` carries the example.
+this entry and pairs it with an `agent:` one in a nested list - `defining-backends.md` carries
+the example.
 
 `request-reviewer` is `none`, so the review round does not run. Either form turns it on:
 

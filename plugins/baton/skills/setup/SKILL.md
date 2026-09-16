@@ -59,20 +59,22 @@ grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
 
 `## Workflow` is the sixth section and stays out of the file unless the user asks for a step
 its defaults do not give - a ticket moved to in-progress when implementation starts, a
-reviewer requested on every pull request, a worklog after publishing, handoffs kept
-somewhere other than the tracker. Its defaults resolve through
-whatever `## Tracker` this file defines, so a Jira backend posts handoffs to Jira without
-restating them. Written, the section restates all eight of its operations, because a
+reviewer requested on every pull request, a worklog after publishing, something logged when
+an attended flow ends, handoffs kept somewhere other than the tracker. Its defaults resolve
+through whatever `## Tracker` this file defines, so a Jira backend posts handoffs to Jira
+without restating them. Written, the section restates all nine of its operations, because a
 `##` heading replaces its section whole.
 
 ```
-grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|code-review\|request-reviewer\|review-wait\|published\|stopped\):\*\*' .claude/baton.md
+grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|code-review\|request-reviewer\|review-wait\|published\|stopped\|wrap-up\):\*\*' .claude/baton.md
 ```
 
-- PASS: 8, or 0 where the file has no `## Workflow`.
+- PASS: 9, or 0 where the file has no `## Workflow`.
 - FAIL: anything between. Add the missing operations before Step 4. An operation left out is
-  undefined rather than defaulted, and `implement-handoff` stops at Step 2 in an unattended
-  run - Step 4 cannot catch it, because it never runs the writing operations.
+  undefined rather than defaulted, and the skill that calls it stops - `implement-handoff` at
+  Step 2 in an unattended run. Step 4 cannot catch it, because it never runs the writing
+  operations. `wrap-up` alone is the exception: the four attended skills skip it when it is
+  undefined, but the file restates it all the same.
 
 ## Step 4 - Verify by running
 
@@ -93,8 +95,8 @@ the label from the first row of the file's `## Categories` table.
 - FAIL: any row fails or any operation errors. Fix the entry and restart Step 4.
 
 Never verify by running `create`, `comment`, `pr-create`, `review-post`, `post-handoff`,
-`started`, `published`, `stopped` or `request-reviewer`. Each one writes to the tracker or
-the forge.
+`started`, `published`, `stopped`, `wrap-up` or `request-reviewer`. Each one writes to the
+tracker or the forge.
 
 ## Step 5 - Offer document types
 
