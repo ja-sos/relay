@@ -78,7 +78,7 @@ approach that failed and the constraint that ruled the alternatives out.
 
 ## Step 2 - Header
 
-First inside the collapsed section, five lines in a fenced block - a tracker renders
+First inside the collapsed section, five required lines in a fenced block - a tracker renders
 consecutive lines as one paragraph, so an unfenced header arrives as prose:
 
 ```
@@ -87,6 +87,14 @@ base:   <sha the plan was formed against>
 issue:  <number>
 closes: <yes, or no>
 branch: <branch the work belongs on>
+```
+
+Two optional lines may follow them inside that same block, each written only where it has a
+value. Their padding is cosmetic - a header is read by line name, not by column:
+
+```
+category: <the issue's label matching a row of the backend's ## Categories table>
+pr-base:  <the branch the pull request opens against>
 ```
 
 `base` must already be on `origin`, because a session that clones never sees a commit
@@ -101,6 +109,23 @@ Empty output is a stop: push first, or record a `base` that is pushed.
 `closes` is `yes` on the handoff that finishes the issue and `no` on every other, so the
 issue is not marked done while work on it remains. `no` is the safe value whenever the
 split is unsettled.
+
+`category` is the label the pull request will carry. Read the issue's own labels, keep the
+one matching a row of the backend's `## Categories` table, and write it exactly as that row
+spells it - a project can rename its categories, so the row is the spelling, not this
+skill. An issue carrying no such label gets no `category` line, and the run opens an
+unlabelled pull request.
+
+`pr-base` is for a handoff that is one layer of a stack: its work sits on top of the layer
+below, so its pull request opens against that layer's branch rather than the default branch.
+Omit the line everywhere else. Where it is written, that branch must already be on `origin`
+for the same reason `base` must:
+
+```
+git ls-remote --exit-code --heads origin <pr-base>
+```
+
+A non-zero exit is a stop: push that branch first, or record no `pr-base`.
 
 ## Step 3 - Body
 

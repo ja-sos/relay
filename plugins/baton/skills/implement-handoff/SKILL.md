@@ -95,8 +95,15 @@ prompts for it.
 
 Run `fetch-handoff` on the locator. Where the entry takes `<id>` or `<comment-id>`, derive
 each from the locator as the backend's notes on `fetch-handoff` say. The handoff's
-header gives `repo`, `base`, `issue`, `closes` and `branch`. Verify the checkout before the
-first edit:
+header gives `repo`, `base`, `issue`, `closes` and `branch`. Two more lines are optional,
+and a handoff written before they existed carries neither - an absent line is not a stop:
+
+| Optional line | Where the line is absent |
+|---|---|
+| `category` | `<category>` is empty |
+| `pr-base` | `<pr-base>` is `<default-branch>` |
+
+Verify the checkout before the first edit:
 
 ```
 git cat-file -e <base>^{commit} 2>/dev/null || git fetch origin
@@ -325,7 +332,9 @@ the scratchpad directory. Two things the run knows and a reviewer cannot recover
   that prove them, with each criterion no test covers named as such, or - where it named
   neither - a sentence saying so, and that `verify` alone checked the change.
 
-Run `pr-create` with that file.
+Run `pr-create` with that file, with `<category>` and `<pr-base>` as Step 1 resolved them.
+Where `<category>` is empty, the backend's notes on its own `pr-create` say what that drops -
+a label, or the call that would have set one.
 
 The body states only what Step 4's audit accepted, in the form it accepted it. A corrected
 claim is rewritten, a retracted one is left out, and every claim the audit could only label

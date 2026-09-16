@@ -94,7 +94,9 @@ raise `page` by one until it appears.
 ## Forge
 
 - **verify-checkout:** { git remote get-url upstream 2>/dev/null || git remote get-url origin; } | sed -E 's#\.git$##; s#.*[/:]([^/:]+/[^/]+)$#\1#'
-- **pr-create:**       tool: mcp__github__create_pull_request {"owner": "<owner>", "repo": "<repo>", "title": "<title>", "head": "<head-owner>:<branch>", "base": "<default-branch>", "body": "<body>"}
+- **pr-create:**
+  - tool: mcp__github__create_pull_request {"owner": "<owner>", "repo": "<repo>", "title": "<title>", "head": "<head-owner>:<branch>", "base": "<pr-base>", "body": "<body>"}
+  - tool: mcp__github__issue_write {"method": "update", "owner": "<owner>", "repo": "<repo>", "issue_number": <pr-number>, "labels": ["<category>"]}
 - **pr-view:**
   - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "head": "<head-owner>:<branch>", "state": "open"}
   - tool: mcp__github__pull_request_read {"method": "get", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
@@ -108,7 +110,22 @@ GitHub call. `pr-create` and `pr-view` name the branch by `<head-owner>` instead
 in `origin`'s URL: in a fork clone `<owner>` is the upstream repository's owner, which does
 not hold the branch.
 
-`pr-create` returns `{"id", "url"}`, and `url` is the pull request's URL.
+`pr-create` returns its **first** call's `{"id", "url"}`, and `url` is the pull request's
+URL; the second call returns nothing the caller keeps.
+
+The label needs that second call because `create_pull_request` has no `labels` parameter -
+its parameters are `owner`, `repo`, `title`, `head`, `base`, `body`, `draft`,
+`maintainer_can_modify` and `reviewers`. Every pull request is also an issue, so
+`issue_write` sets the label on it.
+
+`<pr-number>` is spelled apart from `<id>` on purpose, and the caller passes neither: at
+`implement-handoff` Step 5 `<id>` is the *issue's* number, which `closes` and `refs` take,
+and a label sent to that number lands on the issue while the pull request ships unlabelled.
+The second entry fills `<pr-number>` from the first entry's own result - the last path
+segment of the `url` it returned.
+
+Skip the second call entirely where `<category>` is empty - a pull request meant to carry no
+label must not be sent `[""]`.
 
 `pr-view` with an `<id>` runs only its second entry. With `<id>` empty, the first finds the
 open pull request for the current branch and its `number` is the second entry's `<id>`; an
