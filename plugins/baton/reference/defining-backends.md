@@ -56,11 +56,12 @@ whatever they look like. A prefix names something else:
 | `skill: /<name> <args>` | invoke that skill |
 | `op: <operation> <args>` | run another operation of this backend, with these substitutions |
 | a nested bullet list | each bullet is one entry in any of the forms above, run in order; the first failure stops the rest |
-| `none` | skip the step. Valid for `request-reviewer` only - any other operation set to `none` is undefined |
+| `none` | skip the step. Valid for `started` and `request-reviewer` only - any other operation set to `none` is undefined |
 
-`none` and undefined are not the same answer. `none` says the project has decided the
-review round does not run; undefined says the backend is incomplete, and every skill
-treats it as a stop.
+`none` and undefined are not the same answer. `none` says the project has decided the step
+does not run - that no tracker transition marks the start of implementation, that the review
+round does not run; undefined says the backend is incomplete, and every skill treats it as a
+stop.
 
 `tool:` exists so that a tracker reachable only through an MCP connector needs no CLI and
 no second set of credentials. Inside its JSON, `<body>` is the text of the file at
@@ -113,6 +114,7 @@ upstream repository, and the branch is pushed to `origin`.
 | `closes` / `refs` | `implement-handoff` Step 5 | `<id>` |
 | `post-handoff` | `write-handoff` Step 1 | `<id>` `<path>` |
 | `has-handoff` | `next-issue` Step 2, `investigate-issue` Step 1 | `<id>` |
+| `started` | `implement-handoff` Step 2 | `<id>` |
 | `code-review` | `implement-handoff` Step 4, `review-pr` Step 2, `self-review` Step 1 | `<target>` |
 | `request-reviewer` | `implement-handoff` Step 6 | `<id>` |
 | `review-wait` | `implement-handoff` Step 6 | - |
@@ -125,9 +127,14 @@ author filtering belongs inside the command, since it is part of what the operat
 A `tool:` entry cannot filter its output, so the backend's notes name the filter and the
 caller applies it.
 
-The last seven are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
+The last eight are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
 and `stopped` are `op: comment <id> <path>` - so a backend that has overridden `## Tracker`
 for Jira posts all three to Jira without naming them at all.
+
+`started` is the eighth, added in baton 0.1.5. A `## Workflow` written before it does not
+name `started` at all, which leaves it undefined rather than `none`, and
+`implement-handoff` stops at Step 2 - add `- **started:**          none` to that section,
+or the entry the project's tracker moves its ticket with.
 
 `has-handoff` answers whether an issue already carries a handoff. Its default runs `view`,
 and the caller scopes the answer by looking for the handoff marker in that output; a
@@ -173,7 +180,7 @@ them. The shipped defaults are the template to copy from:
 `reference/backend-github-gh.md` for one reached through a CLI.
 
 Turning the review round on, and logging time after the pull request is published. All
-seven `## Workflow` operations are restated, because the heading replaces the section
+eight `## Workflow` operations are restated, because the heading replaces the section
 whole and the five left at their defaults would otherwise be undefined:
 
 ```markdown
@@ -181,6 +188,7 @@ whole and the five left at their defaults would otherwise be undefined:
 
 - **post-handoff:**     op: comment <id> <path>
 - **has-handoff:**      op: view <id>
+- **started:**          none
 - **code-review:**      skill: /code-review <target>
 - **request-reviewer:** tool: mcp__github__request_copilot_review {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
 - **review-wait:**      20

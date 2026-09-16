@@ -220,6 +220,7 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 
 - **post-handoff:**     op: comment <id> <path>
 - **has-handoff:**      op: view <id>
+- **started:**          none
 - **code-review:**      skill: /code-review <target>
 - **request-reviewer:** none
 - **review-wait:**      10
@@ -237,6 +238,10 @@ the number after `/issues/`.
 
 `has-handoff` prints the issue with its comments, and the caller scopes the answer to the
 `<!-- claude-handoff -->` marker in that output.
+
+`started` is `none`: a GitHub issue has no in-progress state to move into, so nothing runs
+when the implementation run cuts its branch. A tracker that has one defines the transition
+here, and the operation takes `<id>` alone.
 
 `request-reviewer` is `none`, so the review round does not run. Either form turns it on:
 

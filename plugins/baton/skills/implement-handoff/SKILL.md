@@ -67,7 +67,7 @@ unasked does not cover the run. These need no confirmation:
   descriptions otherwise hold `EnterWorktree` to an explicit instruction and `ExitWorktree`
   to the user asking; for this run, these two steps are that instruction.
 - `pr-create` on that branch; `request-reviewer`, `thread-reply` and `pr-comment` on the
-  pull request it opens; `published` and `stopped` on the issue.
+  pull request it opens; `started`, `published` and `stopped` on the issue.
 - Deviating from the handoff's approach where the code contradicts it, so long as Step 5's
   body names the deviation.
 
@@ -109,9 +109,15 @@ records what each one means.
 
 ## Step 2 - Branch and build
 
-Each call below is skipped on its own condition, because neither survives a second run.
-Skip `EnterWorktree` when the session is already in a worktree, which is what a differing
-pair here means - a launcher that started the session in one, or a turn resuming from a stop:
+Resolve `started` against the loaded backend files before the first call below: an operation
+no loaded file defines is a stop, and a stop reached after `EnterWorktree` leaves the run's
+worktree standing, once per relaunch. Resolving it here is not calling it - the call runs at
+the branch cut below, where the run has committed to changing code.
+
+Two of the calls below are skipped on a condition of their own, because neither survives a
+second run. Skip `EnterWorktree` when the session is already in a worktree, which is what a
+differing pair here means - a launcher that started the session in one, or a turn resuming
+from a stop:
 
 ```
 git rev-parse --path-format=absolute --git-dir --git-common-dir
@@ -119,8 +125,8 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir
 
 Skip `git switch -c` when HEAD is already on `<branch>`, testing it after `EnterWorktree` in
 the directory the build runs in, never in the one the session started in. A turn resuming
-from a stop skips both and goes straight to the build. Test the pair rather than the branch
-name: a fresh run in a clone that happens to sit on `<branch>` would otherwise skip
+from a stop skips all three and goes straight to the build. Test the pair rather than the
+branch name: a fresh run in a clone that happens to sit on `<branch>` would otherwise skip
 isolation entirely and build in the working tree it was meant to leave alone.
 
 Otherwise give the run a worktree of its own, so two runs started in one checkout do not
@@ -140,6 +146,16 @@ and it copies in whatever the project lists in `.worktreeinclude`. That list is 
 project's to write, and it is a prerequisite rather than a detail - a gitignored
 `.claude/settings.local.json` that is not on it does not follow the session into the
 worktree, and the run stalls on a permission prompt with nobody there to answer.
+
+Run `started` on the header's `issue` immediately before the block below, under that block's
+condition rather than one of its own: skipped exactly where `git switch -c` is skipped, run
+exactly where it runs. `none` is its shipped default, and that value skips the call the way
+it skips Step 6's. That gate, and not `EnterWorktree`'s, is what holds the call to one per
+branch this run cuts - a turn resuming from a stop skips all three, while a launcher that
+started the session in a worktree skips only `EnterWorktree` and still cuts the branch -
+unless that worktree already sits on `<branch>`, which is indistinguishable from a resume
+and skipped as one. It runs above the block rather than inside the retry below, which would
+fire it once per attempt.
 
 ```
 git switch -c <branch> <base>
@@ -292,7 +308,7 @@ on: the work is in that directory, and a relaunch in the same clone takes a new 
 2 rather than that branch. A stop after Step 7's removal is the one with no path to name.
 
 Then end the turn. The session stays open, so a reply there resumes the run from the answer
-- still in the worktree and still on `<branch>`, which is what Step 2 skips its two calls
+- still in the worktree and still on `<branch>`, which is what Step 2 skips its opening calls
 for.
 
 ## Done
