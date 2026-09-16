@@ -75,9 +75,10 @@ force. `.claude/baton.md` is committed and an unattended cloud run reads it;
 An operation is a shell command by default, and `tool:`, `skill:` or `op:` names a tool call,
 a skill or another operation instead - so a tracker reachable only through an MCP connector
 needs no wrapper script. `## Workflow` is the sixth section, holding the steps around the work
-rather than the work itself: where the handoff is posted and found, which engine reviews, who
-is asked to review a pull request, and what runs once one is published. Its defaults resolve
-through `## Tracker`, so retargeting the tracker moves them with it.
+rather than the work itself: where the handoff is posted and found, what runs when
+implementation starts, which engine reviews, who is asked to review a pull request, and what
+runs once one is published. Its defaults resolve through `## Tracker`, so retargeting the
+tracker moves them with it.
 
 `reference/defining-backends.md` carries the operation contract.
 

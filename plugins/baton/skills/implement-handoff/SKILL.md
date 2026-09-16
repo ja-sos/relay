@@ -67,7 +67,7 @@ unasked does not cover the run. These need no confirmation:
   descriptions otherwise hold `EnterWorktree` to an explicit instruction and `ExitWorktree`
   to the user asking; for this run, these two steps are that instruction.
 - `pr-create` on that branch; `request-reviewer`, `thread-reply` and `pr-comment` on the
-  pull request it opens; `published` and `stopped` on the issue.
+  pull request it opens; `started`, `published` and `stopped` on the issue.
 - Deviating from the handoff's approach where the code contradicts it, so long as Step 5's
   body names the deviation.
 
@@ -109,7 +109,8 @@ records what each one means.
 
 ## Step 2 - Branch and build
 
-Each call below is skipped on its own condition, because neither survives a second run.
+Two of the calls below are skipped on a condition of their own, because neither survives a
+second run.
 Skip `EnterWorktree` when the session is already in a worktree, which is what a differing
 pair here means - a launcher that started the session in one, or a turn resuming from a stop:
 
@@ -140,6 +141,15 @@ and it copies in whatever the project lists in `.worktreeinclude`. That list is 
 project's to write, and it is a prerequisite rather than a detail - a gitignored
 `.claude/settings.local.json` that is not on it does not follow the session into the
 worktree, and the run stalls on a permission prompt with nobody there to answer.
+
+Run `started` on the header's `issue` immediately before the block below, under that block's
+condition rather than one of its own: skipped exactly where `git switch -c` is skipped, run
+exactly where it runs. `none` is its shipped default, and that value skips the call the way
+it skips Step 6's. That gate, and not `EnterWorktree`'s, is what holds the call to one per
+branch this run cuts - a turn resuming from a stop skips both calls, while a launcher that
+started the session in a worktree skips only `EnterWorktree` and still cuts the branch. It
+runs above the block rather than inside the retry below, which would fire it once per
+attempt.
 
 ```
 git switch -c <branch> <base>
