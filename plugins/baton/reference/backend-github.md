@@ -205,10 +205,13 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 
   No `--worktree <branch>`: `implement-handoff` Step 2 creates the run's worktree itself,
   and inside a session started with that flag `EnterWorktree` refuses with "Already in a
-  worktree session." Check the repo ignores `.claude/` first all the same, since Step 2's
-  worktree still lands under `.claude/worktrees/` and an unignored `.claude/` leaves it in
-  `git status`, where an autonomous `git add -A` commits it:
-  `git check-ignore -q .claude/ || echo "add .claude/ to .gitignore first"`.
+  worktree session." Check the repo ignores `.claude/worktrees/` first all the same, since
+  Step 2's worktree lands there and an unignored path leaves it in `git status`, where an
+  autonomous `git add -A` commits it:
+  `git check-ignore -q .claude/worktrees/ || echo "add .claude/worktrees/ to .gitignore first"`.
+  A `.gitignore` that keeps a tracked `.claude/settings.json` visible ignores the contents
+  rather than the directory - `.claude/*` with `!.claude/settings.json` - so `.claude/`
+  itself tests as unignored while `.claude/worktrees/` does not.
   `--bg` and `--print` conflict, because `--print` leaves no session for
   `claude attach <id>` to open. The command returns a short id taken by
   `claude agents --json`, `claude logs <id>` and `claude stop <id>`.
