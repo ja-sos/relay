@@ -183,13 +183,18 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    invoking the skill, which would run its own Step 1 and stop at its Step 3:
 
    ```
-   cat ${CLAUDE_PLUGIN_ROOT}/skills/address-review/SKILL.md
+   awk '/^## Step 2 /{f=1} /^## Step 4 /{f=0} f' \
+     ${CLAUDE_PLUGIN_ROOT}/skills/address-review/SKILL.md
    ```
 
-   Step 3's end-of-turn stop is not this run's, and neither are its Steps 4 and 5: judge
-   each finding here. Apply the findings that hold, run the tests again - a red suite is
-   a stop - answer each thread with `thread-reply` and anything that arrived outside a
-   thread with `pr-comment`, and push once.
+   The range ends before that skill's Step 4, so its pre-publish question for a human and
+   its push gated on approval never reach this run. Empty output means a renamed heading,
+   and that is a stop rather than an empty inventory.
+
+   Step 3's end-of-turn stop is not this run's: judge each finding here. Apply the findings
+   that hold, run the tests again - a red suite is a stop - answer each thread with
+   `thread-reply` and anything that arrived outside a thread with `pr-comment`, and push
+   once.
 
 One round, with no re-request. A finding that holds is yours to judge on the diff, the
 same as a Step 4 finding - `request-reviewer` names who reviews, not who decides.
