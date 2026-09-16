@@ -110,9 +110,9 @@ records what each one means.
 ## Step 2 - Branch and build
 
 Two of the calls below are skipped on a condition of their own, because neither survives a
-second run.
-Skip `EnterWorktree` when the session is already in a worktree, which is what a differing
-pair here means - a launcher that started the session in one, or a turn resuming from a stop:
+second run. Skip `EnterWorktree` when the session is already in a worktree, which is what a
+differing pair here means - a launcher that started the session in one, or a turn resuming
+from a stop:
 
 ```
 git rev-parse --path-format=absolute --git-dir --git-common-dir
@@ -146,7 +146,7 @@ Run `started` on the header's `issue` immediately before the block below, under 
 condition rather than one of its own: skipped exactly where `git switch -c` is skipped, run
 exactly where it runs. `none` is its shipped default, and that value skips the call the way
 it skips Step 6's. That gate, and not `EnterWorktree`'s, is what holds the call to one per
-branch this run cuts - a turn resuming from a stop skips both calls, while a launcher that
+branch this run cuts - a turn resuming from a stop skips all three, while a launcher that
 started the session in a worktree skips only `EnterWorktree` and still cuts the branch. It
 runs above the block rather than inside the retry below, which would fire it once per
 attempt.
@@ -302,7 +302,7 @@ on: the work is in that directory, and a relaunch in the same clone takes a new 
 2 rather than that branch. A stop after Step 7's removal is the one with no path to name.
 
 Then end the turn. The session stays open, so a reply there resumes the run from the answer
-- still in the worktree and still on `<branch>`, which is what Step 2 skips its two calls
+- still in the worktree and still on `<branch>`, which is what Step 2 skips its opening calls
 for.
 
 ## Done
