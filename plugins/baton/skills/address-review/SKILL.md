@@ -124,5 +124,6 @@ request number as `<id>`, and its URL and head branch as `<pr-url>` and `<head-b
 Step 1's `pr-view`.
 
 It runs on the path where the user declines the push, too: the round ended either way. `none`
-is its shipped default, and that value skips the call. A `wrap-up` that fails is reported by
+is its shipped default, and that value skips the call, as does a backend that leaves `wrap-up`
+undefined. A `wrap-up` that fails is reported by
 name - the replies and the push stay as they are, and nothing is retried.

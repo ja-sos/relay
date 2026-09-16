@@ -61,7 +61,8 @@ whatever they look like. A prefix names something else:
 `none` and undefined are not the same answer. `none` says the project has decided the step
 does not run - that no tracker transition marks the start of implementation, that the review
 round does not run, that no step runs when a person-attended flow ends; undefined says the
-backend is incomplete, and every skill treats it as a stop.
+backend is incomplete, and every skill treats it as a stop - except an undefined `wrap-up`,
+which the attended skills read as `none`.
 
 `tool:` exists so that a tracker reachable only through an MCP connector needs no CLI and
 no second set of credentials. Inside its JSON, `<body>` is the text of the file at
@@ -120,7 +121,7 @@ upstream repository, and the branch is pushed to `origin`.
 | `review-wait` | `implement-handoff` Step 6 | - |
 | `published` | `implement-handoff` Step 7 | `<id>` `<path>` `<pr-url>` |
 | `stopped` | `implement-handoff` stop path | `<id>` `<path>` |
-| `wrap-up` | `investigate-issue` Step 6, `review-pr` Step 5, `address-review` Done, `self-review` Step 4 | `<skill>` `<id>` `<pr-url>` `<head-branch>` |
+| `wrap-up` | `investigate-issue` Step 2 or 6, `review-pr` Step 5, `address-review` Done, `self-review` Step 4 | `<skill>` `<id>` `<pr-url>` `<head-branch>` |
 
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
@@ -137,10 +138,11 @@ name `started` at all, which leaves it undefined rather than `none`, and
 `implement-handoff` stops at Step 2 - add `- **started:**          none` to that section,
 or the entry the project's tracker moves its ticket with.
 
-`wrap-up` is the ninth, added in baton 0.1.6, and a `## Workflow` written before it leaves
-it undefined the same way - `investigate-issue`, `review-pr`, `address-review` and
-`self-review` then stop at their last step. Add `- **wrap-up:**          none` to that
-section, or the entry the project runs when an attended flow ends.
+`wrap-up` is the ninth, added in baton 0.1.6. Unlike every other operation, leaving it
+undefined is not a stop: `investigate-issue`, `review-pr`, `address-review` and
+`self-review` treat a `wrap-up` no loaded file defines as `none`, so a `## Workflow` written
+before 0.1.6 keeps working unchanged. Add the entry the project runs when an attended flow
+ends to use it.
 
 `wrap-up` is each of those four skills' final action, and it runs on the path where the user
 declines the last push or post as well: the flow ended either way. `<skill>` is the calling
@@ -148,7 +150,9 @@ skill's name without the `baton:` prefix. `<id>` is the issue number for
 `investigate-issue` and the pull request number for the other three, and `<pr-url>` and
 `<head-branch>` are the pull request's URL and head branch from `pr-view`, both empty for
 `investigate-issue`. `self-review` on a branch carrying no pull request passes an empty
-`<id>` and `<pr-url>`, and the current branch as `<head-branch>`.
+`<id>` and `<pr-url>`, and the current branch as `<head-branch>`. A shell entry quotes each
+placeholder - `log-flow "<skill>" "<id>" "<pr-url>" "<head-branch>"` - so an empty value
+still arrives as its own argument instead of shifting the ones after it.
 
 `<head-branch>` is passed by the caller rather than derived, unlike `<branch>` above:
 `review-pr` reviews a pull request whose head may not be checked out, so the checked-out

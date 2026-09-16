@@ -99,7 +99,7 @@ Step 1's `pr-view`, because the pull request under review may not be the checked
 
 It runs on the path where the user declines to post, too: the review ended either way, and a
 step that fires only on the posting path measures half the work. `none` is its shipped
-default, and that value skips the call.
+default, and that value skips the call, as does a backend that leaves `wrap-up` undefined.
 
 A `wrap-up` that fails is reported by name. The review stays posted and nothing is retried.
 

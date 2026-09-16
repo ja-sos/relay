@@ -80,6 +80,9 @@ On either stop, report to the user and propose closing - `close-fixed` for a fix
 landed, `close-invalid` for a finding that never held. Never close an issue without
 approval.
 
+Either stop ends the investigation, so run `wrap-up` as the last action of the run, with the
+arguments Step 6 gives it.
+
 ## Step 3 - Cause
 
 Name the cause at `file:line` at HEAD. The cause accounts for every symptom the issue
@@ -132,7 +135,8 @@ Then run `wrap-up` as the last action of the run, with `investigate-issue` as `<
 the issue number as `<id>`. `<pr-url>` and `<head-branch>` are empty: no pull request exists
 yet, and the implementation run cuts its own branch. It runs where the answer names no
 launcher too - the investigation ended either way, and the handoff is on the issue whether or
-not a run was started. `none` is its shipped default, and that value skips the call.
+not a run was started. `none` is its shipped default, and that value skips the call, as does
+a backend that leaves `wrap-up` undefined.
 
 A `wrap-up` that fails is reported by name. The handoff stays posted, a launched run keeps
 running, and nothing is retried.

@@ -72,8 +72,9 @@ grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|code-review\|request-revie
 - PASS: 9, or 0 where the file has no `## Workflow`.
 - FAIL: anything between. Add the missing operations before Step 4. An operation left out is
   undefined rather than defaulted, and the skill that calls it stops - `implement-handoff` at
-  Step 2 in an unattended run, the four attended skills at their last step. Step 4 cannot
-  catch either, because it never runs the writing operations.
+  Step 2 in an unattended run. Step 4 cannot catch it, because it never runs the writing
+  operations. `wrap-up` alone is the exception: the four attended skills skip it when it is
+  undefined, but the file restates it all the same.
 
 ## Step 4 - Verify by running
 
