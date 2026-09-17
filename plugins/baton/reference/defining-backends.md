@@ -47,8 +47,8 @@ runs it unasked, to start the layer above in a stack. So an entry has to be runn
 inside an unattended run of the very skill it launches - which is what the tool list below
 is about.
 
-`## Repositories` is the one optional section, added in baton 0.1.11. It maps each repository
-a change spans to an absolute local path:
+`## Repositories` is optional, as `## Workflow` is, and was added in baton 0.1.11. It maps
+each repository a change spans to an absolute local path:
 
 | Repository | Path |
 |---|---|
@@ -131,12 +131,15 @@ bare id, a file path. Only the backend has to understand it: where `fetch-handof
 the locator. `code-review` takes it as well, and there it may arrive empty, from a caller
 working on no handoff.
 
-Five placeholders are open to every entry, derived rather than passed by the caller:
+Five placeholders are open to every entry, derived or taken from the handoff in play rather
+than passed by the caller. What an entry *addresses* decides where its `<owner>` and `<repo>`
+come from, not which section holds it:
 
 | Placeholder | Value |
 |---|---|
-| `<owner>` `<repo>` on a `## Tracker` or `## Workflow` entry, and on `closes` / `refs` | the **issue's** repository: the locator's, where a handoff is in play, and `verify-checkout`'s answer split at the slash otherwise |
-| `<owner>` `<repo>` on any other `## Forge` or `## Review` entry | the **checkout's** repository: `verify-checkout`'s answer, split at the slash |
+| `<owner>` `<repo>` on an entry addressing the **issue** - every `## Tracker` entry, the `## Workflow` entries resolving through one, and `closes` / `refs` | the **issue's** repository: the locator's, where a handoff is in play, and `verify-checkout`'s answer split at the slash otherwise |
+| `<owner>` `<repo>` on an entry addressing the **pull request or the checkout** - `## Forge` and `## Review` apart from `closes` / `refs`, and `request-reviewer` | the **checkout's** repository: `verify-checkout`'s answer, split at the slash |
+| `<owner>` `<repo>` on a `## Launcher` entry | the **handoff's** `repo` line, split at the slash: the entry starts a run for that repository, in a session that is not in it yet |
 | `<head-owner>` | the owner in `origin`'s URL, printed by the command below |
 | `<branch>` | `git branch --show-current` |
 | `<default-branch>` | `git symbolic-ref --short refs/remotes/origin/HEAD`, without its `origin/`; where that exits non-zero, the name after `refs/heads/` in the `ref:` line of `git ls-remote --symref origin HEAD` |
@@ -272,6 +275,13 @@ they are named here:
 - An overridden `## Launcher` keeps its own `allowed_tools`, so a `cloud` entry copied before
   0.1.10 lacks `RemoteTrigger` and cannot launch the layer above. See **Tools an unattended
   run needs**.
+
+`closes` and `refs` gained `<owner>` and `<repo>` in baton 0.1.11. A `## Forge` restated
+before then still carries the bare, unqualified form, and nothing errors: it resolves against
+the pull request's own repository, which is the right issue for every single-repository handoff
+and the wrong one for a handoff recorded for a repository other than the issue's. Add both
+placeholders to that section's `closes` and `refs` before recording a handoff that spans
+repositories.
 
 `has-handoff` answers whether an issue already carries a handoff. Its default runs `view`,
 and the caller scopes the answer by looking for the handoff marker in that output; a

@@ -72,6 +72,12 @@ backend's `## Repositories` section gives, and run the diff above once per repos
 against that repository's own `Found at <sha>` where the body gives one. A citation resolves
 against the repository it belongs to and nothing else, so a line number located in the wrong
 clone is worse than no line number at all. A repository the issue cites that
+A citation carries no repository of its own, and `baton:file-issue` writes a single
+`Found at <sha>` line for the repository it filed from. Attribute each citation by its path: one
+that resolves in this checkout belongs to it and resolves against that line, and one that does
+not is looked for in the mapped repositories and located by content, as a citation with no
+anchor is above. A path resolving in more than one repository is ambiguous - say which, and ask
+rather than picking. A repository the issue cites that
 `## Repositories` has no row for cannot be read from here: name that repository and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`, and ask the user for the row before
 going on rather than investigating it blind.

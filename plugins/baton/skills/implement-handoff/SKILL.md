@@ -160,11 +160,17 @@ The locator also fixes which repository this run's tracker calls address, for th
 One investigation can record a handoff per repository a change spans, so the issue driving
 this run may live in a repository other than the one the handoff names:
 
+What an operation addresses decides this, not the section holding it:
+
 | Entries | Where `<owner>` and `<repo>` come from |
 |---|---|
-| `## Tracker` and `## Workflow` - `view`, `comment`, and the `started`, `published` and `stopped` that resolve through it | the locator, as `fetch-handoff`'s own notes take them |
+| the ones addressing the issue - `view`, `comment`, and the `started`, `published` and `stopped` resolving through them | the locator, as `fetch-handoff`'s own notes take them |
 | `closes` and `refs`, though `## Forge` holds them | the locator as well: the keyword references the issue, so it resolves against the issue's repository |
-| every other `## Forge` and `## Review` entry - `pr-create`, `pr-view`, `pr-update`, `stack-link`, and the review operations | `verify-checkout`'s answer |
+| the ones addressing the pull request or the checkout - `pr-create`, `pr-view`, `pr-update`, `stack-link`, `request-reviewer` and the review operations | `verify-checkout`'s answer |
+
+`request-reviewer` is the one `## Workflow` entry on the second row. It acts on the pull
+request and takes its number as `<id>`, so a project that defines it gets the checkout's
+repository like the forge operations beside it.
 
 Both name one repository wherever the issue and the work are in the same place, which is every
 handoff recorded before baton 0.1.11, and nothing changes there. Where they differ, a tracker
@@ -450,7 +456,7 @@ and Step 6's: a forge with no stack of its own to register in loses nothing, sin
 `pr-create` succeeded is a stop of the second shape below - the pull request is open, and the
 report says the layer went unregistered.
 
-The issue reference comes from the header, because a merged `closes` shuts an issue
+Which of the two lines to use comes from the header, because a merged `closes` shuts an issue
 whatever else is outstanding:
 
 | Header | Reference in the body |

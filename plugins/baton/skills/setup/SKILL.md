@@ -23,6 +23,7 @@ routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 
 | Found | Action |
 |---|---|
+| No backend file; route 1 or 2 selected; the request is for `## Repositories` alone | Step 3, writing `~/.claude/baton.md` and that section only. It overrides no shipped operation, so it is not the duplicate the row below refuses. |
 | No backend file; route 1 or 2 selected | Stop. The shipped defaults run as they are - through the GitHub MCP tools, or through `reference/backend-github-gh.md` - and a copy of them is a second file to keep in sync. |
 | No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
@@ -96,16 +97,17 @@ other is what needs it. A backend without the section runs every single-reposito
 exactly as one did before baton 0.1.11, so no count above requires it.
 
 ```
-grep -c '^## Repositories$' ~/.claude/baton.md
+grep -c '^## Repositories$' ~/.claude/baton.md 2>/dev/null
 ```
 
-- PASS: 0, or 1 where the user asked for the section.
+- PASS: `1` where the user asked for the section; `0`, or no output at all, where they did not.
+  `grep` prints nothing and exits 2 when the file does not exist, which is the usual case.
 - FAIL: more than 1.
 
 Written, it carries one row per repository, each naming an absolute path:
 
 ```
-grep -c '^| `[^/`]*/[^`]*` | `/' ~/.claude/baton.md
+grep -c '^| `[^/`]*/[^`]*` | `/' ~/.claude/baton.md 2>/dev/null
 ```
 
 - PASS: one per repository the user named.

@@ -82,7 +82,7 @@ runs when an attended flow ends - the last as the `wrap-up` operation `investiga
 `review-pr`, `address-review` and `self-review` each call as their final action. Its
 defaults resolve through `## Tracker`, so retargeting the tracker moves them with it.
 
-`## Repositories` is the seventh, and the only optional one: it maps `owner/repo` to an
+`## Repositories` is the seventh, and optional as `## Workflow` is: it maps `owner/repo` to an
 absolute local path, so one investigation can record a handoff per repository a change spans
 and each handoff's `base` check and launch happen in that repository's own checkout. Paths
 differ per machine, so it belongs in `~/.claude/baton.md`. Leave it out and everything runs

@@ -268,10 +268,14 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   `~/.claude/baton.md` before then needs the name adding by hand - the heading replaces this
   one whole.
 
-  `sources` takes the handoff's `repo`, not `verify-checkout`'s answer. The routine clones the
+  This entry's `<owner>` and `<repo>` are the handoff's `repo` line rather than
+  `verify-checkout`'s answer, in `name` as much as in `sources`. The routine clones the
   repository the work belongs in, and for a handoff an investigation of another repository
-  recorded that is not the repository the launching session sits in. It is also why this entry
-  needs no `## Repositories` row: it clones rather than reading a path on this machine.
+  recorded that is not the repository the launching session sits in. `name` takes the same line
+  because it is what keeps one routine per repository: two handoffs of one investigation would
+  otherwise resolve to a single routine, and launching the second would re-point the first. It
+  is also why this entry needs no `## Repositories` row - it clones rather than reading a path
+  on this machine.
 
 - **local:** `cd <repo root> && claude --bg "/baton:implement-handoff <comment url>"`
 
@@ -280,7 +284,7 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   worktree session." Check the repo ignores `.claude/worktrees/` first all the same, since
   Step 2's worktree lands there and an unignored path leaves it in `git status`, where an
   autonomous `git add -A` commits it:
-  `git check-ignore -q .claude/worktrees/ || echo "add .claude/worktrees/ to .gitignore first"`.
+  `git -C <repo root> check-ignore -q .claude/worktrees/ || echo "add .claude/worktrees/ to <repo root>/.gitignore first"`.
   A `.gitignore` that keeps a tracked `.claude/settings.json` visible ignores the contents
   rather than the directory - `.claude/*` with `!.claude/settings.json` - so `.claude/`
   itself tests as unignored while `.claude/worktrees/` does not.
@@ -292,7 +296,8 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   the other handoffs of the same investigation still launch. The map applies to the
   placeholder, so a `## Launcher` restated in `.claude/baton.md` or `~/.claude/baton.md` before
   baton 0.1.11 picks it up unchanged: its `local` entry still reads `cd <repo root>`, and only
-  what fills the placeholder has moved. The checks above run in that same root.
+  what fills the placeholder has moved. The ignore check above takes the same root, since the
+  worktree Step 2 creates lands in the repository being launched rather than this one.
   `--bg` and `--print` conflict, because `--print` leaves no session for
   `claude attach <id>` to open. The command returns a short id taken by
   `claude agents --json`, `claude logs <id>` and `claude stop <id>`.
