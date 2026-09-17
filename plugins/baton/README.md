@@ -97,9 +97,10 @@ Four contracts ship and any type not listed is derived, so a project needs none.
 in `.claude/doc-types.md` or `~/.claude/doc-types.md`, per
 `skills/write-deliverables/reference/defining-doc-types.md`.
 
-Overriding `Run report` retargets what the tracker receives: `implement-handoff` posts its
-wrap-up under that type, so a project whose tracker is read by people without code access
-gives them a reader, an order and an emphasis of its own. What the report says stays the
+Overriding `Run report` retargets what the tracker receives: `implement-handoff` writes both
+the report it posts on finishing and the one it posts on stopping under that type, so a
+project whose tracker is read by people without code access gives them a reader, an order and
+an emphasis of its own. What the report says stays the
 skill's - every review finding with its disposition, and whether a review round ran - since an
 override replaces a contract's must-include list whole.
 

@@ -159,7 +159,7 @@ user's checkout.
 
 ## Step 5 - Offer document types
 
-Offer this once, as optional: `baton:write-deliverables` ships three contracts and derives any
+Offer this once, as optional: `baton:write-deliverables` ships four contracts and derives any
 type not listed, so a project needs none. Name
 `${CLAUDE_PLUGIN_ROOT}/skills/write-deliverables/reference/defining-doc-types.md`, and write a
 contract only for a type the user names.

@@ -685,18 +685,24 @@ hold - each under one disposition:
 | Disposition | The finding | Carries |
 |---|---|---|
 | applied | is fixed on the branch | nothing further |
-| rejected | contradicts a decision the handoff recorded | which decision |
-| deferred | has a fix outside the handoff's scope | what it waits on |
+| rejected | does not hold, or contradicts a decision the handoff recorded | which of the two, and why |
+| deferred | holds, and its fix is outside the handoff's scope or costs more than it is worth | what it waits on, or why it was left |
 | unresolved | needs an answer nobody here could give | what blocks the call |
 
-Those three reasons are Step 4's own, for a finding the run cannot fix, and every disposition
-but applied carries its reason. A finding the loop applied and a later round reopened takes
-the disposition it ends on.
+Step 4's three reasons for a finding the run cannot fix map onto these: outside the handoff's
+scope is deferred, contradicts a decision the handoff recorded is rejected, needs an answer
+nobody here can give is unresolved. The two judgements a round makes on its own take the
+remaining shapes - a finding read and found not to hold is rejected, a Minor one the loop
+chose to leave is deferred - so neither reaches the reader as silence. Every disposition but
+applied carries its reason, and every finding carries the severity Step 4 gave it: an
+unresolved Critical and a Minor left alone are different news. A finding the loop applied and
+a later round reopened takes the disposition it ends on.
 
 The findings, their dispositions and Step 6's outcome are required content whatever contract
 **Run report** resolves to. An override replaces a contract's must-include list wholesale
 (`skills/write-deliverables/reference/defining-doc-types.md`), so the shipped contract is not
-what holds them in - this step is. The type governs who the report is written for and the
+what holds them in - this step is, and a must-not-include that would cut them does not reach
+a file this step mandates. The type governs who the report is written for and the
 order, emphasis and wording it gets; this step governs what is present. A report missing an
 unresolved finding, or silent about a round that never ran, reads as a clean review under any
 contract.
