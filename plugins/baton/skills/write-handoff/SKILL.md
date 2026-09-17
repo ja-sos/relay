@@ -115,6 +115,19 @@ Name nothing that exists only on this machine. Cite code as repo-relative `file:
 absolute path, a home directory or a hostname resolves to nothing in the session that
 reads it.
 
+The body ends with acceptance criteria: a numbered list of what the finished change must
+show, each row checkable against the diff by someone who was not here. "Step 4 stops after
+three review rounds" is checkable; "the review is thorough" is not. Cover every part of the
+approach, since a part no row names is a part nothing checks.
+
+Who reads them, and how far that goes. `implement-handoff` Step 4 classes a review finding
+that contradicts one of these rows as Critical rather than a remark, so a row here changes what
+that run must fix before it publishes. Nothing in the shipped backend walks the list row by row
+against the diff: `implement-handoff` Step 4 passes this handoff's locator to `code-review`,
+and only a backend that has paired that operation with an `agent:` compliance reviewer gets
+that check. Write them for the person reviewing the pull request either way - they are the list
+that reviewer ticks off, and a row only a machine could settle helps nobody.
+
 ## Step 4 - Update
 
 Write the update under `baton:write-deliverables` as a separate document.

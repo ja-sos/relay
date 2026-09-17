@@ -78,7 +78,8 @@ Run `pr-view` for the current branch, and compare the pull request's head commit
   the branch is covered rather than only uncommitted edits.
 
 Run `code-review` over that diff, with the pull request number as its `<target>` - or the
-branch name for the local branch - carrying the provenance rule into it. Findings land
+branch name for the local branch - and `<locator>` empty, this skill taking a branch rather
+than a handoff. Carry the provenance rule into it. Findings land
 as fixes in the working tree, never as comments on the pull request: the branch is yours to
 fix, not yours to have written.
 

@@ -179,7 +179,7 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
      "model": "<the model this session is running>",
      "sources": [{"git_repository": {"url": "https://github.com/<owner>/<repo>"}}],
      "allowed_tools": ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Skill",
-                       "EnterWorktree", "ExitWorktree"]},
+                       "Agent", "Task", "EnterWorktree", "ExitWorktree"]},
    "events": [{"data": {
      "uuid": "<fresh lowercase v4 uuid>", "session_id": "", "type": "user",
      "parent_tool_use_id": null,
@@ -201,6 +201,17 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   `EnterWorktree` and `ExitWorktree` are on the list because `implement-handoff` Step 2
   creates the run's worktree and Step 7 removes it. A cloud run has a disposable clone to
   itself and isolates from nothing, and that cost is accepted rather than made conditional.
+
+  `Agent` and `Task` are on the list because Step 4's claim audit dispatches a subagent whose
+  context did not write the code, and a `code-review` entry may itself be an `agent:` one. The
+  list names both so the run has the dispatch tool under either name. Routine creation keeps a
+  name the build does not carry, and the session ignores it: a cloud run whose list held
+  `Agent`, `Task` and a made-up name started, carried only `Agent`, and dispatched through it.
+  Both names were added in baton 0.1.7, so a `## Launcher` entry copied from this file before
+  then, into a project's `.claude/baton.md` or a personal `~/.claude/baton.md`, names neither.
+  Add both: that run also carried tools its list did not name, such as `ToolSearch`, so
+  whether a list naming neither still gets `Agent` is untested, and Step 2 stops a run that
+  lacks it.
 
 - **local:** `cd <repo root> && claude --bg "/baton:implement-handoff <comment url>"`
 
@@ -249,6 +260,12 @@ here, and the operation takes `<id>` alone.
 `review-pr`, `address-review` or `self-review` finishes, each having already posted what it
 produced. A project that logs time, notifies a channel or closes out a ticket when an
 attended flow ends defines that here.
+
+`code-review` reviews the working tree where `<target>` is empty, and otherwise the pull
+request number or branch `<target>` names. It ignores `<locator>`: `/code-review` checks
+correctness, not a handoff's acceptance criteria. A project that wants those checked keeps
+this entry and pairs it with an `agent:` one in a nested list - `defining-backends.md` carries
+the example.
 
 `request-reviewer` is `none`, so the review round does not run. Either form turns it on:
 

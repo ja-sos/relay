@@ -54,6 +54,7 @@ whatever they look like. A prefix names something else:
 | `<command>` | run it in a shell |
 | `tool: <tool-name> <json-args>` | call that tool, loading it with `ToolSearch select:<tool-name>` first when it is deferred |
 | `skill: /<name> <args>` | invoke that skill |
+| `agent: <type> <prompt>` | dispatch a subagent of that type with that prompt, through the subagent dispatch tool - `Agent` or `Task`, by harness build |
 | `op: <operation> <args>` | run another operation of this backend, with these substitutions |
 | a nested bullet list | each bullet is one entry in any of the forms above, run in order; the first failure stops the rest |
 | `none` | skip the step. Valid for `started`, `request-reviewer` and `wrap-up` only - any other operation set to `none` is undefined |
@@ -69,10 +70,21 @@ no second set of credentials. Inside its JSON, `<body>` is the text of the file 
 `<path>`, JSON-escaped: a tool call has no shell to redirect a file into, so an operation
 taking `<path>` sends `<body>` instead.
 
+`agent:` exists for the operation that is a judgement rather than a call - a reviewer that
+reads acceptance criteria and checks a diff against them has no CLI form and no tool to
+name. `<type>` is one agent type the session offers, `general-purpose` where the project has
+none of its own, and everything after it is the prompt, with the placeholders of that
+operation substituted into it. A prompt spanning lines goes in a fenced block below the
+entry, as any other multi-line value does. What the subagent reports is the operation's
+output, read by the caller the same way a command's stdout is. An entry the session cannot
+dispatch - no dispatch tool in the run's allowed set, under either name - fails under the
+caller's stop rule, the same as a missing binary.
+
 `<locator>` stands for whatever `post-handoff` returned, passed whole - a comment URL, a
 bare id, a file path. Only the backend has to understand it: where `fetch-handoff` takes
 `<owner>`, `<repo>`, `<id>` or `<comment-id>`, the backend's notes say how each comes from
-the locator.
+the locator. `code-review` takes it as well, and there it may arrive empty, from a caller
+working on no handoff.
 
 Five placeholders are open to every entry, derived rather than passed by the caller:
 
@@ -104,7 +116,7 @@ upstream repository, and the branch is pushed to `origin`.
 | `verify-checkout` | `implement-handoff` Step 1 | - |
 | `pr-create` | `implement-handoff` Step 5 | `<title>` `<path>` |
 | `pr-view` | `self-review` Step 1, `review-pr` Step 1, `address-review` Step 1 | `<id>` |
-| `pr-update` | `self-review` Step 4, `address-review` Step 5 | `<id>` `<path>` |
+| `pr-update` | `self-review` Step 4, `address-review` Step 5, `implement-handoff` Step 6 | `<id>` `<path>` |
 | `review-list` | `review-pr` Step 4, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
 | `review-post` | `review-pr` Step 4 | `<owner>` `<repo>` `<id>` `<path>` |
 | `review-bodies` | `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
@@ -116,7 +128,7 @@ upstream repository, and the branch is pushed to `origin`.
 | `post-handoff` | `write-handoff` Step 1 | `<id>` `<path>` |
 | `has-handoff` | `next-issue` Step 2, `investigate-issue` Step 1 | `<id>` |
 | `started` | `implement-handoff` Step 2 | `<id>` |
-| `code-review` | `implement-handoff` Step 4, `review-pr` Step 2, `self-review` Step 1 | `<target>` |
+| `code-review` | `implement-handoff` Steps 4 and 6, `review-pr` Step 2, `self-review` Step 1 | `<target>` `<locator>` |
 | `request-reviewer` | `implement-handoff` Step 6 | `<id>` |
 | `review-wait` | `implement-handoff` Step 6 | - |
 | `published` | `implement-handoff` Step 7 | `<id>` `<path>` `<pr-url>` |
@@ -162,6 +174,14 @@ leaves everything it already published in place and does not retry.
 `has-handoff` answers whether an issue already carries a handoff. Its default runs `view`,
 and the caller scopes the answer by looking for the handoff marker in that output; a
 backend that can ask the question directly returns output the caller reads the same way.
+
+`code-review` substitutes two placeholders. `<target>` is what to review - a pull request
+number, a branch, or empty for the working tree. `<locator>` is the handoff the work came
+from: `implement-handoff` Step 4 fills it with the locator its run opened with, while
+`review-pr` Step 2 and `self-review` Step 1 pass it empty, having none. An entry whose prompt
+checks acceptance criteria reads them from the handoff at `<locator>` where one is given;
+where it is empty, that entry has no criteria to read and says so rather than inventing them.
+The shipped entry uses neither placeholder beyond `<target>`.
 
 `review-wait` is a number of minutes, not a command. The cap is 60: an unattended run that
 waits longer than that is holding a finished branch for a reviewer who is not coming, and
@@ -227,6 +247,41 @@ whole and the six left at their defaults would otherwise be undefined:
 `published` runs two entries in order, and the comment goes first: a worklog that fails
 must not swallow the only notice that the run finished.
 
+Pairing the correctness review with a compliance reviewer. `code-review` becomes a nested
+list, and `implement-handoff` Step 4 classifies the findings of both by the same severity
+table:
+
+````markdown
+## Workflow
+
+- **post-handoff:**     op: comment <id> <path>
+- **has-handoff:**      op: view <id>
+- **started:**          none
+- **code-review:**
+  - skill: /code-review <target>
+  - agent: general-purpose
+
+    ```
+    Review the change at <target> - the working tree, where that is empty - against the
+    acceptance criteria of the handoff at <locator>. Read the handoff first. An empty
+    <locator> means there is no handoff: report that and stop, rather than inferring
+    criteria from the diff.
+
+    Report one row per criterion: the criterion, the file:line that satisfies it, and MET,
+    UNMET or UNCLEAR. A criterion no hunk of the diff satisfies is UNMET, whatever the
+    change's own documentation says about it. Recommend nothing - what an UNMET row costs
+    is the caller's to weigh.
+    ```
+- **request-reviewer:** none
+- **review-wait:**      10
+- **published:**        op: comment <id> <path>
+- **stopped:**          op: comment <id> <path>
+- **wrap-up:**          none
+````
+
+The first entry's failure stops the second, so the compliance reviewer never runs against a
+diff the correctness review could not read.
+
 ## Checks
 
 | Check | Test |
@@ -238,6 +293,7 @@ must not swallow the only notice that the run finished.
 | Body arrives as a file | each operation taking `<path>` reads the file rather than a string, or sends `<body>` when it is a `tool:` entry |
 | Runs standalone | paste the command with real values into a shell; it must succeed there first |
 | Tool entries called | call each `tool:` entry of a read operation with real values, since it has no shell form to paste; never call one `baton:setup` Step 4 forbids running |
+| Agent entries dispatchable | each `agent:` entry names an agent type this session offers, and every `## Launcher` entry that names `allowed_tools` at all names both `Agent` and `Task` |
 
 A backend is done when every row passes.
 
@@ -247,6 +303,16 @@ A cloud session can have the `mcp__github__*` tools and no `gh`, which is why th
 defaults run through those tools. A cloud run whose `## Launcher` entry's `allowed_tools`
 held only `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep` and `Skill` loaded `ToolSearch`
 and the GitHub MCP tools it needed, and called them with no permission denial.
+
+`implement-handoff` adds the subagent dispatch tool to that need: Step 4's claim audit
+dispatches a subagent whose context did not write the code, and an `agent:` entry in
+`code-review` dispatches one too. Harness builds differ on that tool's name - `Agent` in some,
+`Task` in others - so a `## Launcher` entry that names `allowed_tools` at all names both and
+lets a build ignore the name it does not carry. An entry written before baton 0.1.7 names
+neither - add them, or its runs stop at Step 2, which looks for the tool before the build
+rather than leaving Step 4 to discard one. A personal `~/.claude/baton.md` restating
+`## Launcher` carries its own `allowed_tools` and needs the same edit by hand: it lives
+outside every repo, so no update to this plugin reaches it.
 
 `implement-handoff` adds `EnterWorktree` and `ExitWorktree` to that need: Step 2 creates the
 run's worktree and Step 7 removes it. A `## Launcher` entry that names `allowed_tools` at all
