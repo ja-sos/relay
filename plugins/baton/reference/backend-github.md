@@ -204,12 +204,14 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 
   `Agent` and `Task` are on the list because Step 4's claim audit dispatches a subagent whose
   context did not write the code, and a `code-review` entry may itself be an `agent:` one. The
-  list names both so the run has the dispatch tool under either name. Whether routine creation
-  accepts a tool name its build does not carry is untested; where it rejects one, creation
-  fails, and removing the name that build lacks is the fix. Both names were added in baton
-  0.1.7: a `## Launcher` entry copied from this file before then, into a project's
-  `.claude/baton.md` or a personal `~/.claude/baton.md`, names neither and stops its runs at
-  Step 2.
+  list names both so the run has the dispatch tool under either name. Routine creation keeps a
+  name the build does not carry, and the session ignores it: a cloud run whose list held
+  `Agent`, `Task` and a made-up name started, carried only `Agent`, and dispatched through it.
+  Both names were added in baton 0.1.7, so a `## Launcher` entry copied from this file before
+  then, into a project's `.claude/baton.md` or a personal `~/.claude/baton.md`, names neither.
+  Add both: that run also carried tools its list did not name, such as `ToolSearch`, so
+  whether a list naming neither still gets `Agent` is untested, and Step 2 stops a run that
+  lacks it.
 
 - **local:** `cd <repo root> && claude --bg "/baton:implement-handoff <comment url>"`
 
