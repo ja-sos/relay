@@ -194,6 +194,21 @@ The last ten are `## Workflow`, and the shipped defaults of `post-handoff`, `pub
 and `stopped` are `op: comment <id> <path>` - so a backend that has overridden `## Tracker`
 for Jira posts all three to Jira without naming them at all.
 
+Four of those operations run **once per issue the handoff's header names**, never once with a
+list: `post-handoff` at `write-handoff` Step 1, and `started`, `published` and `stopped` in
+`implement-handoff`. A handoff's `issue` line became a space-separated list in baton 0.1.11,
+paired positionally with `closes`; a header naming one issue calls each of them once, exactly
+as every header did before. So `<id>` is always a single issue whatever the header holds, and
+no entry - a shell command, a `tool:` JSON body, an `op:` - needs anything added to handle a
+bundle. An entry that reached for the whole list would have to be written for it on purpose,
+and nothing here passes one.
+
+`stack-link` is not one of the four, though it sits in the same step as two of them. It
+registers one pull request as one layer, and a bundle is still one pull request, so it runs
+once and its `<id>` is the **primary** issue - the first entry of the header's `issue` line.
+`closes` and `refs` are the other way about: Step 5 reads them once per issue, because the
+body carries a reference line for each.
+
 `started` is the eighth, added in baton 0.1.5. A `## Workflow` written before it does not
 name `started` at all, which leaves it undefined rather than `none`, and
 `implement-handoff` stops at Step 2 - add `- **started:**          none` to that section,

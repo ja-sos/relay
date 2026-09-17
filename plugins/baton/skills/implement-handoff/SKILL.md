@@ -67,8 +67,10 @@ unasked does not cover the run. These need no confirmation:
   descriptions otherwise hold `EnterWorktree` to an explicit instruction and `ExitWorktree`
   to the user asking; for this run, these two steps are that instruction.
 - `pr-create` on that branch; `pr-update`, `request-reviewer`, `thread-reply` and
-  `pr-comment` on the pull request it opens; `started`, `published` and `stopped` on the
-  issue.
+  `pr-comment` on the pull request it opens; `started`, `published` and `stopped` on **each
+  issue the header names**, one call per issue. A header naming several issues is the
+  authorization to move all of them: whoever wrote it decided this one pull request settles
+  that bundle.
 - `stack-link` at Step 5, where the header carries `pr-base`. It writes to the pull request
   below, which belongs to another handoff, so it is named here rather than covered by
   `pr-create`: the header asking for a stacked base is the authorization to register the
@@ -116,6 +118,31 @@ A handoff with a `pr-base` line is a stop where the loaded `pr-create` entry nev
 `<pr-base>`. A `## Forge` written before baton 0.1.9 has no such placeholder, and its pull
 request would open against the default branch, carrying the unmerged commits of the layer
 below.
+
+A fetched comment carrying the handoff marker but **no fenced header** is a pointer, not a
+handoff: `write-handoff` posts one on every issue beyond the first that its header names, and
+a launcher handed that comment's locator instead of the primary's arrives here. It is a stop.
+Name the issue and locator the pointer carries - that is the handoff to run - rather than
+building from a comment that records no branch, no base and no approach.
+
+### `issue` and `closes` are lists
+
+Both lines are read as space-separated lists, paired positionally: `issue: 15 16` with
+`closes: yes no` pairs 15 with `yes` and 16 with `no`. A header naming one issue is a
+one-entry list - every handoff written before baton 0.1.11 - and every step below then does
+exactly what it did before lists existed. The **first entry is the primary issue**: the one
+this handoff was posted on, and the one Step 2 names the worktree from.
+
+**Two lists that differ in length are a stop here**, before `EnterWorktree`, quoting both lines
+as the handoff wrote them. Pairing what can be paired guesses at the rest, and a guess landing
+on `yes` shuts an issue the handoff said to leave open - on merge, with nothing left to undo
+it.
+
+Three operations then run **once per issue, in header order**, each taking one issue as its
+`<id>` and never the list: `started` at Step 2, `published` at Step 7, and `stopped` on any
+stop. Where one of those calls fails, the run stops on it and the report names the operation,
+the issue it failed on, and every issue after that one in the list as **not reached** - that
+list is what tells a person which tickets are still theirs to move by hand.
 
 Verify the checkout before the first edit:
 
@@ -194,13 +221,14 @@ branch name: a fresh run in a clone that happens to sit on `<branch>` would othe
 isolation entirely and build in the working tree it was meant to leave alone.
 
 Otherwise give the run a worktree of its own, so two runs started in one checkout do not
-edit one working tree. Call `EnterWorktree` with a `name` of `<issue>-<6 hex>` - the six
-characters `od -An -N3 -tx1 /dev/urandom | tr -d ' \n'` prints, so `5-a1b2c3` for issue 5.
-The worktree lands at `.claude/worktrees/<name>` on a branch of its own, and the session
-moves into it. Every step from here works there; Step 1's checks ran before it, in the
-directory the session started in.
+edit one working tree. Call `EnterWorktree` with a `name` of `<issue>-<6 hex>`, where
+`<issue>` is the **primary** issue - the first entry of the header's list, never the list
+itself - and the six characters are what `od -An -N3 -tx1 /dev/urandom | tr -d ' \n'` prints,
+so `5-a1b2c3` for issue 5. The worktree lands at `.claude/worktrees/<name>` on a branch of
+its own, and the session moves into it. Every step from here works there; Step 1's checks ran
+before it, in the directory the session started in.
 
-The name comes from the issue rather than the branch because a branch-named directory is
+The name comes from one issue rather than the branch because a branch-named directory is
 long enough to push a test binary's path past the 259 characters Windows `CreateProcess`
 accepts, and the run then reports a failing suite in which no test failed. The random suffix
 keeps two handoffs on one issue in separate directories.
@@ -211,15 +239,27 @@ project's to write, and it is a prerequisite rather than a detail - a gitignored
 `.claude/settings.local.json` that is not on it does not follow the session into the
 worktree, and the run stalls on a permission prompt with nobody there to answer.
 
-Run `started` on the header's `issue` immediately before the branch cut below, under that
-cut's condition rather than one of its own: skipped exactly where `git switch -c` is skipped,
-run exactly where it runs. `none` is its shipped default, and that value skips the call the
-way it skips Step 6's. That gate, and not `EnterWorktree`'s, is what holds the call to one per
-branch this run cuts - a turn resuming from a stop skips all three, while a launcher that
-started the session in a worktree skips only `EnterWorktree` and still cuts the branch -
-unless that worktree already sits on `<branch>`, which is indistinguishable from a resume
-and skipped as one. It runs above the cut rather than inside the retry below, which would
-fire it once per attempt.
+Run `started` once per issue the header names, in header order, immediately before the branch
+cut below, under that cut's condition rather than one of its own: the whole sequence is
+skipped exactly where `git switch -c` is skipped, and runs exactly where it runs. Each call
+takes one issue - the tracker moves every bundled ticket's status, and the branch cut is the
+moment implementation starts on all of them. A failure part-way through the list is the stop
+Step 1 describes, naming the issue it failed on and the ones after it as not reached.
+
+`none` is its shipped default, and that value skips the call the way it skips Step 6's. That
+gate, and not `EnterWorktree`'s, is what holds the call to one per branch this run cuts - a
+turn resuming from a stop skips all three, while a launcher that started the session in a
+worktree skips only `EnterWorktree` and still cuts the branch - unless that worktree already
+sits on `<branch>`, which is indistinguishable from a resume and skipped as one. It runs
+above the cut rather than inside the retry below, which would fire it once per attempt.
+
+The gate holds the sequence to one pass per branch cut, and not to one call per issue for
+all time: a stop part-way through the list leaves the branch uncut, so the resuming turn
+finds HEAD off `<branch>`, cuts it, and runs the whole list again from the first issue. What
+that asks of `started` is that repeating it be harmless - moving a ticket that is already
+moved - which is what it asked of a one-issue header before lists existed, and why a partial
+failure needs no bookkeeping carried across the stop. An entry that cannot be repeated safely
+is one the project writes as `none`.
 
 Where the header carries no `pr-base`, the branch is cut from `<base>`:
 
@@ -408,6 +448,10 @@ the scratchpad directory. Two things the run knows and a reviewer cannot recover
   that prove them, with each criterion no test covers named as such, or - where it named
   neither - a sentence saying so, and that `verify` alone checked the change.
 
+That body carries the issue reference lines this step's table below chooses, written into it
+before `pr-create` runs: the operation sends a file, so a line added after the call reaches
+nothing, and `pr-update` at Step 6 is the only way back to a body already posted.
+
 Run `pr-create` with that file, with `<category>` and `<pr-base>` as Step 1 resolved them.
 Where `<category>` is empty, the backend's notes on its own `pr-create` say what that drops -
 a label, or the call that would have set one.
@@ -434,13 +478,22 @@ and Step 6's: a forge with no stack of its own to register in loses nothing, sin
 `pr-create` succeeded is a stop of the second shape below - the pull request is open, and the
 report says the layer went unregistered.
 
-The issue reference comes from the header, because a merged `closes` shuts an issue
-whatever else is outstanding:
+The issue references come from the header, because a merged `closes` shuts an issue whatever
+else is outstanding. The body carries **one line per issue the header names**, in header order,
+each issue's line chosen by that issue's own `closes` value:
 
-| Header | Reference in the body |
+| That issue's `closes` value | Line in the body |
 |---|---|
-| `closes: yes` | the backend's `closes` line |
-| `closes: no` | the backend's `refs` line |
+| `yes` | the backend's `closes` line, with that issue as `<id>` |
+| `no` | the backend's `refs` line, with that issue as `<id>` |
+
+A header naming one issue writes one line, as every header did before baton 0.1.11. `closes`
+is judged per entry, so a bundle that finishes one issue and leaves another open writes a
+`closes` line for the first and a `refs` line for the second: a `closes` line on the second
+would shut it on merge whatever remains open on it, and the run has no way to reopen it.
+
+An issue the body names in no line is unlinked on merge. Nothing errors - the pull request is
+valid without it, and the ticket simply never moves.
 
 Keep what `pr-create` returns. Step 6 addresses the pull request by it and Step 7 reports
 it, and nothing else in the run recovers it.
@@ -516,11 +569,13 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    on it, and then takes the form Step 4's verdict table gives. A finding from Step 5's body
    stays unless a fix this round resolved it. To those the body adds the claims this round's
    audit accepted, the findings this round's loop left standing, the `## Not verified here`
-   list as it now stands, and - the one line easiest to lose - the same issue reference Step
-   5's table chose. `pr-update` replaces the body whole rather than appending to it, so a
-   rewrite that drops a `closes` line leaves a pull request that no longer shuts its issue on
-   merge. The body describes the branch as it is
-   now, and never narrates the round that changed it.
+   list as it now stands, and - the lines easiest to lose - **every** issue reference Step 5's
+   table chose, one per issue the header names and each keeping the form that table gave it.
+   `pr-update` replaces the body whole rather than appending to it, so a rewrite that drops a
+   `closes` line leaves a pull request that no longer shuts its issue on merge, and one that
+   keeps only the first line of a bundle leaves every issue after it unlinked - silently,
+   since a body missing a reference is as valid as one carrying it. The body describes the
+   branch as it is now, and never narrates the round that changed it.
 
 One round, with no re-request. A finding that holds is yours to judge on the diff, the
 same as a Step 4 finding - `request-reviewer` names who reviews, not who decides.
@@ -568,12 +623,18 @@ Two things hold it back, and neither is a stop:
   `<branch>-<6 hex>` while the next layer's `pr-base` still names `<branch>` - a branch
   holding somebody else's work. Launching would stack the layer above onto the wrong history.
 
-Then run `published` with the issue id, the pull request URL from Step 5, and one file
-saying what shipped: the URL, the branch, how the handoff's commands and `verify` came out,
-any deviation Step 2 recorded, and whether Step 6 ran, timed out, or was skipped - skipped
-meaning only that
-`request-reviewer` is `none`. After a `keep`, that file also names the worktree path
+Then run `published` once per issue the header names, in header order, each with that issue's
+id, the pull request URL from Step 5, and the same one file saying what shipped: the URL, the
+branch, how the handoff's commands and `verify` came out, any deviation Step 2 recorded, and
+whether Step 6 ran, timed out, or was skipped - skipped meaning only that `request-reviewer`
+is `none`. After a `keep`, that file also names the worktree path
 `.claude/worktrees/<name>` and which of the two checks failed.
+
+Where the header named more than one issue, that file names them all and says which reference
+line each got, so every ticket's participants read the same account of what this one pull
+request settles. A `published` that fails part-way through the list is the stop Step 1
+describes: the report names the issue it failed on and the ones after it as not reached, and
+the pull request stays open and unaffected.
 
 Where the header carried `pr-base`, that file names the branch the pull request opens
 against and whether `stack-link` ran or is `none`. Where it carried `next`, it records the
@@ -591,6 +652,27 @@ Every stop above takes one of two shapes, set by whether Step 5 has opened the p
   push nothing further and leave the pull request open. Run `stopped` with one file naming
   the step, what stopped it, and the pull request URL - only Step 7's `published` would
   otherwise carry that URL to the issue.
+
+Either shape runs `stopped` **once per issue the header names**, in header order, each call
+with that issue's id and the same file: every ticket the run took on hears that it stopped,
+not just the primary. Where the header named one issue that is one call, as it always was.
+
+One exception, and it is the stop inside Step 7's own `published` sequence: skip the issues
+that sequence already reached. They have been told the pull request shipped, and a `stopped`
+behind that says the opposite of the call before it on the same ticket. Run `stopped` on the
+issue `published` failed on and on the ones after it - exactly the issues that step reported
+as not reached - and let the file name the ones that did get their `published`.
+
+A `stopped` that itself fails part-way through the list ends the run there, and the report
+names the operation, the issue it failed on, and every issue after it as not reached - the
+same shape Step 1 sets for `started` and `published`. Nothing retries it: a stop reporting a
+stop has no further step to reach.
+
+Step 1's stop on a mismatched pair still has a list: `issue` parsed, and only the pairing with
+`closes` did not. Run `stopped` on every entry of it - each issue was named for this work
+whatever `closes` failed to say about it. A stop earlier than that has nothing to walk: run
+`stopped` on the primary alone where only that parsed, on nothing at all where
+`fetch-handoff` itself failed, and say in the report which issues went unnamed.
 
 **A stop before Step 7's launch never launches `next`, and the `stopped` file carries the
 locator it did not launch.** A stop there strands every layer above it, and a stop runs
@@ -616,6 +698,10 @@ for.
 Both exits end here. Report the pull request URL, the branch and how the handoff's commands
 and `verify` came out - or the blocker, the step it stopped at, and the pull request URL
 when Step 5 opened one.
+
+Name every issue the header carried and what reached it: the reference line it got in the
+body, and whether `started`, `published` or `stopped` ran on it. An issue the report leaves
+out is one nobody knows to check.
 
 A handoff carrying `next` reports the launch too, in whichever form Step 7 recorded it. The
 run above is a separate session: this one does not wait for it, watch it, or report anything

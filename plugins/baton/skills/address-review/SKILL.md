@@ -102,7 +102,9 @@ undecided inverts the order.
 Only once verification clears and the user approves, in this order:
 
 1. Push.
-2. Run `pr-update` when the changes left the body inaccurate.
+2. Run `pr-update` when the changes left the body inaccurate. It replaces the body whole, so
+   carry every issue reference line across unchanged - a handoff may name several issues, and
+   each `closes` or `refs` line dropped here is an issue the merge silently stops settling.
 3. Answer every Step 3 row in the venue it arrived: an inline finding takes `thread-reply` in its
    own thread, while rows from summary bodies and conversation comments take one `pr-comment`
    covering them, there being no thread to reply into.
