@@ -95,8 +95,20 @@ prompts for it.
 
 Run `fetch-handoff` on the locator. Where the entry takes `<id>` or `<comment-id>`, derive
 each from the locator as the backend's notes on `fetch-handoff` say. The handoff's
-header gives `repo`, `base`, `issue`, `closes` and `branch`. Verify the checkout before the
-first edit:
+header gives `repo`, `base`, `issue`, `closes` and `branch`. Two more lines are optional,
+and a handoff written before they existed carries neither - an absent line is not a stop:
+
+| Optional line | Where the line is absent |
+|---|---|
+| `category` | `<category>` is empty |
+| `pr-base` | `<pr-base>` is `<default-branch>` |
+
+A handoff with a `pr-base` line is a stop where the loaded `pr-create` entry never contains
+`<pr-base>`. A `## Forge` written before baton 0.1.9 has no such placeholder, and its pull
+request would open against the default branch, carrying the unmerged commits of the layer
+below.
+
+Verify the checkout before the first edit:
 
 ```
 git cat-file -e <base>^{commit} 2>/dev/null || git fetch origin
@@ -325,7 +337,9 @@ the scratchpad directory. Two things the run knows and a reviewer cannot recover
   that prove them, with each criterion no test covers named as such, or - where it named
   neither - a sentence saying so, and that `verify` alone checked the change.
 
-Run `pr-create` with that file.
+Run `pr-create` with that file, with `<category>` and `<pr-base>` as Step 1 resolved them.
+Where `<category>` is empty, the backend's notes on its own `pr-create` say what that drops -
+a label, or the call that would have set one.
 
 The body states only what Step 4's audit accepted, in the form it accepted it. A corrected
 claim is rewritten, a retracted one is left out, and every claim the audit could only label
@@ -346,6 +360,10 @@ whatever else is outstanding:
 
 Keep what `pr-create` returns. Step 6 addresses the pull request by it and Step 7 reports
 it, and nothing else in the run recovers it.
+
+The pull request is open once `pr-create` returns its URL, even where the operation has calls
+left to run. A later call in `pr-create` that fails is a stop after Step 5, carrying that URL:
+taken for a stop before Step 5, it leaves an open pull request the issue never hears of.
 
 ## Step 6 - Review round
 
@@ -461,9 +479,10 @@ Every stop above takes one of two shapes, set by whether Step 5 has opened the p
 
 - Before it: push nothing, open no pull request, and run `stopped` with one file naming the
   step and what stopped it.
-- After it, in Step 6 or 7: push nothing further and leave the pull request open. Run
-  `stopped` with one file naming the step, what stopped it, and the pull request URL - only
-  Step 7's `published` would otherwise carry that URL to the issue.
+- After it, in Step 5's remaining `pr-create` calls, Step 6 or Step 7: push nothing further
+  and leave the pull request open. Run `stopped` with one file naming the step, what stopped
+  it, and the pull request URL - only Step 7's `published` would otherwise carry that URL to
+  the issue.
 
 No stop calls `ExitWorktree`. A stop is where work sits unpushed, and Step 7's two checks
 are the only thing that establishes it does not. The `stopped` file names the worktree path

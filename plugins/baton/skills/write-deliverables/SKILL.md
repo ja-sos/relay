@@ -11,7 +11,7 @@ not make it a chat message. The one exemption is your conversational reply to th
 answer to their question, not an artifact they will forward, keep, or act on later.
 
 **A skill that mandates a template outranks this one.** Where another skill fixes the section
-list - `baton:file-issue`'s category headings, `baton:write-handoff`'s five-line header, a
+list - `baton:file-issue`'s category headings, `baton:write-handoff`'s handoff header, a
 repo's PR template - it owns which sections exist, and this skill applies only *inside* them.
 Never put a mandated heading through Step 3 and never drop one as redundant: an empty mandated
 section is a signal to its reader, not padding.

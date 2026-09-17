@@ -44,11 +44,22 @@ real credentials on outbound requests. `reachable` is the check that works.
 ## Forge
 
 - **verify-checkout:** gh repo view --json nameWithOwner -q .nameWithOwner
-- **pr-create:**       gh pr create --title "<title>" --body-file <path>
+- **pr-create:**
+  - gh pr create --title "<title>" --base "<pr-base>" --body-file <path>
+  - gh pr edit <pr-url> --add-label "<category>"
 - **pr-view:**         gh pr view <id> --json number,url,body,author,headRefName,headRefOid,isDraft
 - **pr-update:**       gh pr edit --body-file <path>
 - **closes:**          Closes #<id>
 - **refs:**            Refs #<id>
+
+`pr-create` returns its first command's stdout, the pull request's URL, and the second command
+takes that URL as `<pr-url>`. Skip the second command where `<category>` is empty.
+`--base "<pr-base>"` is always passed, since `<pr-base>` falls back to `<default-branch>` and
+is never empty.
+
+The label is a separate command so the URL is in hand before anything can fail on the label.
+A failed `gh pr edit` leaves the pull request open and unlabelled - a stop after
+`implement-handoff` Step 5, whose `stopped` file carries that URL.
 
 `pr-view` takes an empty `<id>` to mean the pull request for the current branch.
 

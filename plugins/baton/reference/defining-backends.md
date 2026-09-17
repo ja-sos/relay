@@ -128,7 +128,7 @@ upstream repository, and the branch is pushed to `origin`.
 | `fetch-handoff` | `implement-handoff` Step 1 | `<owner>` `<repo>` `<id>` `<comment-id>` `<locator>` |
 | `reachable` | `implement-handoff` Step 1 | - |
 | `verify-checkout` | `implement-handoff` Step 1 | - |
-| `pr-create` | `implement-handoff` Step 5 | `<title>` `<path>` |
+| `pr-create` | `implement-handoff` Step 5 | `<title>` `<path>` `<category>` `<pr-base>` |
 | `pr-view` | `self-review` Step 1, `review-pr` Step 1, `address-review` Step 1 | `<id>` |
 | `pr-update` | `self-review` Step 4, `address-review` Step 5, `implement-handoff` Step 6 | `<id>` `<path>` |
 | `review-list` | `review-pr` Step 4, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
@@ -149,6 +149,20 @@ upstream repository, and the branch is pushed to `origin`.
 | `published` | `implement-handoff` Step 7 | `<id>` `<path>` `<pr-url>` |
 | `stopped` | `implement-handoff` stop path | `<id>` `<path>` |
 | `wrap-up` | `investigate-issue` Step 2 or 6, `review-pr` Step 5, `address-review` Done, `self-review` Step 4 | `<skill>` `<id>` `<pr-url>` `<head-branch>` |
+
+`pr-create` takes two values beyond the title and the body, both from the handoff's header
+and both optional there. `<category>` is the label the handoff's `category` line names, and
+it is **empty** where that line is absent; each entry substituting it says in its notes what
+an empty value drops, because a `tool:` entry has no conditional syntax and the caller
+applies the note instead. `<pr-base>` is the handoff's `pr-base` line, or `<default-branch>`
+where that line is absent - it is never empty. It does not replace the derived
+`<default-branch>` above, which every other entry keeps using.
+
+Both placeholders were added in baton 0.1.9. A `## Forge` written before then substitutes
+neither, so its pull requests carry no label and open against the default branch. Add
+`<category>` and `<pr-base>` to that section's `pr-create`: until then `implement-handoff`
+stops at Step 1 on any handoff with a `pr-base` line, and drops a `category` line without
+an error.
 
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
