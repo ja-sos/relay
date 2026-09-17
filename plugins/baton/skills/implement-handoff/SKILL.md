@@ -156,6 +156,28 @@ Where the header carries `next`, resolve the `## Launcher` entry its first value
 against the same loaded files. A name no loaded file defines is a stop here: Step 7 runs that
 entry only after the pull request is open and the worktree removed.
 
+The locator also fixes which repository this run's tracker calls address, for the whole run.
+One investigation can record a handoff per repository a change spans, so the issue driving
+this run may live in a repository other than the one the handoff names:
+
+What an operation addresses decides this, not the section holding it:
+
+| Entries | Where `<owner>` and `<repo>` come from |
+|---|---|
+| the ones addressing the issue - `view`, `comment`, and the `started`, `published` and `stopped` resolving through them | the locator, as `fetch-handoff`'s own notes take them |
+| `closes` and `refs`, though `## Forge` holds them | the locator as well: the keyword references the issue, so it resolves against the issue's repository |
+| the ones addressing the pull request or the checkout - `pr-create`, `pr-view`, `pr-update`, `stack-link`, `request-reviewer` and the review operations | `verify-checkout`'s answer |
+
+`request-reviewer` is the one `## Workflow` entry on the second row. It acts on the pull
+request and takes its number as `<id>`, so a project that defines it gets the checkout's
+repository like the forge operations beside it.
+
+Both name one repository wherever the issue and the work are in the same place, which is every
+handoff recorded before baton 0.1.11, and nothing changes there. Where they differ, a tracker
+call taking `verify-checkout`'s answer would comment on whatever issue happens to hold `<id>`
+in the repository this run is building in. `verify-checkout` still has to equal the header's
+`repo` above: that check is about the checkout, and it is unaffected by where the issue lives.
+
 Check reachability with `reachable` when a tracker call fails; it separates a credential error
 from an undefined operation. A credential error is the session, not the plan, and the backend
 records what each one means.
@@ -434,13 +456,19 @@ and Step 6's: a forge with no stack of its own to register in loses nothing, sin
 `pr-create` succeeded is a stop of the second shape below - the pull request is open, and the
 report says the layer went unregistered.
 
-The issue reference comes from the header, because a merged `closes` shuts an issue
+Which of the two lines to use comes from the header, because a merged `closes` shuts an issue
 whatever else is outstanding:
 
 | Header | Reference in the body |
 |---|---|
 | `closes: yes` | the backend's `closes` line |
 | `closes: no` | the backend's `refs` line |
+
+Fill that line's `<owner>`, `<repo>` and `<id>` from the locator, per Step 1's table. The
+reference names the issue's repository, which is not this pull request's wherever the handoff
+was recorded for a repository other than the issue's; there, a bare `#<id>` would reference
+whatever issue holds that number here. Where the two are one repository the line reads as it
+always did.
 
 Keep what `pr-create` returns. Step 6 addresses the pull request by it and Step 7 reports
 it, and nothing else in the run recovers it.

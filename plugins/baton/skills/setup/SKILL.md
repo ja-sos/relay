@@ -23,6 +23,7 @@ routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 
 | Found | Action |
 |---|---|
+| The request is for `## Repositories` alone, whether or not a backend file exists | Add or replace that one section in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Repositories` checks and Step 4's `## Repositories` checks, then stop: the full Step 3 counts and the Step 4 check table test a backend's operations, which this request neither writes nor changes. It overrides no shipped operation, so it is not the duplicate the no-backend-file rows refuse. |
 | No backend file; route 1 or 2 selected | Stop. The shipped defaults run as they are - through the GitHub MCP tools, or through `reference/backend-github-gh.md` - and a copy of them is a second file to keep in sync. |
 | No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
@@ -88,6 +89,31 @@ grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|verify\|code-review\|reque
   operations. `wrap-up` alone is the exception: the four attended skills skip it when it is
   undefined, but the file restates it all the same.
 
+`## Repositories` is the seventh section and the second optional one. It stays out of
+`.claude/baton.md` altogether: it maps `owner/repo` to an absolute local path, paths differ per
+machine, and the committed file is read by cloud runs that have none of them. Write it in
+`~/.claude/baton.md`, and only on request - a change spanning repositories that depend on each
+other is what needs it. A backend without the section runs every single-repository handoff
+exactly as one did before baton 0.1.11, so no count above requires it.
+
+```
+grep -c '^## Repositories$' ~/.claude/baton.md 2>/dev/null
+```
+
+- PASS: `1` where the user asked for the section; `0`, or no output at all, where they did not.
+  `grep` prints nothing and exits 2 when the file does not exist, which is the usual case.
+- FAIL: more than 1.
+
+Written, it carries one row per repository, each naming an absolute path:
+
+```
+grep -c '^| `[^/`]*/[^`]*` | `/' ~/.claude/baton.md 2>/dev/null
+```
+
+- PASS: one per repository the user named.
+- FAIL: fewer. A relative path resolves against whatever directory a launcher happens to start
+  in, so a row that is not absolute is a row to rewrite.
+
 ## Step 4 - Verify by running
 
 Run the check table at the end of `reference/defining-backends.md` against the file. Run the
@@ -105,6 +131,25 @@ the label from the first row of the file's `## Categories` table.
 
 - PASS: every row passes and all four operations return.
 - FAIL: any row fails or any operation errors. Fix the entry and restart Step 4.
+
+Where the file carries `## Repositories`, check every row of it too. A wrong path sends a run
+into the wrong tree rather than failing, so the check is the repository each path answers as,
+not merely that something is there:
+
+```
+test -d <path> && git -C <path> rev-parse --show-toplevel
+```
+
+Then run `verify-checkout` in each row's path and compare its answer with that row's
+`owner/repo`.
+
+- PASS: every row's path is a git checkout whose `verify-checkout` answer equals its
+  `owner/repo`.
+- FAIL: any row whose path is missing, is not a checkout, or answers with a different
+  repository. Fix the row and restart Step 4.
+
+`verify-checkout` reads and writes nothing, so running it once per row adds nothing to the
+list below.
 
 Never verify by running `create`, `comment`, `pr-create`, `stack-link`, `review-post`,
 `post-handoff`, `started`, `published`, `stopped`, `wrap-up` or `request-reviewer`. Each one
