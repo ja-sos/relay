@@ -57,6 +57,17 @@ grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
 - PASS: 5.
 - FAIL: fewer. Add the missing sections before Step 4.
 
+`## Forge` gets the same count of its own operations that `## Workflow` gets below, and for
+the same reason: `stack-link` writes to the forge, so Step 4 never runs it, and a section
+missing it stops `implement-handoff` at Step 1 on any handoff carrying `pr-base`.
+
+```
+grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-update\|closes\|refs\):\*\*' .claude/baton.md
+```
+
+- PASS: 7.
+- FAIL: fewer. Add the missing operations before Step 4.
+
 `## Workflow` is the sixth section and stays out of the file unless the user asks for a step
 its defaults do not give - a ticket moved to in-progress when implementation starts, a
 pre-push sequence of the project's own rather than its test command alone, a reviewer
@@ -95,9 +106,10 @@ the label from the first row of the file's `## Categories` table.
 - PASS: every row passes and all four operations return.
 - FAIL: any row fails or any operation errors. Fix the entry and restart Step 4.
 
-Never verify by running `create`, `comment`, `pr-create`, `review-post`, `post-handoff`,
-`started`, `published`, `stopped`, `wrap-up` or `request-reviewer`. Each one writes to the
-tracker or the forge. Never run `verify` either: a project's sequence may rewrite files in the
+Never verify by running `create`, `comment`, `pr-create`, `stack-link`, `review-post`,
+`post-handoff`, `started`, `published`, `stopped`, `wrap-up` or `request-reviewer`. Each one
+writes to the tracker or the forge - `stack-link` to a pull request belonging to somebody
+else's handoff. Never run `verify` either: a project's sequence may rewrite files in the
 user's checkout.
 
 ## Step 5 - Offer document types

@@ -69,6 +69,13 @@ unasked does not cover the run. These need no confirmation:
 - `pr-create` on that branch; `pr-update`, `request-reviewer`, `thread-reply` and
   `pr-comment` on the pull request it opens; `started`, `published` and `stopped` on the
   issue.
+- `stack-link` at Step 5, where the header carries `pr-base`. It writes to the pull request
+  below, which belongs to another handoff, so it is named here rather than covered by
+  `pr-create`: the header asking for a stacked base is the authorization to register the
+  layer in that stack.
+- The `## Launcher` entry the header's `next` names, run once at Step 7. That line is the
+  authorization to start the layer above, given ahead of the run by whoever wrote the
+  handoff.
 - Dispatching the subagents Step 4 runs - the claim audit, and a reviewer an `agent:` entry
   names. They read and report; nothing they return reaches the tracker or the forge except
   through a step above.
@@ -95,13 +102,15 @@ prompts for it.
 
 Run `fetch-handoff` on the locator. Where the entry takes `<id>` or `<comment-id>`, derive
 each from the locator as the backend's notes on `fetch-handoff` say. The handoff's
-header gives `repo`, `base`, `issue`, `closes` and `branch`. Two more lines are optional,
-and a handoff written before they existed carries neither - an absent line is not a stop:
+header gives `repo`, `base`, `issue`, `closes` and `branch`. Three more lines are optional,
+and a handoff written before they existed carries none of them - an absent line is not a
+stop:
 
 | Optional line | Where the line is absent |
 |---|---|
 | `category` | `<category>` is empty |
-| `pr-base` | `<pr-base>` is `<default-branch>` |
+| `pr-base` | `<pr-base>` is `<default-branch>`, and the branch is cut from `<base>` |
+| `next` | Step 7 launches nothing |
 
 A handoff with a `pr-base` line is a stop where the loaded `pr-create` entry never contains
 `<pr-base>`. A `## Forge` written before baton 0.1.9 has no such placeholder, and its pull
@@ -118,6 +127,34 @@ git merge-base --is-ancestor <base> HEAD
 Run `verify-checkout`; its answer must equal the header's `repo`. A repo that does not
 match, or a `base` that is not an ancestor of HEAD, is a stop: the plan addresses code
 this clone does not contain.
+
+**Where the header carries `pr-base`, run this pair instead of the second line:**
+
+```
+git cat-file -e <base>^{commit} 2>/dev/null || git fetch origin <base>
+git cat-file -e <base>^{commit}
+```
+
+`base` is then a commit on the layer below, which is unmerged by definition, so it is not an
+ancestor of the default branch this clone arrives on and `--is-ancestor <base> HEAD` fails on
+every stacked handoff. Step 2 asks the same question of `origin/<pr-base>`, the branch the
+work actually sits on, where `base` does have to be an ancestor.
+
+What does not move is this step's own question: does this clone hold `base` at all. The first
+line answers it with a fetch and then discards the answer - `||` makes the whole line succeed
+whenever the fetch does, and a fetch that silently brought nothing exits 0. The second line is
+what turns a missing `base` into a stop here, rather than into a confusing `pr-base` failure
+at Step 2.
+
+Also resolve `stack-link` against the loaded backend files, for the same reason Step 2
+resolves `started` early - an operation no loaded file defines is a stop, and one reached
+after `EnterWorktree` leaves a worktree standing. Resolve it only where the header carries
+`pr-base`, since that is the only case Step 5 calls it in: a project whose `## Forge`
+override predates the operation keeps running single-layer handoffs.
+
+Where the header carries `next`, resolve the `## Launcher` entry its first value names
+against the same loaded files. A name no loaded file defines is a stop here: Step 7 runs that
+entry only after the pull request is open and the worktree removed.
 
 Check reachability with `reachable` when a tracker call fails; it separates a credential error
 from an undefined operation. A credential error is the session, not the plan, and the backend
@@ -174,25 +211,53 @@ project's to write, and it is a prerequisite rather than a detail - a gitignored
 `.claude/settings.local.json` that is not on it does not follow the session into the
 worktree, and the run stalls on a permission prompt with nobody there to answer.
 
-Run `started` on the header's `issue` immediately before the block below, under that block's
-condition rather than one of its own: skipped exactly where `git switch -c` is skipped, run
-exactly where it runs. `none` is its shipped default, and that value skips the call the way
-it skips Step 6's. That gate, and not `EnterWorktree`'s, is what holds the call to one per
+Run `started` on the header's `issue` immediately before the branch cut below, under that
+cut's condition rather than one of its own: skipped exactly where `git switch -c` is skipped,
+run exactly where it runs. `none` is its shipped default, and that value skips the call the
+way it skips Step 6's. That gate, and not `EnterWorktree`'s, is what holds the call to one per
 branch this run cuts - a turn resuming from a stop skips all three, while a launcher that
 started the session in a worktree skips only `EnterWorktree` and still cuts the branch -
 unless that worktree already sits on `<branch>`, which is indistinguishable from a resume
-and skipped as one. It runs above the block rather than inside the retry below, which would
+and skipped as one. It runs above the cut rather than inside the retry below, which would
 fire it once per attempt.
+
+Where the header carries no `pr-base`, the branch is cut from `<base>`:
 
 ```
 git switch -c <branch> <base>
 ```
 
-This exiting non-zero because `<branch>` already exists is neither a stop nor a reuse: run
-it again with `<branch>-<6 hex>`, six fresh characters from the command above, until one
+Where it carries one, the branch is cut from that branch's tip on `origin` instead, because
+the layer below has pushed commits since the plan was formed and this layer's work belongs on
+top of all of them:
+
+```
+git fetch origin <pr-base>:refs/remotes/origin/<pr-base>
+git merge-base --is-ancestor <base> origin/<pr-base>
+git switch -c <branch> origin/<pr-base>
+```
+
+The fetch names both sides of the refspec on purpose. A clone made with `--single-branch` -
+which `--depth 1` implies, and which is how a cloud run's checkout arrives - narrows
+`remote.origin.fetch` to the default branch alone, and a bare `git fetch origin <pr-base>`
+there updates `FETCH_HEAD` and creates no `origin/<pr-base>` for the next two lines to name.
+The explicit destination creates it in a narrowed clone and in a wildcard one alike.
+
+Either of the first two exiting non-zero is a stop. A failed fetch means the layer below has
+not pushed `<pr-base>` yet, so this run was started out of order - the launch at Step 7 of the
+layer below is what starts this one. A failed ancestor check means `<pr-base>` is not the
+branch the plan was formed on top of, whatever its name says, and the `file:line` citations in
+the handoff resolve against a history that branch does not carry.
+
+This is the check `write-handoff` Step 2 does not run. A stack is posted top layer first, so
+at posting time `<pr-base>` usually names a branch nothing has pushed; here it has to exist,
+and that is why the check sits in the run.
+
+The third exiting non-zero because `<branch>` already exists is neither a stop nor a reuse:
+run it again with `<branch>-<6 hex>`, six fresh characters from the command above, until one
 succeeds. From there `<branch>` means the name that succeeded - Step 5 pushes it, Step 7
 fetches it, and Step 5's body and Step 7's report both name it beside the name the handoff
-asked for.
+asked for. Step 7 also stops launching `next` when that happens, for the reason given there.
 
 Build on the existing branch only where the handoff says to.
 
@@ -206,11 +271,17 @@ forced it, for the Step 5 body.
 
 ## Step 3 - Test and verify
 
-Add tests that fail against `<base>` and pass against the change, whatever the handoff
-carries. Where it numbers acceptance criteria, each criterion gets at least one of them. The
-exception is a criterion the handoff marks as out of any test's reach: the handoff's commands
-prove that one, and Step 5's body names it as untested. Follow the conventions of the tests
-already in the repo.
+Add tests that fail against the commit this branch was cut from and pass against the
+change, whatever the handoff carries. Where it numbers acceptance criteria, each criterion
+gets at least one of them. The exception is a criterion the handoff marks as out of any
+test's reach: the handoff's commands prove that one, and Step 5's body names it as untested.
+Follow the conventions of the tests already in the repo.
+
+That commit is `<base>` for an ordinary handoff, and `origin/<pr-base>` for a stacked one -
+the branch point Step 2 used, not the header's `base`. A stacked branch carries the layer
+below, so a test run at `<base>` measures this change against a tree missing that layer's
+work, and a test that fails there may be failing on the layer below rather than on anything
+this run wrote.
 
 Then run two checks, in this order:
 
@@ -350,6 +421,19 @@ such heading.
 The findings the loop left standing go in the body as well, each with its severity and the
 reason it stands.
 
+`pr-create` opens a draft, on both shipped routes and whether or not this handoff is part of
+a stack. An unattended run's branch has been reviewed by nobody but itself, and a draft says
+so to everyone looking at the pull request list. Marking it ready is a stop, above - the
+person who reads the branch does that.
+
+Then, **only where the header carries `pr-base`**, run `stack-link` with the pull request
+`pr-create` returned and that branch below it. It registers this layer in the stack its base
+belongs to. `none` is its shipped default, which skips the call the way it skips `started`'s
+and Step 6's: a forge with no stack of its own to register in loses nothing, since the base
+`pr-create` already passed is what makes the layer a layer. A `stack-link` failure after
+`pr-create` succeeded is a stop of the second shape below - the pull request is open, and the
+report says the layer went unregistered.
+
 The issue reference comes from the header, because a merged `closes` shuts an issue
 whatever else is outstanding:
 
@@ -466,6 +550,24 @@ exists nowhere but that directory.
 sends it down the `keep` path. That is the right way to be wrong: the same output is also
 how a source file the run wrote but never added looks, and `remove` cannot be undone.
 
+Then launch the layer above, where the header carries `next` and **both checks above
+passed**. Split the line at its space: the first value names a `## Launcher` entry the
+backend defines, and the second is the locator to substitute into it, for the `<locator>` or
+`<comment url>` placeholder that entry carries. A first value naming no entry this backend
+defines is undefined, and undefined is a stop.
+
+Run it **once, with no retry**, whatever it returns. Two runs on one branch race: both cut
+the same branch name, the second takes a suffix at Step 2, and the stack gains a layer nobody
+asked for. A launch that fails is reported rather than repeated.
+
+Two things hold it back, and neither is a stop:
+
+- **Either check above failed.** `origin` does not hold this layer's work, so the run above
+  would branch from a `pr-base` missing the commits it builds on.
+- **Step 2 renamed the branch.** `<branch>` already existed, so this layer sits on
+  `<branch>-<6 hex>` while the next layer's `pr-base` still names `<branch>` - a branch
+  holding somebody else's work. Launching would stack the layer above onto the wrong history.
+
 Then run `published` with the issue id, the pull request URL from Step 5, and one file
 saying what shipped: the URL, the branch, how the handoff's commands and `verify` came out,
 any deviation Step 2 recorded, and whether Step 6 ran, timed out, or was skipped - skipped
@@ -473,16 +575,31 @@ meaning only that
 `request-reviewer` is `none`. After a `keep`, that file also names the worktree path
 `.claude/worktrees/<name>` and which of the two checks failed.
 
+Where the header carried `pr-base`, that file names the branch the pull request opens
+against and whether `stack-link` ran or is `none`. Where it carried `next`, it records the
+launch: the entry run and what it returned, or, when one of the two conditions above held
+it back, which one - naming both branch names on a rename, and the locator that went
+unlaunched either way. That locator is how a person resumes the stack by hand.
+
 ## Stopping
 
 Every stop above takes one of two shapes, set by whether Step 5 has opened the pull request:
 
 - Before it: push nothing, open no pull request, and run `stopped` with one file naming the
   step and what stopped it.
-- After it, in Step 5's remaining `pr-create` calls, Step 6 or Step 7: push nothing further
-  and leave the pull request open. Run `stopped` with one file naming the step, what stopped
-  it, and the pull request URL - only Step 7's `published` would otherwise carry that URL to
-  the issue.
+- After it, in Step 5's remaining `pr-create` calls or its `stack-link`, Step 6 or Step 7:
+  push nothing further and leave the pull request open. Run `stopped` with one file naming
+  the step, what stopped it, and the pull request URL - only Step 7's `published` would
+  otherwise carry that URL to the issue.
+
+**A stop before Step 7's launch never launches `next`, and the `stopped` file carries the
+locator it did not launch.** A stop there strands every layer above it, and a stop runs
+`stopped` rather than `published`, so this file is the only place that locator reaches
+anyone. Name it, and say the layer above was not started.
+
+**A stop after the launch ran - a failed `published` - says the layer above was started.**
+Name the entry run and what it returned, and do not present the locator as unlaunched: a
+person who starts that layer again puts two runs on one branch, the race Step 7 names.
 
 No stop calls `ExitWorktree`. A stop is where work sits unpushed, and Step 7's two checks
 are the only thing that establishes it does not. The `stopped` file names the worktree path
@@ -499,3 +616,7 @@ for.
 Both exits end here. Report the pull request URL, the branch and how the handoff's commands
 and `verify` came out - or the blocker, the step it stopped at, and the pull request URL
 when Step 5 opened one.
+
+A handoff carrying `next` reports the launch too, in whichever form Step 7 recorded it. The
+run above is a separate session: this one does not wait for it, watch it, or report anything
+about how it went.
