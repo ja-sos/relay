@@ -111,7 +111,9 @@ in `origin`'s URL: in a fork clone `<owner>` is the upstream repository's owner,
 not hold the branch.
 
 `pr-create` returns its **first** call's `{"id", "url"}`, and `url` is the pull request's
-URL; the second call returns nothing the caller keeps.
+URL; the second call returns nothing the caller keeps. The pull request exists from the
+first call on, so a failed label call leaves it open and unlabelled - a stop after
+`implement-handoff` Step 5, whose `stopped` file carries that URL.
 
 The label needs that second call because `create_pull_request` has no `labels` parameter -
 its parameters are `owner`, `repo`, `title`, `head`, `base`, `body`, `draft`,

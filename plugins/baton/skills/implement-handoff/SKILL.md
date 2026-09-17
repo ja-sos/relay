@@ -103,6 +103,11 @@ and a handoff written before they existed carries neither - an absent line is no
 | `category` | `<category>` is empty |
 | `pr-base` | `<pr-base>` is `<default-branch>` |
 
+A handoff with a `pr-base` line is a stop where the loaded `pr-create` entry never contains
+`<pr-base>`. A `## Forge` written before baton 0.1.9 has no such placeholder, and its pull
+request would open against the default branch, carrying the unmerged commits of the layer
+below.
+
 Verify the checkout before the first edit:
 
 ```
@@ -356,6 +361,10 @@ whatever else is outstanding:
 Keep what `pr-create` returns. Step 6 addresses the pull request by it and Step 7 reports
 it, and nothing else in the run recovers it.
 
+The pull request is open once `pr-create` returns its URL, even where the operation has calls
+left to run. A later call in `pr-create` that fails is a stop after Step 5, carrying that URL:
+taken for a stop before Step 5, it leaves an open pull request the issue never hears of.
+
 ## Step 6 - Review round
 
 Skip this step when `request-reviewer` is `none`, which is the shipped default. That is the
@@ -470,9 +479,10 @@ Every stop above takes one of two shapes, set by whether Step 5 has opened the p
 
 - Before it: push nothing, open no pull request, and run `stopped` with one file naming the
   step and what stopped it.
-- After it, in Step 6 or 7: push nothing further and leave the pull request open. Run
-  `stopped` with one file naming the step, what stopped it, and the pull request URL - only
-  Step 7's `published` would otherwise carry that URL to the issue.
+- After it, in Step 5's remaining `pr-create` calls, Step 6 or Step 7: push nothing further
+  and leave the pull request open. Run `stopped` with one file naming the step, what stopped
+  it, and the pull request URL - only Step 7's `published` would otherwise carry that URL to
+  the issue.
 
 No stop calls `ExitWorktree`. A stop is where work sits unpushed, and Step 7's two checks
 are the only thing that establishes it does not. The `stopped` file names the worktree path

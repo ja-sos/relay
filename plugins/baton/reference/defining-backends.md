@@ -158,6 +158,12 @@ applies the note instead. `<pr-base>` is the handoff's `pr-base` line, or `<defa
 where that line is absent - it is never empty. It does not replace the derived
 `<default-branch>` above, which every other entry keeps using.
 
+Both placeholders were added in baton 0.1.9. A `## Forge` written before then substitutes
+neither, so its pull requests carry no label and open against the default branch. Add
+`<category>` and `<pr-base>` to that section's `pr-create`: until then `implement-handoff`
+stops at Step 1 on any handoff with a `pr-base` line, and drops a `category` line without
+an error.
+
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
 author filtering belongs inside the command, since it is part of what the operation collects.
