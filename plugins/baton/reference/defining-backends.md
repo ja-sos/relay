@@ -29,7 +29,7 @@ unattended run must use goes in `.claude/baton.md`.
 |---|---|
 | `## Tracker` | reading, creating, commenting on and closing issues |
 | `## Categories` | the condition-to-label table `file-issue` picks from |
-| `## Forge` | checkout verification, pull requests, closing keywords |
+| `## Forge` | checkout verification, pull requests, stack registration, closing keywords |
 | `## Review` | collecting review feedback on a pull request, and answering it |
 | `## Launcher` | how `investigate-issue` starts an implementation run |
 | `## Workflow` | the steps the skills run around the work: posting and finding handoffs, reviewing, publishing |
@@ -39,6 +39,12 @@ run reads the handoff and nothing the starting session holds, so an entry that p
 context instead of that locator starts a session with no work to do. Passing context
 *beside* the locator fails the other way: the prompt arrives as a user turn, so a
 suggestion copied into it outranks the handoff section it was copied from.
+
+Two callers reach these entries by name. `investigate-issue` Step 6 asks a person which to
+use; `implement-handoff` Step 7 takes the name from the finishing handoff's `next` line and
+runs it unasked, to start the layer above in a stack. So an entry has to be runnable from
+inside an unattended run of the very skill it launches - which is what the tool list below
+is about.
 
 ## Operations
 
@@ -58,14 +64,14 @@ whatever they look like. `verify` is run, but takes one literal besides a comman
 | `agent: <type> <prompt>` | dispatch a subagent of that type with that prompt, through the subagent dispatch tool - `Agent` or `Task`, by harness build |
 | `op: <operation> <args>` | run another operation of this backend, with these substitutions |
 | a nested bullet list | each bullet is one entry in any of the forms above, run in order; the first failure stops the rest |
-| `none` | skip the step. Valid for `started`, `request-reviewer` and `wrap-up` only - any other operation set to `none` is undefined |
+| `none` | skip the step. Valid for `started`, `stack-link`, `request-reviewer` and `wrap-up` only - any other operation set to `none` is undefined |
 | `repo-tests` | run the repo's full test command, as the run finds it. Valid for `verify` only - anywhere else it is a shell command, and no such binary exists |
 
 `none` and undefined are not the same answer. `none` says the project has decided the step
-does not run - that no tracker transition marks the start of implementation, that the review
-round does not run, that no step runs when a person-attended flow ends; undefined says the
-backend is incomplete, and every skill treats it as a stop - except an undefined `wrap-up`,
-which the attended skills read as `none`.
+does not run - that no tracker transition marks the start of implementation, that the forge
+tracks no stack to register a layer in, that the review round does not run, that no step runs
+when a person-attended flow ends; undefined says the backend is incomplete, and every skill
+treats it as a stop - except an undefined `wrap-up`, which the attended skills read as `none`.
 
 `repo-tests` is a literal the skills recognise rather than a command they run, because no
 single command is every repo's suite. It is `verify`'s shipped value, and a project that
@@ -129,6 +135,7 @@ upstream repository, and the branch is pushed to `origin`.
 | `reachable` | `implement-handoff` Step 1 | - |
 | `verify-checkout` | `implement-handoff` Step 1 | - |
 | `pr-create` | `implement-handoff` Step 5 | `<title>` `<path>` `<category>` `<pr-base>` |
+| `stack-link` | `implement-handoff` Step 5 | `<id>` `<pr-url>` `<pr-base>` |
 | `pr-view` | `self-review` Step 1, `review-pr` Step 1, `address-review` Step 1 | `<id>` |
 | `pr-update` | `self-review` Step 4, `address-review` Step 5, `implement-handoff` Step 6 | `<id>` `<path>` |
 | `review-list` | `review-pr` Step 4, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
@@ -163,6 +170,19 @@ neither, so its pull requests carry no label and open against the default branch
 `<category>` and `<pr-base>` to that section's `pr-create`: until then `implement-handoff`
 stops at Step 1 on any handoff with a `pr-base` line, and drops a `category` line without
 an error.
+
+`pr-create` also opens a draft on both shipped routes, unconditionally. An entry a project
+writes for itself decides that for itself, but `implement-handoff` treats marking a pull
+request ready as outside what an unattended run may do, so an entry that opens a ready one
+ships branches no person has looked at.
+
+`stack-link` registers a pull request as one layer of a stack. It runs at `implement-handoff`
+Step 5, immediately after `pr-create` and **only where the handoff's header carries
+`pr-base`** - which is why a project whose `## Forge` predates the operation keeps running
+single-layer handoffs and stops only on a stacked one. `<pr-url>` is what `pr-create`
+returned and `<pr-base>` the branch below; `<id>` is the issue's number, as it is everywhere
+else in that step. Both shipped routes ship `none`: a pull request opened against another's
+branch already reads as stacked on GitHub, and `pr-create` has passed that base already.
 
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
@@ -205,6 +225,19 @@ leaves everything it already published in place and does not retry.
 `- **verify:**           repo-tests` to that section, or the sequence the project runs
 before a push. It takes no placeholders: what it checks is the whole repo, not this
 change, which is what the handoff's own commands cover.
+
+`stack-link` is the same shape of addition to `## Forge`, in baton 0.1.10. A section written
+before it leaves the operation undefined, and `implement-handoff` stops at Step 1 - but only
+on a handoff whose header carries `pr-base`, because that is the only case the run resolves
+it in. Add `- **stack-link:**      none`, or the entry the project's forge registers a stack
+with. Two more edits belong to the same upgrade and neither errors when skipped, which is why
+they are named here:
+
+- An overridden `pr-create` opens a ready pull request until its entry adds the shipped
+  routes' `--draft` or `"draft": true`.
+- An overridden `## Launcher` keeps its own `allowed_tools`, so a `cloud` entry copied before
+  0.1.10 lacks `RemoteTrigger` and cannot launch the layer above. See **Tools an unattended
+  run needs**.
 
 `has-handoff` answers whether an issue already carries a handoff. Its default runs `view`,
 and the caller scopes the answer by looking for the handoff marker in that output; a
@@ -358,6 +391,22 @@ runs stop on a tool they cannot call, at Step 2 or at Step 7. An entry that star
 session in a worktree already, `claude --worktree` among them, names both as well: Step 2
 skips `EnterWorktree` there, which refuses a second worktree, and Step 7 calls
 `ExitWorktree`, which removes the worktree the launcher created.
+
+A `cloud` entry adds whatever tool it itself is written with - `RemoteTrigger` on the shipped
+one, added in baton 0.1.10. `implement-handoff` Step 7 runs the entry the finishing handoff's
+`next` names, so a cloud run launching a cloud layer executes those same lines from inside
+the run, and the tool that creates the routine has to be on the list the routine grants. The
+shipped entry is self-consistent; an entry copied into `.claude/baton.md` or
+`~/.claude/baton.md` before 0.1.10 is not, and the layer above never starts.
+
+A `local` entry needs nothing beyond `Bash`, but it starts a session on the machine the
+launching run is on, and that is the constraint a stack's `next` has to be written around.
+Launched from a developer's own checkout it is the cheaper route; launched by
+`implement-handoff` Step 7 from inside a cloud run it puts the layer above in a container
+that is reclaimed when that run ends, and the launch reports success either way because the
+command returns before the session does. So a stack whose layers run in the cloud names
+`cloud` in every `next` line, `local` only where every run is on one long-lived machine, and
+the two are not mixed down a stack.
 
 The review round runs on either route. Where `review-list` and `pr-comments` are `tool:`
 entries its wait is a background `sleep 60` and the operations run between sleeps; where

@@ -89,12 +89,13 @@ closes: <yes, or no>
 branch: <branch the work belongs on>
 ```
 
-Two optional lines may follow them inside that same block, each written only where it has a
+Three optional lines may follow them inside that same block, each written only where it has a
 value. Their padding is cosmetic - a header is read by line name, not by column:
 
 ```
 category: <the issue's label matching a row of the backend's ## Categories table>
 pr-base:  <the branch the pull request opens against>
+next:     <a ## Launcher entry name> <the locator of the layer above>
 ```
 
 `base` must already be on `origin`, because a session that clones never sees a commit
@@ -117,15 +118,23 @@ skill. An issue carrying no such label gets no `category` line, and the run open
 unlabelled pull request.
 
 `pr-base` is for a handoff that is one layer of a stack: its work sits on top of the layer
-below, so its pull request opens against that layer's branch rather than the default branch.
-Omit the line everywhere else. Where it is written, that branch must already be on `origin`
-for the same reason `base` must:
+below, so its pull request opens against that layer's branch rather than the default branch,
+and the run cuts its own branch from there. Omit the line everywhere else.
 
-```
-git ls-remote --exit-code --heads origin <pr-base>
-```
+That branch is not checked here, unlike `base`. A stack is written top layer first - see
+`## Done` - so at the moment this handoff is posted the layer below has usually not pushed
+yet, and a check here would fail on every layer but the bottom one. `implement-handoff`
+Step 2 checks it instead, at the one moment it has to hold: when the run cuts its branch.
 
-A non-zero exit is a stop: push that branch first, or record no `pr-base`.
+`next` names the layer above, and it is the authorization to start that layer: the run that
+finishes this one launches it at `implement-handoff` Step 7, once and with no retry. Write
+two values separated by a space - the name of a `## Launcher` entry the backend defines,
+`local` or `cloud` on the shipped one, and the locator `post-handoff` returned for that
+layer's handoff. Omit the line on the top layer, and on any handoff that is not part of a
+stack; nothing is launched then, which is what every handoff written before this line did.
+
+A layer names `pr-base` and `next` independently. The bottom layer of a stack carries `next`
+and no `pr-base`; the top carries `pr-base` and no `next`.
 
 ## Step 3 - Body
 
@@ -198,4 +207,12 @@ understand its shape.
 An issue splits into several handoffs whenever its fix lands as more than one change, so
 the issue number addresses none of them and whatever launches the work takes the locator.
 
-Starting that work is the caller's decision, not this skill's.
+**A stack is written top layer first.** Each layer's `next` carries the locator of the layer
+above, which exists only once that layer's handoff is posted, so the order is forced: post
+the top layer, then the one below it carrying that locator as its `next`, down to the bottom.
+Every layer is posted before any of them runs. That is what lets each one name a `pr-base`
+branch nothing has pushed yet, and it is why the branch is checked in the run rather than
+here.
+
+Starting that work is the caller's decision, not this skill's. For a stack it is one
+decision: launch the bottom layer, whose `next` carries the rest up.

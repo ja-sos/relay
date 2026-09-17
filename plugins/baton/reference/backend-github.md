@@ -95,8 +95,9 @@ raise `page` by one until it appears.
 
 - **verify-checkout:** { git remote get-url upstream 2>/dev/null || git remote get-url origin; } | sed -E 's#\.git$##; s#.*[/:]([^/:]+/[^/]+)$#\1#'
 - **pr-create:**
-  - tool: mcp__github__create_pull_request {"owner": "<owner>", "repo": "<repo>", "title": "<title>", "head": "<head-owner>:<branch>", "base": "<pr-base>", "body": "<body>"}
+  - tool: mcp__github__create_pull_request {"owner": "<owner>", "repo": "<repo>", "title": "<title>", "head": "<head-owner>:<branch>", "base": "<pr-base>", "body": "<body>", "draft": true}
   - tool: mcp__github__issue_write {"method": "update", "owner": "<owner>", "repo": "<repo>", "issue_number": <pr-number>, "labels": ["<category>"]}
+- **stack-link:**      none
 - **pr-view:**
   - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "head": "<head-owner>:<branch>", "state": "open"}
   - tool: mcp__github__pull_request_read {"method": "get", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
@@ -128,6 +129,19 @@ segment of the `url` it returned.
 
 Skip the second call entirely where `<category>` is empty - a pull request meant to carry no
 label must not be sent `[""]`.
+
+`"draft": true` is unconditional: every pull request these skills open starts as a draft,
+stacked or not. `implement-handoff` Step 5 says why, and marking one ready stays outside what
+an unattended run may do.
+
+`stack-link` is `none`. GitHub has no stack of its own for a pull request to join - a pull
+request opened against another pull request's branch already shows as stacked, and
+`<pr-base>` is what `pr-create` passes to do that. A project whose forge does track stacks
+defines the operation here, taking `<id>`, `<pr-url>` and `<pr-base>`; `implement-handoff`
+Step 5 runs it after `pr-create`, and only where the handoff's header carries `pr-base`.
+The `gh` route ships `none` for the same reason and one more: the `github/gh-stack` extension
+that would supply a command was not installed where this was written, so its syntax is
+unverified and no guess at it ships.
 
 `pr-view` with an `<id>` runs only its second entry. With `<id>` empty, the first finds the
 open pull request for the current branch and its `number` is the second entry's `<id>`; an
@@ -198,7 +212,8 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
      "model": "<the model this session is running>",
      "sources": [{"git_repository": {"url": "https://github.com/<owner>/<repo>"}}],
      "allowed_tools": ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Skill",
-                       "Agent", "Task", "EnterWorktree", "ExitWorktree"]},
+                       "Agent", "Task", "EnterWorktree", "ExitWorktree",
+                       "RemoteTrigger"]},
    "events": [{"data": {
      "uuid": "<fresh lowercase v4 uuid>", "session_id": "", "type": "user",
      "parent_tool_use_id": null,
@@ -231,6 +246,14 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   Add both: that run also carried tools its list did not name, such as `ToolSearch`, so
   whether a list naming neither still gets `Agent` is untested, and Step 2 stops a run that
   lacks it.
+
+  `RemoteTrigger` is on it because this entry is the one a run launches its own next layer
+  with: a handoff carrying `next: cloud <locator>` sends `implement-handoff` Step 7 back
+  through these very lines, from inside a cloud run. Without the tool on the list that run
+  cannot call it, and the launch fails at the last step of an otherwise finished layer. It
+  was added in baton 0.1.10, so a `## Launcher` section restated in `.claude/baton.md` or
+  `~/.claude/baton.md` before then needs the name adding by hand - the heading replaces this
+  one whole.
 
 - **local:** `cd <repo root> && claude --bg "/baton:implement-handoff <comment url>"`
 

@@ -121,15 +121,37 @@ body through `baton:write-deliverables`.
 Its `base` is the HEAD that Step 2 reproduced against and Step 3 named the cause at, so
 the plan stays falsifiable against the code it was formed on.
 
+Where Step 4 split the work into a stack of pull requests, each layer is its own handoff and
+**they are posted top layer first**. A layer's `next` line carries the locator of the layer
+above, which exists only once that layer is posted, so writing upwards is impossible. Post
+the top, then each layer below it carrying the locator it just returned, down to the bottom.
+Each layer above the bottom also carries `pr-base`, naming the branch of the layer below;
+that branch does not exist yet, and `write-handoff` Step 2 says why it is not checked here.
+
+A `next` line also names the `## Launcher` entry that starts the layer above, so **for a
+stack, ask which launcher here** rather than at Step 6 - the answer is written into every
+layer but the top before any of them is posted. Report what each entry would do, as Step 6
+does. An answer of none of them is not a stack without launchers: it means no `next` lines
+and no launch, so every layer has to be started by hand, in order. Say that before taking the
+answer. Step 6 then starts the bottom layer through the entry already chosen, and asks
+nothing further.
+
 ## Step 6 - Launch
 
 Implementation belongs in its own session against its own checkout. Ask which of the
 backend's `## Launcher` entries to use, and start only what the answer names. Report what
-each would do and create nothing when the answer is none of them.
+each would do and create nothing when the answer is none of them. Where Step 5 posted a
+stack, that question was already asked and answered there; use that answer and ask again for
+nothing.
 
 The entry carries a `<locator>` or a `<comment url>` placeholder; substitute the locator
 Step 5 returned for either one. A launcher that starts with anything else starts a session
 with no handoff to read.
+
+**A stack is launched once, at the bottom.** Start the bottom layer alone and nothing else:
+its run opens its pull request, pushes its branch, and launches the layer above through that
+layer's `next` line, which carries the rest up. Starting a higher layer here starts a run
+whose `pr-base` branch nothing has pushed, and that run stops at its Step 2.
 
 Then run `wrap-up` as the last action of the run, with `investigate-issue` as `<skill>` and
 the issue number as `<id>`. `<pr-url>` and `<head-branch>` are empty: no pull request exists
