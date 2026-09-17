@@ -50,8 +50,8 @@ real credentials on outbound requests. `reachable` is the check that works.
 - **stack-link:**      none
 - **pr-view:**         gh pr view <id> --json number,url,body,author,headRefName,headRefOid,isDraft
 - **pr-update:**       gh pr edit --body-file <path>
-- **closes:**          Closes #<id>
-- **refs:**            Refs #<id>
+- **closes:**          Closes <owner>/<repo>#<id>
+- **refs:**            Refs <owner>/<repo>#<id>
 
 `pr-create` returns its first command's stdout, the pull request's URL, and the second command
 takes that URL as `<pr-url>`. Skip the second command where `<category>` is empty.
@@ -70,6 +70,11 @@ starts as a draft, and `implement-handoff` Step 5 says why.
 where this was written, so its syntax is unverified.
 
 `pr-view` takes an empty `<id>` to mean the pull request for the current branch.
+
+`closes` and `refs` name the issue's repository as well as its number, matching the MCP route,
+and the note there says why: the pull request may open in a repository other than the issue's
+once one investigation records a handoff per repository a change spans. `implement-handoff`
+Step 5 fills all three values from the locator rather than from `verify-checkout`.
 
 A 403 naming `add_repo` means the session holds no grant for the repo, not that the
 credentials are wrong. Attach the repo at `access: push`; the read default covers neither

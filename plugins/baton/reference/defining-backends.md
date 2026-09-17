@@ -33,6 +33,7 @@ unattended run must use goes in `.claude/baton.md`.
 | `## Review` | collecting review feedback on a pull request, and answering it |
 | `## Launcher` | how `investigate-issue` starts an implementation run |
 | `## Workflow` | the steps the skills run around the work: posting and finding handoffs, reviewing, publishing |
+| `## Repositories` | local paths of the repositories one change spans, for the `local` launcher and the `base` check. Optional |
 
 Every `## Launcher` entry sends one prompt, `/baton:implement-handoff <locator>`. A
 run reads the handoff and nothing the starting session holds, so an entry that passes
@@ -45,6 +46,30 @@ use; `implement-handoff` Step 7 takes the name from the finishing handoff's `nex
 runs it unasked, to start the layer above in a stack. So an entry has to be runnable from
 inside an unattended run of the very skill it launches - which is what the tool list below
 is about.
+
+`## Repositories` is the one optional section, added in baton 0.1.11. It maps each repository
+a change spans to an absolute local path:
+
+| Repository | Path |
+|---|---|
+| `owner/contracts` | `/home/you/src/contracts` |
+| `owner/service` | `/home/you/src/service` |
+
+One investigation reads several repositories and records one handoff per repository that has
+to change. Two steps then need a clone of a repository other than the one the session runs
+in: `write-handoff` Step 2 checks a handoff's `base` against the `origin` of the repository
+its `repo` line names, and the `local` launcher starts the run in that repository's checkout.
+Both resolve their path through this section.
+
+Paths differ per machine, so the section belongs in `~/.claude/baton.md` rather than the
+committed `.claude/baton.md`. The investigating repository needs no row - both callers fall
+back to the current checkout where a handoff's `repo` is the checkout's own - so a backend
+with no `## Repositories` at all behaves exactly as one did before 0.1.11 for a change that
+spans a single repository. A handoff naming a repository with no row is a stop for that
+handoff alone, and the other handoffs of the same investigation are unaffected.
+
+The `cloud` launcher ignores the section: it clones rather than reading a local path, so its
+`sources` takes the handoff's `repo` and no path on this machine means anything to it.
 
 ## Operations
 
@@ -110,7 +135,8 @@ Five placeholders are open to every entry, derived rather than passed by the cal
 
 | Placeholder | Value |
 |---|---|
-| `<owner>` `<repo>` | `verify-checkout`'s answer, split at the slash |
+| `<owner>` `<repo>` on a `## Tracker` or `## Workflow` entry, and on `closes` / `refs` | the **issue's** repository: the locator's, where a handoff is in play, and `verify-checkout`'s answer split at the slash otherwise |
+| `<owner>` `<repo>` on any other `## Forge` or `## Review` entry | the **checkout's** repository: `verify-checkout`'s answer, split at the slash |
 | `<head-owner>` | the owner in `origin`'s URL, printed by the command below |
 | `<branch>` | `git branch --show-current` |
 | `<default-branch>` | `git symbolic-ref --short refs/remotes/origin/HEAD`, without its `origin/`; where that exits non-zero, the name after `refs/heads/` in the `ref:` line of `git ls-remote --symref origin HEAD` |
@@ -121,6 +147,14 @@ git remote get-url origin | sed -E 's#\.git$##; s#.*[/:]([^/:]+)/[^/]+$#\1#'
 
 `<head-owner>` differs from `<owner>` in a fork clone: `verify-checkout` answers with the
 upstream repository, and the branch is pushed to `origin`.
+
+The tracker and the checkout name one repository for every handoff recorded before baton
+0.1.11, and the split above changes nothing there. They differ once one investigation records
+a handoff per repository a change spans: the issue stays in the repository it was filed in,
+while the run happens in the repository the handoff names. `implement-handoff` Step 1 carries
+the same table for its own run, and `fetch-handoff` took its `<owner>`/`<repo>` from the
+locator already. `closes` and `refs` sit in `## Forge` and follow the tracker's rule all the
+same, because what they reference is the issue rather than the pull request.
 
 | Operation | Called by | Substitutes |
 |---|---|---|
@@ -145,7 +179,7 @@ upstream repository, and the branch is pushed to `origin`.
 | `review-threads` | `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
 | `thread-reply` | `address-review` Step 5, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` `<comment-id>` `<path>` |
 | `pr-comment` | `address-review` Step 5, `implement-handoff` Step 6 | `<id>` `<path>` |
-| `closes` / `refs` | `implement-handoff` Step 5 | `<id>` |
+| `closes` / `refs` | `implement-handoff` Step 5 | `<owner>` `<repo>` `<id>` |
 | `post-handoff` | `write-handoff` Step 1 | `<id>` `<path>` |
 | `has-handoff` | `next-issue` Step 2, `investigate-issue` Step 1 | `<id>` |
 | `started` | `implement-handoff` Step 2 | `<id>` |

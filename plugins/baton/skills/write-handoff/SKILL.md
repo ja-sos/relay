@@ -99,13 +99,21 @@ next:     <a ## Launcher entry name> <the locator of the layer above>
 ```
 
 `base` must already be on `origin`, because a session that clones never sees a commit
-held only here:
+held only here. Run the check in the clone of the repository the `repo` line names:
 
 ```
-git branch -r --contains <sha>
+git -C <repo root> branch -r --contains <sha>
 ```
 
 Empty output is a stop: push first, or record a `base` that is pushed.
+
+`<repo root>` is the current checkout's root - `git rev-parse --show-toplevel` - wherever
+`repo` names the repository this session is in, which is every handoff for a change that
+spans one repository. Where `repo` names another repository, it is that repository's path in
+the backend's `## Repositories` section. A repository with no row there is a stop for this
+handoff, and the other handoffs of the same investigation are unaffected: the commit cannot
+be checked in the only clone this machine offers for it, and the check run in the wrong clone
+answers confidently about the wrong repository rather than failing.
 
 `closes` is `yes` on the handoff that finishes the issue and `no` on every other, so the
 issue is not marked done while work on it remains. `no` is the safe value whenever the
@@ -135,6 +143,13 @@ stack; nothing is launched then, which is what every handoff written before this
 
 A layer names `pr-base` and `next` independently. The bottom layer of a stack carries `next`
 and no `pr-base`; the top carries `pr-base` and no `next`.
+
+**Both lines are single-repository.** `pr-base` names a branch in the repository `repo` gives,
+and `next` fires at `implement-handoff` Step 7, the moment the layer below opens its pull
+request. Neither chains repositories. What a handoff for a repository downstream of another
+waits on is that upstream repository's next *published* version, which no run produces and no
+branch stands for, so such a handoff carries neither line: it is posted with the rest and
+launched by hand, in the order `investigate-issue` Step 6 reports.
 
 ## Step 3 - Body
 

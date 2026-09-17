@@ -102,8 +102,8 @@ raise `page` by one until it appears.
   - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "head": "<head-owner>:<branch>", "state": "open"}
   - tool: mcp__github__pull_request_read {"method": "get", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
 - **pr-update:**       tool: mcp__github__update_pull_request {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "body": "<body>"}
-- **closes:**          Closes #<id>
-- **refs:**            Refs #<id>
+- **closes:**          Closes <owner>/<repo>#<id>
+- **refs:**            Refs <owner>/<repo>#<id>
 
 `verify-checkout` prints `<owner>/<repo>` from the `upstream` remote's URL, or from
 `origin`'s where there is no `upstream`, in HTTPS, SSH and proxied forms alike, with no
@@ -146,6 +146,19 @@ unverified and no guess at it ships.
 `pr-view` with an `<id>` runs only its second entry. With `<id>` empty, the first finds the
 open pull request for the current branch and its `number` is the second entry's `<id>`; an
 empty list means the branch has no open pull request.
+
+`closes` and `refs` name the issue's repository as well as its number. One investigation can
+record a handoff per repository a change spans, so the pull request may open in a repository
+other than the issue's, and a bare `#<id>` there resolves against whatever issue holds that
+number in the pull request's own repository. `implement-handoff` Step 5 fills `<owner>`,
+`<repo>` and `<id>` from the locator, not from `verify-checkout` - the one place a `## Forge`
+entry follows the tracker's placeholder rule, which `defining-backends.md` states. Where the
+issue and the work are in one repository, which is every handoff recorded before baton 0.1.11,
+the reference reads as `Closes owner/repo#12` and resolves to the same issue `Closes #12` did.
+
+GitHub documents that cross-repository form for closing keywords. That it closes the issue on
+merge was not tested here, and `implement-handoff`'s pull request body lists it for the
+reviewer.
 
 A 403 naming `add_repo` means the session holds no grant for the repo, not that the
 credentials are wrong. Attach the repo at `access: push`; the read default covers neither
@@ -255,6 +268,11 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   `~/.claude/baton.md` before then needs the name adding by hand - the heading replaces this
   one whole.
 
+  `sources` takes the handoff's `repo`, not `verify-checkout`'s answer. The routine clones the
+  repository the work belongs in, and for a handoff an investigation of another repository
+  recorded that is not the repository the launching session sits in. It is also why this entry
+  needs no `## Repositories` row: it clones rather than reading a path on this machine.
+
 - **local:** `cd <repo root> && claude --bg "/baton:implement-handoff <comment url>"`
 
   No `--worktree <branch>`: `implement-handoff` Step 2 creates the run's worktree itself,
@@ -266,6 +284,15 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   A `.gitignore` that keeps a tracked `.claude/settings.json` visible ignores the contents
   rather than the directory - `.claude/*` with `!.claude/settings.json` - so `.claude/`
   itself tests as unignored while `.claude/worktrees/` does not.
+
+  `<repo root>` is the root of the checkout of the repository the handoff's `repo` line names.
+  Where that is the repository this session is in, it is the current checkout's root,
+  `git rev-parse --show-toplevel`. Where it is another repository, it is that repository's path
+  in `## Repositories`, and a repository with no row there is a stop for this launch alone -
+  the other handoffs of the same investigation still launch. The map applies to the
+  placeholder, so a `## Launcher` restated in `.claude/baton.md` or `~/.claude/baton.md` before
+  baton 0.1.11 picks it up unchanged: its `local` entry still reads `cd <repo root>`, and only
+  what fills the placeholder has moved. The checks above run in that same root.
   `--bg` and `--print` conflict, because `--print` leaves no session for
   `claude attach <id>` to open. The command returns a short id taken by
   `claude agents --json`, `claude logs <id>` and `claude stop <id>`.
