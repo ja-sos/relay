@@ -115,18 +115,44 @@ Name nothing that exists only on this machine. Cite code as repo-relative `file:
 absolute path, a home directory or a hostname resolves to nothing in the session that
 reads it.
 
-The body ends with acceptance criteria: a numbered list of what the finished change must
-show, each row checkable against the diff by someone who was not here. "Step 4 stops after
-three review rounds" is checkable; "the review is thorough" is not. Cover every part of the
-approach, since a part no row names is a part nothing checks.
+Four sections beyond that contract turn the body into a spec the implementing session can
+check itself against. They belong to this collapsed implementation handoff and never to
+the update Step 4 writes above it, which is read by the issue's participants and states no
+criteria:
 
-Who reads them, and how far that goes. `implement-handoff` Step 4 classes a review finding
-that contradicts one of these rows as Critical rather than a remark, so a row here changes what
-that run must fix before it publishes. Nothing in the shipped backend walks the list row by row
-against the diff: `implement-handoff` Step 4 passes this handoff's locator to `code-review`,
-and only a backend that has paired that operation with an `agent:` compliance reviewer gets
-that check. Write them for the person reviewing the pull request either way - they are the list
+1. **Steps**, numbered, for the code change - what to edit, in what order.
+2. **Acceptance criteria**, numbered, each one an outcome a test can cover and someone who
+   was not here can check against the diff. An outcome, not an edit: "a handoff without the
+   sections runs with `verify` alone" is a criterion, "add a paragraph to Step 3" is a step,
+   and "the review is thorough" is neither. Cover every part of the approach, since a part
+   no row names is a part nothing checks.
+3. **Commands** that prove those criteria, which `implement-handoff` Step 3 runs and reruns
+   after every round of fixes. Every one is headless: that run is unattended, so a command
+   opening a window or waiting on a keypress hangs it with nobody there to answer. Name
+   the output that counts as a pass beside each, since the run has no other way to read
+   the result.
+4. **Not verified here**, listing anything needing eyes on a running application: the
+   screen, the control, and the expected result. The run carries this list into the pull
+   request body, so it reaches the reviewer who can open them.
+
+These four are must-include for the implementation handoff, alongside the four the **Handoff / context
+note** contract lists. They are named here rather than in that contract because it also
+covers the note left when stopping mid-task, which has no criteria to state. Carry them
+into the Step 2 brief as part of `GOAL`, or the outline verdict cuts Acceptance criteria
+and Commands as sections no reader question asks for - the reader here is a run that
+cannot check itself without them.
+
+Each criterion changes what that run does. `implement-handoff` Step 3 writes at least one
+test for it, and Step 4 classes a review finding that contradicts it as Critical rather than
+a remark. Nothing in the shipped backend walks the list row by row against the diff: only a
+backend that has paired `code-review` with an `agent:` compliance reviewer gets that check.
+Write the criteria for the person reviewing the pull request either way - they are the list
 that reviewer ticks off, and a row only a machine could settle helps nobody.
+
+A handoff for work no test reaches states that under the criteria rather than dropping the
+sections, and `implement-handoff` Step 3 proves such a criterion with the Commands alone.
+Dropped, the sections are indistinguishable from a handoff written before baton 0.1.7,
+which the run executes with `verify` alone.
 
 ## Step 4 - Update
 

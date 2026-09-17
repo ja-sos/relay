@@ -47,7 +47,8 @@ the entry, and a fenced block is one multi-line command rather than a sequence o
 
 A bare value is a shell command, wherever the operation is one the skills *run*. Three are
 values they read instead - `closes`, `refs` and `review-wait` - and those stay literal text
-whatever they look like. A prefix names something else:
+whatever they look like. `verify` is run, but takes one literal besides a command:
+`repo-tests`, in the table below. A prefix names something else:
 
 | Value | Meaning |
 |---|---|
@@ -58,12 +59,25 @@ whatever they look like. A prefix names something else:
 | `op: <operation> <args>` | run another operation of this backend, with these substitutions |
 | a nested bullet list | each bullet is one entry in any of the forms above, run in order; the first failure stops the rest |
 | `none` | skip the step. Valid for `started`, `request-reviewer` and `wrap-up` only - any other operation set to `none` is undefined |
+| `repo-tests` | run the repo's full test command, as the run finds it. Valid for `verify` only - anywhere else it is a shell command, and no such binary exists |
 
 `none` and undefined are not the same answer. `none` says the project has decided the step
 does not run - that no tracker transition marks the start of implementation, that the review
 round does not run, that no step runs when a person-attended flow ends; undefined says the
 backend is incomplete, and every skill treats it as a stop - except an undefined `wrap-up`,
 which the attended skills read as `none`.
+
+`repo-tests` is a literal the skills recognise rather than a command they run, because no
+single command is every repo's suite. It is `verify`'s shipped value, and a project that
+mandates a sequence of its own - a formatter pass, then a test-and-lint target - writes that
+sequence here instead. A sequence that rewrites files does so before any of its checks:
+`implement-handoff` commits the tree `verify` leaves, so a rewrite after the checks commits a
+tree none of them ran against. In a repo with no test command it passes with nothing run, and
+the handoff's own commands are then the only thing checking the change.
+
+`none` is not among `verify`'s values. A project that wants nothing repo-wide already has
+`repo-tests`, which runs nothing where there is nothing to run, and a project that has a
+sequence should not be able to turn the check off from the same field it configures it in.
 
 `tool:` exists so that a tracker reachable only through an MCP connector needs no CLI and
 no second set of credentials. Inside its JSON, `<body>` is the text of the file at
@@ -128,6 +142,7 @@ upstream repository, and the branch is pushed to `origin`.
 | `post-handoff` | `write-handoff` Step 1 | `<id>` `<path>` |
 | `has-handoff` | `next-issue` Step 2, `investigate-issue` Step 1 | `<id>` |
 | `started` | `implement-handoff` Step 2 | `<id>` |
+| `verify` | `implement-handoff` Steps 3, 4 and 6 | - |
 | `code-review` | `implement-handoff` Steps 4 and 6, `review-pr` Step 2, `self-review` Step 1 | `<target>` `<locator>` |
 | `request-reviewer` | `implement-handoff` Step 6 | `<id>` |
 | `review-wait` | `implement-handoff` Step 6 | - |
@@ -141,7 +156,7 @@ author filtering belongs inside the command, since it is part of what the operat
 A `tool:` entry cannot filter its output, so the backend's notes name the filter and the
 caller applies it.
 
-The last nine are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
+The last ten are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
 and `stopped` are `op: comment <id> <path>` - so a backend that has overridden `## Tracker`
 for Jira posts all three to Jira without naming them at all.
 
@@ -170,6 +185,12 @@ still arrives as its own argument instead of shifting the ones after it.
 `review-pr` reviews a pull request whose head may not be checked out, so the checked-out
 branch is the wrong answer there. A `wrap-up` that fails is reported by name; the skill
 leaves everything it already published in place and does not retry.
+
+`verify` is the tenth, added in baton 0.1.8. A `## Workflow` written before it leaves
+`verify` undefined the same way, and the same run stops at Step 2 - add
+`- **verify:**           repo-tests` to that section, or the sequence the project runs
+before a push. It takes no placeholders: what it checks is the whole repo, not this
+change, which is what the handoff's own commands cover.
 
 `has-handoff` answers whether an issue already carries a handoff. Its default runs `view`,
 and the caller scopes the answer by looking for the handoff marker in that output; a
@@ -225,8 +246,8 @@ them. The shipped defaults are the template to copy from:
 `reference/backend-github-gh.md` for one reached through a CLI.
 
 Turning the review round on, and logging time after the pull request is published. All
-nine `## Workflow` operations are restated, because the heading replaces the section
-whole and the six left at their defaults would otherwise be undefined:
+ten `## Workflow` operations are restated, because the heading replaces the section
+whole and the seven left at their defaults would otherwise be undefined:
 
 ```markdown
 ## Workflow
@@ -234,6 +255,7 @@ whole and the six left at their defaults would otherwise be undefined:
 - **post-handoff:**     op: comment <id> <path>
 - **has-handoff:**      op: view <id>
 - **started:**          none
+- **verify:**           repo-tests
 - **code-review:**      skill: /code-review <target>
 - **request-reviewer:** tool: mcp__github__request_copilot_review {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
 - **review-wait:**      20
@@ -257,6 +279,7 @@ table:
 - **post-handoff:**     op: comment <id> <path>
 - **has-handoff:**      op: view <id>
 - **started:**          none
+- **verify:**           repo-tests
 - **code-review:**
   - skill: /code-review <target>
   - agent: general-purpose
@@ -291,7 +314,7 @@ diff the correctness review could not read.
 | Entries complete | every operation the section owns is present |
 | Placeholders spelled | `<id>` not `<issue>`; an unrecognised placeholder is passed through literally |
 | Body arrives as a file | each operation taking `<path>` reads the file rather than a string, or sends `<body>` when it is a `tool:` entry |
-| Runs standalone | paste the command with real values into a shell; it must succeed there first |
+| Runs standalone | paste the command with real values into a shell; it must succeed there first. A literal - `none`, `repo-tests`, `closes`, `refs`, `review-wait` - is not a command and is exempt. So is `verify` whatever its value: its sequence may rewrite files, and `baton:setup` Step 4 never runs it |
 | Tool entries called | call each `tool:` entry of a read operation with real values, since it has no shell form to paste; never call one `baton:setup` Step 4 forbids running |
 | Agent entries dispatchable | each `agent:` entry names an agent type this session offers, and every `## Launcher` entry that names `allowed_tools` at all names both `Agent` and `Task` |
 
