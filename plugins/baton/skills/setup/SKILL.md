@@ -23,7 +23,7 @@ routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 
 | Found | Action |
 |---|---|
-| No backend file; route 1 or 2 selected; the request is for `## Repositories` alone | Step 3, writing `~/.claude/baton.md` and that section only. It overrides no shipped operation, so it is not the duplicate the row below refuses. |
+| The request is for `## Repositories` alone, whether or not a backend file exists | Add or replace that one section in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Repositories` checks and Step 4's `## Repositories` checks, then stop: the full Step 3 counts and the Step 4 check table test a backend's operations, which this request neither writes nor changes. It overrides no shipped operation, so it is not the duplicate the no-backend-file rows refuse. |
 | No backend file; route 1 or 2 selected | Stop. The shipped defaults run as they are - through the GitHub MCP tools, or through `reference/backend-github-gh.md` - and a copy of them is a second file to keep in sync. |
 | No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |

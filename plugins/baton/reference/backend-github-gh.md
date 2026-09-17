@@ -14,12 +14,17 @@ stay as `backend-github.md` gives them.
 - **list-open:**       gh issue list --state open --limit 500
 - **list-mine:**       gh issue list --assignee @me --state open --limit 100 --search "sort:created-asc"
 - **create:**          gh issue create --title "<title>" --label "<category>" --body-file <path>
-- **view:**            gh issue view <id> --comments
-- **close-fixed:**     gh issue close <id> --reason completed
-- **close-invalid:**   gh issue close <id> --reason "not planned"
-- **comment:**         gh issue comment <id> --body-file <path>
+- **view:**            gh issue view <id> -R <owner>/<repo> --comments
+- **close-fixed:**     gh issue close <id> -R <owner>/<repo> --reason completed
+- **close-invalid:**   gh issue close <id> -R <owner>/<repo> --reason "not planned"
+- **comment:**         gh issue comment <id> -R <owner>/<repo> --body-file <path>
 - **fetch-handoff:**   gh api repos/<owner>/<repo>/issues/comments/<comment-id> --jq .body
 - **reachable:**       gh api user
+
+`view`, `comment`, `close-fixed` and `close-invalid` name the repository with `-R` because a
+run addressing an issue in another repository - `implement-handoff` fills `<owner>` and
+`<repo>` from the handoff locator - otherwise acts on the issue with that number in whichever
+checkout the command runs in.
 
 `comment` prints the created comment's URL on stdout, and that is the locator
 `post-handoff` reports. Do not re-derive it by listing an issue's comments: the listing is
