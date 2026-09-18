@@ -92,10 +92,18 @@ against the one repository the session is in, as it did before.
 
 ## Document contracts
 
-`write-deliverables` binds a document type to its reader and its must-include lists. Three
-contracts ship and any type not listed is derived, so a project needs none. Add your own in
-`.claude/doc-types.md` or `~/.claude/doc-types.md`, per
+`write-deliverables` binds a document type to its reader and its must-include lists.
+Four contracts ship and any type not listed is derived, so a project needs none. Add your own
+in `.claude/doc-types.md` or `~/.claude/doc-types.md`, per
 `skills/write-deliverables/reference/defining-doc-types.md`.
+
+Overriding `Run report` retargets what the tracker receives: `implement-handoff` writes both
+the report it posts on finishing and the one it posts on stopping under that type, so a
+project whose tracker is read by people without code access gives them a reader, an order and
+an emphasis of its own. An override replaces a contract's
+must-include list whole, so it cannot be what keeps a finding in: `implement-handoff` requires
+every review finding with its disposition, and whether a review round ran, from its own Step 7.
+Write an override for the reader and the shape; those stay in under any of them.
 
 ## Requires
 

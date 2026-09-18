@@ -66,3 +66,26 @@ listed. Add or replace types in `.claude/doc-types.md` or `~/.claude/doc-types.m
 - Anything recoverable from git history or the code itself.
 - A diary of the session.
 - Conclusions restated from a document already in the repo - link it.
+
+---
+
+## Run report
+
+- **READER:** a participant on the tracker issue the run was launched from, who did not watch it.
+- **GOAL:** know what the run left on the pull request, or where and why it stopped, and what still needs a person.
+- **ALREADY HAS:** the issue thread and everything already posted to it; where the run opened a pull request, that pull request and its diff, for a reader with repository access.
+
+**Must include**
+- The outcome first: the pull request, or the step the run stopped at and what stopped it.
+- Every review finding the run collected, each with its disposition - applied; rejected, with
+  the reason; deferred, with what it waits on; unresolved, with what blocks the call.
+- A review round that was skipped, timed out, or stopped part-way, said as that rather than
+  left silent.
+- What is left for a person to do, and where.
+
+**Must not include**
+- What the pull request body is for: the approach, what a reviewer should scrutinize, the
+  change described again at the level the diff shows.
+- A narrative of the run: what was tried, what order things happened in, or which round
+  raised a finding where its disposition already says what became of it.
+- Commands and their raw output where a one-line result answers the reader.

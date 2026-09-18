@@ -418,6 +418,12 @@ Every finding still standing when the loop ends goes in the Step 5 body - the Cr
 Important ones the run could not fix, and each Minor one it left - with its severity and the
 reason it stands.
 
+Keep the rest too, round by round: every finding each `code-review` returned, with its
+severity and what the loop did with it. The body needs only the ones still standing, so
+nothing else here would hold on to a finding the loop fixed - and Step 7's report names every
+finding, applied ones included. A round's output discarded once its fixes land cannot be
+recovered later.
+
 ### The claim audit
 
 The loop leaves the run holding a set of claims it is about to put in front of a reviewer:
@@ -562,8 +568,10 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    so the loop is the default.
 4. When the new output holds no review by the reviewer `request-reviewer` named, keep it
    as the copy and return to item 3 for what is left of the wait.
-5. On timeout, go to Step 7 with a file saying the review did not arrive. A reviewer that
-   answers later is `baton:address-review`'s to handle, not this run's.
+5. On timeout, go to Step 7. Its report is where the timeout is said: that the round was
+   requested and no review arrived, and - because a timeout cuts short what this round found,
+   not what the run has to report - Step 4's findings and their dispositions alongside it. A
+   reviewer that answers later is `baton:address-review`'s to handle, not this run's.
 6. Otherwise collect the round as `baton:address-review` Step 2 does - `review-bodies`,
    `pr-comments` and `review-threads`, with the author filters the backend defines - and
    keep the findings its Step 3 admits to the inventory. Read those two steps rather than
@@ -578,7 +586,8 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    its push gated on approval never reach this run. Empty output means a renamed heading,
    and that is a stop rather than an empty inventory.
 
-   Step 3's end-of-turn stop is not this run's: judge each finding here. Apply the findings
+   Step 3's end-of-turn stop is not this run's: judge each finding here, and give it a
+   severity from Step 4's table whether or not it holds. Apply the findings
    that hold and run the handoff's commands and `verify` over them - a failure of either is a
    stop. Run them here rather than leaving them to the loop below: that loop's checks sit after
    the findings it applies, so a round applying none skips them, and these fixes would reach
@@ -656,11 +665,13 @@ Two things hold it back, and neither is a stop:
   holding somebody else's work. Launching would stack the layer above onto the wrong history.
 
 Then run `published` once per issue the header names, in header order, each with that issue's
-id, the pull request URL from Step 5, and the same one file saying what shipped: the URL, the
-branch, how the handoff's commands and `verify` came out, any deviation Step 2 recorded, and
-whether Step 6 ran, timed out, or was skipped - skipped meaning only that `request-reviewer`
-is `none`. After a `keep`, that file also names the worktree path
-`.claude/worktrees/<name>` and which of the two checks failed.
+id, the pull request URL from Step 5, and the same one file written under
+`baton:write-deliverables` as a **Run report**, saying what shipped: the URL, the branch, how
+the handoff's commands and `verify` came out, any deviation Step 2 recorded, and whether Step 6
+ran, timed out, or was skipped - skipped meaning only that `request-reviewer` is `none`, and
+said so that a reader takes it as no external review having run rather than as nothing worth
+mentioning. After a `keep`, that file also names the worktree path `.claude/worktrees/<name>`
+and which of the two checks failed.
 
 Where the header named more than one issue, that file names them all and says which reference
 line each got, so every ticket's participants read the same account of what this one pull
@@ -674,9 +685,41 @@ launch: the entry run and what it returned, or, when one of the two conditions a
 it back, which one - naming both branch names on a rename, and the locator that went
 unlaunched either way. That locator is how a person resumes the stack by hand.
 
+That file also carries every review finding the run collected: every round of Step 4's loop,
+both the loop before Step 5's push and the one Step 6 item 6 runs over the reviewer's fixes,
+and, where Step 6 ran, every finding its reviewer round collected including the ones judged
+not to hold. Each carries one disposition:
+
+| Disposition | The finding | Carries |
+|---|---|---|
+| applied | is fixed on the branch | nothing further |
+| rejected | does not hold, or contradicts a decision the handoff recorded | which of the two, and why |
+| deferred | holds, and its fix is outside the handoff's scope or costs more than it is worth | what it waits on, or why it was left |
+| unresolved | needs an answer nobody here could give | what blocks the call |
+
+Step 4's three reasons for a finding the run cannot fix map onto these: outside the handoff's
+scope is deferred, contradicts a decision the handoff recorded is rejected, needs an answer
+nobody here can give is unresolved. The two judgements a round makes on its own take the
+remaining shapes - a finding read and found not to hold is rejected, a Minor one the loop
+chose to leave is deferred - so neither reaches the reader as silence. Every disposition but
+applied carries its reason, and every finding carries the severity Step 4 gave it: an
+unresolved Critical and a Minor left alone are different news. A finding the loop applied and
+a later round reopened takes the disposition it ends on.
+
+The findings, their dispositions and Step 6's outcome are required content whatever contract
+**Run report** resolves to. An override replaces a contract's must-include list wholesale
+(`skills/write-deliverables/reference/defining-doc-types.md`), so the shipped contract is not
+what holds them in - this step is, and a must-not-include that would cut them does not reach
+a file this step mandates. The type governs who the report is written for and the
+order, emphasis and wording it gets; this step governs what is present. A report missing an
+unresolved finding, or silent about a round that never ran, reads as a clean review under any
+contract.
+
 ## Stopping
 
-Every stop above takes one of two shapes, set by whether Step 5 has opened the pull request:
+Every stop above takes one of two shapes, set by whether Step 5 has opened the pull request.
+Both files are written under `baton:write-deliverables` as a **Run report**, the type Step 7
+uses:
 
 - Before it: push nothing, open no pull request, and run `stopped` with one file naming the
   step and what stopped it.
@@ -705,6 +748,15 @@ Step 1's stop on a mismatched pair still has a list: `issue` parsed, and only th
 whatever `closes` failed to say about it. A stop earlier than that has nothing to walk: run
 `stopped` on the primary alone where only that parsed, on nothing at all where
 `fetch-handoff` itself failed, and say in the report which issues went unnamed.
+
+**A stop can land part-way through a review.** Wherever Step 4's loop or Step 6's round had
+started, the file carries the findings judged so far with their dispositions, as Step 7's
+report does, and marks unresolved every finding it collected but never judged, with "run
+stopped" as what blocks the call - so the count a reader sees is the count the round found. A
+fix still uncommitted when the run stops is not on the branch, so its finding is not applied:
+mark it unresolved, with what stopped the run as what blocks the call. A
+stop before Step 4 has collected no findings and says nothing about them. This is required
+content under any contract loaded for **Run report**, the same as Step 7's.
 
 **A stop before Step 7's launch never launches `next`, and the `stopped` file carries the
 locator it did not launch.** A stop there strands every layer above it, and a stop runs
