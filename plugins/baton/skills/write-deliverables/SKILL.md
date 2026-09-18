@@ -18,11 +18,12 @@ section is a signal to its reader, not padding.
 
 Content works the same way as sections. Where a skill requires something by name in a document
 it mandates - `baton:implement-handoff`'s review findings and their dispositions - that skill
-owns whether it is present. Never put mandated content through Step 3, never cut it at G2 as
-derivable or at G9 as deletable, and never drop it because a contract's must-not-include reaches
-it. What a reader could look up elsewhere is exactly what a mandated claim is often for: that
-they do not have to. The contract still owns the reader the document is written for, and the
-order, emphasis and wording that reader gets; this skill still owns every sentence's shape.
+owns whether it is present. Never put mandated content through Step 3, never cut it under
+Step 4's Delete on sight or any Step 5 gate row, and never drop it because a contract's
+must-not-include reaches it. What a reader could look up elsewhere is exactly what a mandated
+claim is often for: that they do not have to. The contract still owns the reader the document
+is written for, and the order, emphasis and wording that reader gets; this skill still owns
+every sentence's shape.
 
 **Being asked for this skill authorizes reworking text already approved.** A direction here -
 by slash command, by a workflow step, by an instruction naming the text - is permission to
@@ -44,8 +45,9 @@ cat ~/.claude/doc-types.md 2>/dev/null
 ```
 
 A listed type fills the first three lines of the Step 2 brief, and its must-include and
-must-not-include lists are binding. An unlisted type leaves all five lines to Step 2, which
-derives the sections there as well.
+must-not-include lists are binding, except that a must-not-include never removes content
+another skill mandates, per the opening section. An unlisted type leaves all five lines to
+Step 2, which derives the sections there as well.
 
 Adding a type: `reference/defining-doc-types.md`.
 
@@ -101,6 +103,8 @@ Draft in the file itself - the gate runs on real text, not on intent.
 
 ### Delete on sight
 
+Content the owning skill mandates is never deleted here, per the opening section.
+
 - **Narration of the diff** - a bullet per changed file, before/after pairs where the after
   is obvious.
 - **Narration of your process** - "searched X, then read Y, then found Z".
@@ -129,10 +133,13 @@ against the actual text and record PASS or FAIL.
 **On any FAIL: fix it, then restart the gate at G1.** Fixes introduce new violations - that is
 why it restarts. Done means one full clean pass.
 
+No row's fix deletes content the owning skill mandates, per the opening section: a row that
+fires on it is fixed by rewording, or passes with the content as it stands.
+
 | # | Check | Test |
 |---|-------|------|
 | G1 | **Process leakage** | Sentences whose subject is you, the work, or the change: `I`, `we`, `initially`, `originally`, `then`, `after that`, `tried`, `decided to`, `ended up`, `was changed`, `used to`, `previously`, `turns out`. FAIL unless GOAL is history. Imperative steps the *reader* performs are exempt. |
-| G2 | **Derivable** | Per sentence: could READER get this from ALREADY HAS in under a minute? FAIL - cut, or replace with a pointer. Content the owning skill mandates is exempt, per the opening section. |
+| G2 | **Derivable** | Per sentence: could READER get this from ALREADY HAS in under a minute? FAIL - cut, or replace with a pointer. |
 | G3 | **Wrong reader** | Name the Step 2 reader again, on this sentence. A sentence addressed to you, your session, or whoever set the task is FAIL however accurate - correct content aimed at the wrong person is not wordy, so no other row catches it. |
 | G4 | **Padding** | Run the grep below. Any hit outside a quoted example is FAIL - delete it or name the concrete thing it stands in for. |
 | G5 | **Vacuous** | A sentence that would be equally true of a different project, PR, or report. FAIL - delete. |

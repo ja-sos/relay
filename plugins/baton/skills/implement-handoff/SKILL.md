@@ -586,7 +586,8 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    its push gated on approval never reach this run. Empty output means a renamed heading,
    and that is a stop rather than an empty inventory.
 
-   Step 3's end-of-turn stop is not this run's: judge each finding here. Apply the findings
+   Step 3's end-of-turn stop is not this run's: judge each finding here, and give it a
+   severity from Step 4's table whether or not it holds. Apply the findings
    that hold and run the handoff's commands and `verify` over them - a failure of either is a
    stop. Run them here rather than leaving them to the loop below: that loop's checks sit after
    the findings it applies, so a round applying none skips them, and these fixes would reach
@@ -752,6 +753,8 @@ whatever `closes` failed to say about it. A stop earlier than that has nothing t
 started, the file carries the findings judged so far with their dispositions, as Step 7's
 report does, and marks unresolved every finding it collected but never judged, with "run
 stopped" as what blocks the call - so the count a reader sees is the count the round found. A
+fix still uncommitted when the run stops is not on the branch, so its finding is not applied:
+mark it unresolved, with what stopped the run as what blocks the call. A
 stop before Step 4 has collected no findings and says nothing about them. This is required
 content under any contract loaded for **Run report**, the same as Step 7's.
 
