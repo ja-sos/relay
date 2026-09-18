@@ -228,6 +228,11 @@ author filtering belongs inside the command, since it is part of what the operat
 A `tool:` entry cannot filter its output, so the backend's notes name the filter and the
 caller applies it.
 
+`self-review` Step 0 joined `review-threads`' callers in baton 0.1.14. A `## Review` restated
+in `.claude/baton.md` or `~/.claude/baton.md` without the operation already stopped
+`address-review` and `implement-handoff`, and from 0.1.14 it stops `self-review` as well. Add
+the entry; there is no degraded mode that reviews a branch without its threads.
+
 The last ten are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
 and `stopped` are `op: comment <id> <path>` - so a backend that has overridden `## Tracker`
 for Jira posts all three to Jira without naming them at all.

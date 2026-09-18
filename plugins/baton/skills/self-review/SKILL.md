@@ -120,8 +120,13 @@ Present the findings with severity, a verdict on each, and the proposed fix, as 
 message of the turn**. End the turn there, with no tool call after it.
 
 Alongside them, and kept apart from them, list one disposition per thread Step 0 collected:
-stands, fixed as claimed, or the rejection holds - each with the evidence that settled it.
-Every collected thread gets a row, whether it was resolved or answered or neither.
+stands, fixed as claimed, the rejection holds, or the finding does not hold - each with the
+evidence that settled it. Those four cover Step 1's three classes between them, so every
+collected thread gets a row, whether it was resolved or answered or neither.
+
+A thread whose finding stands carries a proposed fix like any `code-review` finding does.
+Separating the dispositions from the findings is a matter of presentation, not of standing:
+a re-opened finding the user approves is applied in Step 3 the same way.
 
 Which fixes to apply is input only the user can give, so stopping is this step's required
 outcome, not a failure to finish. Applying a fix in the same turn as the findings does not
