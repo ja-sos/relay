@@ -173,13 +173,13 @@ same, because what they reference is the issue rather than the pull request.
 | `verify-checkout` | `implement-handoff` Step 1 | - |
 | `pr-create` | `implement-handoff` Step 5 | `<title>` `<path>` `<category>` `<pr-base>` |
 | `stack-link` | `implement-handoff` Step 5 | `<id>` `<pr-url>` `<pr-base>` |
-| `pr-view` | `self-review` Step 1, `review-pr` Step 1, `address-review` Step 1 | `<id>` |
+| `pr-view` | `self-review` Step 0, `review-pr` Step 1, `address-review` Step 1 | `<id>` |
 | `pr-update` | `self-review` Step 4, `address-review` Step 5, `implement-handoff` Step 6 | `<id>` `<path>` |
 | `review-list` | `review-pr` Step 4, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
 | `review-post` | `review-pr` Step 4 | `<owner>` `<repo>` `<id>` `<path>` |
 | `review-bodies` | `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
 | `pr-comments` | `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
-| `review-threads` | `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
+| `review-threads` | `self-review` Step 0, `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
 | `thread-reply` | `address-review` Step 5, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` `<comment-id>` `<path>` |
 | `pr-comment` | `address-review` Step 5, `implement-handoff` Step 6 | `<id>` `<path>` |
 | `closes` / `refs` | `implement-handoff` Step 5 | `<owner>` `<repo>` `<id>` |
