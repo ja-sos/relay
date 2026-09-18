@@ -66,27 +66,72 @@ written on the branch is not. Name the writer as the `baton:implement-handoff` r
 author", never a pronoun, never "your change" or "you decided" about this branch. Carry this rule
 into every subagent prompt the review spawns, not only the first.
 
-## Step 1 - Review
+## Step 0 - Collect the review threads
 
 Run `pr-view` for the current branch, and compare the pull request's head commit with
 `git rev-parse HEAD`:
 
-- Equal: review the pull request's diff.
+- Equal: the target is the pull request's diff.
 - Different: one side holds commits the other lacks, and either target misses them. Report
   both commits and ask which to review before running anything.
-- No pull request: review the full branch diff against the merge target, so every commit on
-  the branch is covered rather than only uncommitted edits.
+- No pull request: the target is the full branch diff against the merge target, so every
+  commit on the branch is covered rather than only uncommitted edits.
 
-Run `code-review` over that diff, with the pull request number as its `<target>` - or the
-branch name for the local branch - and `<locator>` empty, this skill taking a branch rather
-than a handoff. Carry the provenance rule into it. Findings land
+With a pull request settled, run `review-threads` on it and keep every thread it returns.
+No resolved-state filter and no author filter. `address-review` Step 3 takes a resolved
+thread as context rather than a row; that rule does not hold here, where a thread marked
+resolved records an agent's claim and nothing more. An author filter cannot help either:
+the run commits under the user's git identity and replies through the credentials
+`reachable` resolves to, so its replies and the user's are indistinguishable by author.
+
+Write down three facts per thread:
+
+- the finding - the thread's first comment;
+- what the code at the reviewed head does now at that thread's path;
+- what the latest reply claimed, or `no reply`.
+
+The thread comment's numeric id is not among them: this skill names no `thread-reply`, and
+nothing here writes back to a thread.
+
+Where there is no pull request, or it carries no threads, this step collects nothing and
+Step 1 reviews the target above alone.
+
+## Step 1 - Review
+
+Run `code-review` over the target Step 0 settled, with the pull request number as its
+`<target>` - or the branch name for the local branch - and `<locator>` empty, this skill
+taking a branch rather than a handoff. Carry the provenance rule into it. Findings land
 as fixes in the working tree, never as comments on the pull request: the branch is yours to
 fix, not yours to have written.
+
+The threads Step 0 collected stay out of that call: `code-review` takes `<target>` and
+`<locator>` and nothing else, so no thread reaches it. Once it returns, check each thread
+yourself against its three facts, by its latest reply:
+
+- A reply claiming a fix: check the claim against the diff. Where the diff contains the fix,
+  the thread is fixed as claimed.
+- A reply rejecting the finding: check the reasoning against the code. Where the reasoning
+  holds, the rejection holds.
+- Any other reply - an acknowledgement, a deferral, a question, a reviewer's pushback - or
+  no reply: rule on the finding's merits.
+
+A fix claim the diff does not contain, or reasoning the code contradicts, discards the reply
+and nothing more: rule on the finding's merits. A ruling on the merits is settled by what
+the code at the reviewed head does, and ends in stands or the finding does not hold.
 
 ## Step 2 - The gate
 
 Present the findings with severity, a verdict on each, and the proposed fix, as the **final
 message of the turn**. End the turn there, with no tool call after it.
+
+Alongside them, and kept apart from them, list one disposition per thread Step 0 collected:
+stands, fixed as claimed, the rejection holds, or the finding does not hold - each with the
+evidence that settled it. Every check in Step 1 ends in one of those four, so every
+collected thread gets a row, whether it was resolved or answered or neither.
+
+A thread whose finding stands carries a proposed fix like any `code-review` finding does.
+Separating the dispositions from the findings is a matter of presentation, not of standing:
+a re-opened finding the user approves is applied in Step 3 the same way.
 
 Which fixes to apply is input only the user can give, so stopping is this step's required
 outcome, not a failure to finish. Applying a fix in the same turn as the findings does not
@@ -110,7 +155,7 @@ Nothing leaves the machine until the user approves it, and a passing suite is no
 Pushing is not pre-authorized here, unlike in `baton:implement-handoff`, because someone is
 present to ask.
 
-On an explicit go-ahead, push. Where Step 1 found no pull request, that is the end of it -
+On an explicit go-ahead, push. Where Step 0 found no pull request, that is the end of it -
 there is no body to update, and opening one is not this skill's.
 
 With one open, run `pr-update` when the applied fixes left its body inaccurate. Write that
@@ -128,7 +173,7 @@ When the user declines the push, say what that leaves undone rather than moving 
 
 Either way, run `wrap-up` as the last action of the run, with `self-review` as `<skill>`. With
 a pull request open, `<id>` is its number and `<pr-url>` and `<head-branch>` its URL and head
-branch, from Step 1's `pr-view`; where Step 1 found none, `<id>` and `<pr-url>` are empty and
+branch, from Step 0's `pr-view`; where Step 0 found none, `<id>` and `<pr-url>` are empty and
 `<head-branch>` is the current branch. The decline path runs it too: the review ended either
 way. `none` is its shipped default, and that value skips the call, as does a backend that
 leaves `wrap-up` undefined.
@@ -144,6 +189,8 @@ nothing is retried.
 - "Your change", "your code", "you decided" about this branch.
 - A finding dropped or downgraded on the strength of a reply, a resolved thread, a commit message
   or a code comment.
+- A thread Step 0 collected missing from the Step 2 gate because it was resolved or already
+  answered.
 - A subagent prompt sent without the provenance rule.
 - A passing suite read as evidence the behaviour is right.
 
