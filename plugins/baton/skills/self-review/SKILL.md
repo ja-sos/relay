@@ -104,15 +104,20 @@ taking a branch rather than a handoff. Carry the provenance rule into it. Findin
 as fixes in the working tree, never as comments on the pull request: the branch is yours to
 fix, not yours to have written.
 
-Every thread Step 0 collected goes into that prompt as a named target, carrying its three
-facts and the provenance rule, and into every subagent prompt the review spawns. Each class
-of thread has its own check:
+The threads Step 0 collected stay out of that call: `code-review` takes `<target>` and
+`<locator>` and nothing else, so no thread reaches it. Once it returns, check each thread
+yourself against its three facts, by its latest reply:
 
-- A reply claiming a fix: check the claim against the diff. Where the diff does not contain
-  the fix, the finding stands.
+- A reply claiming a fix: check the claim against the diff. Where the diff contains the fix,
+  the thread is fixed as claimed.
 - A reply rejecting the finding: check the reasoning against the code. Where the reasoning
-  is wrong, the finding stands.
-- No reply: rule on the finding's merits.
+  holds, the rejection holds.
+- Any other reply - an acknowledgement, a deferral, a question, a reviewer's pushback - or
+  no reply: rule on the finding's merits.
+
+A fix claim the diff does not contain, or reasoning the code contradicts, discards the reply
+and nothing more: rule on the finding's merits. A ruling on the merits is settled by what
+the code at the reviewed head does, and ends in stands or the finding does not hold.
 
 ## Step 2 - The gate
 
@@ -121,7 +126,7 @@ message of the turn**. End the turn there, with no tool call after it.
 
 Alongside them, and kept apart from them, list one disposition per thread Step 0 collected:
 stands, fixed as claimed, the rejection holds, or the finding does not hold - each with the
-evidence that settled it. Those four cover Step 1's three classes between them, so every
+evidence that settled it. Every check in Step 1 ends in one of those four, so every
 collected thread gets a row, whether it was resolved or answered or neither.
 
 A thread whose finding stands carries a proposed fix like any `code-review` finding does.
