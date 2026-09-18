@@ -16,6 +16,11 @@ repo's PR template - it owns which sections exist, and this skill applies only *
 Never put a mandated heading through Step 3 and never drop one as redundant: an empty mandated
 section is a signal to its reader, not padding.
 
+Content works the same way as sections. Where a skill requires something by name in a document
+it mandates, that skill owns whether it is present, and no contract's must-not-include - shipped
+or overridden - removes it. The contract still owns the reader it is written for and the order,
+emphasis and wording it gets.
+
 **Being asked for this skill authorizes reworking text already approved.** A direction here -
 by slash command, by a workflow step, by an instruction naming the text - is permission to
 change wording the user has already seen. The exception is your own mid-turn discovery that the

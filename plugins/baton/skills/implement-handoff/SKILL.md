@@ -418,6 +418,12 @@ Every finding still standing when the loop ends goes in the Step 5 body - the Cr
 Important ones the run could not fix, and each Minor one it left - with its severity and the
 reason it stands.
 
+Keep the rest too, round by round: every finding each `code-review` returned, with its
+severity and what the loop did with it. The body needs only the ones still standing, so
+nothing else here would hold on to a finding the loop fixed - and Step 7's report names every
+finding, applied ones included. A round's output discarded once its fixes land cannot be
+recovered later.
+
 ### The claim audit
 
 The loop leaves the run holding a set of claims it is about to put in front of a reviewer:
@@ -678,9 +684,10 @@ launch: the entry run and what it returned, or, when one of the two conditions a
 it back, which one - naming both branch names on a rename, and the locator that went
 unlaunched either way. That locator is how a person resumes the stack by hand.
 
-That file also carries every review finding the run collected - each round of Step 4's loop,
-and, where Step 6 ran, every finding its round collected including the ones judged not to
-hold - each under one disposition:
+That file also carries every review finding the run collected: every round of Step 4's loop,
+both the loop before Step 5's push and the one Step 6 item 6 runs over the reviewer's fixes,
+and, where Step 6 ran, every finding its reviewer round collected including the ones judged
+not to hold. Each carries one disposition:
 
 | Disposition | The finding | Carries |
 |---|---|---|
