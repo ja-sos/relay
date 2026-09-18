@@ -82,7 +82,10 @@ pointer into another issue's bundle - and for a pointer, the issue it names. A s
 does not explain is one nobody can judge.
 
 When nothing survives, say so and name what was skipped. Never invent an issue, and never
-return one that carries the marker because the list would otherwise be empty.
+return one that carries the marker because the list would otherwise be empty. Add which of the
+skipped issues carried `closes: no`, whose pull request may already have merged: those are the
+ones where the marker records finished work rather than pending work, and this step cannot
+tell the two apart. They are the candidates a person picks from when the answer is none.
 
 ## Done
 
