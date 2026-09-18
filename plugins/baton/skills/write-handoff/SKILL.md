@@ -69,6 +69,32 @@ labelled as a work order rather than a decision the project has taken:
 Keep the blank lines inside `<details>` as shown. Without the one after `<summary>`, GitHub
 renders the fenced header as literal backticks.
 
+Where the header names more than one issue, that whole comment goes on the **primary** issue -
+the first entry of `issue` - and every other issue named gets a pointer to it, posted with
+`post-handoff` as well and written to a file of its own, since that operation takes a path:
+
+```
+<!-- claude-handoff -->
+This issue is bundled into the handoff on issue <primary id>: <locator>
+That handoff carries the header, the approach and the acceptance criteria for this issue
+as well.
+```
+
+The marker is the first line and there is **no fenced header anywhere in it**. With one the
+pointer would read as a second handoff, and a launcher handed its locator would start a second
+run on the branch the primary handoff already names - two runs on one branch, which is the
+race `implement-handoff` Step 7 exists to prevent.
+
+What the pointer buys is the marker on that issue. `has-handoff` looks for nothing else, so a
+bundled issue is skipped by `next-issue` exactly as its primary is, and `investigate-issue`
+reads the primary handoff by looking at the issue the pointer names.
+
+Bundle only issues this investigation actually settled - it is a judgement made from the work
+just done, and nothing here checks it. An issue already waiting on a handoff of its own is
+work another run is about to do, and bundling it puts two runs on the same ticket, one of
+which may carry `closes: yes` and shut it while the other's work is still outstanding. Where
+such an issue belongs in the bundle anyway, `closes` for it is `no`.
+
 Work no issue drives has nowhere to anchor. A session on another machine reaches the
 tracker and nothing else - no file of this machine's, and no path that resolves. Open the
 issue first; `baton:file-issue` covers that.
@@ -84,8 +110,8 @@ consecutive lines as one paragraph, so an unfenced header arrives as prose:
 ```
 repo:   <owner>/<name>
 base:   <sha the plan was formed against>
-issue:  <number>
-closes: <yes, or no>
+issue:  <number, or several separated by spaces>
+closes: <yes or no, one value per issue in the same order>
 branch: <branch the work belongs on>
 ```
 
@@ -115,12 +141,30 @@ handoff, and the other handoffs of the same investigation are unaffected: the co
 be checked in the only clone this machine offers for it, and the check run in the wrong clone
 answers confidently about the wrong repository rather than failing.
 
+`issue` names every issue this handoff's pull request settles, separated by spaces, and
+`closes` carries one value per issue in the same order: `issue: 15 16 17` pairs with
+`closes: yes no yes`. Space separation is the `next` line's, below. One value in each is a
+handoff naming one issue - every handoff written before baton 0.1.12, and what a run does with
+it is unchanged. Every entry names an issue in the repository this handoff is posted in,
+which is where `post-handoff` puts the pointers too - not necessarily the `repo` line's
+repository, which names where the work goes.
+
+**The two lists must be the same length.** `implement-handoff` Step 1 stops on a pair that is
+not, rather than pairing what it can: a guess that lands on `yes` shuts an issue this handoff
+said to leave open, and a merge cannot be taken back.
+
+**The first entry is the primary issue.** The investigation, this whole handoff comment and the
+run's worktree name all come from it, and every other entry gets the pointer Step 1 describes.
+
 `closes` is `yes` on the handoff that finishes the issue and `no` on every other, so the
 issue is not marked done while work on it remains. `no` is the safe value whenever the
-split is unsettled.
+split is unsettled. It is judged per entry, not per handoff: a bundle that finishes one issue
+and leaves another open writes `yes` for the first and `no` for the second, and the run writes
+each issue's reference line from that issue's own value.
 
-`category` is the label the pull request will carry. Read the issue's own labels, keep the
-one matching a row of the backend's `## Categories` table, and write it exactly as that row
+`category` is the label the pull request will carry. Read the primary issue's own labels -
+one pull request carries one label, so a bundle takes the primary's - keep the one matching
+a row of the backend's `## Categories` table, and write it exactly as that row
 spells it - a project can rename its categories, so the row is the spelling, not this
 skill. An issue carrying no such label gets no `category` line, and the run opens an
 unlabelled pull request.
@@ -215,9 +259,22 @@ without the handoff's reasoning.
 
 ## Done
 
-Print the locator `post-handoff` returns, which addresses this handoff rather than the
-issue. Print it as it came back, unparsed: only the backend's own `fetch-handoff` has to
-understand its shape.
+`post-handoff` runs once per issue the header names, primary first. That order is forced: the
+pointers carry the locator the primary's call returns. The operation's signature does not
+change - each call takes one `<id>` and one file, and never a list.
+
+A pointer call that fails is a stop, and the report names which issues carry the marker and
+which do not - and the primary locator too, even though the stop lands before `## Done`,
+because nothing else in the run recovers it. The primary handoff is already posted by then
+and stays posted: it names the whole bundle and is still the handoff to run. What an issue
+without its pointer loses is the marker, so `next-issue` offers it as fresh work and a second
+investigation of it begins. Post the missing pointer by hand and the bundle is whole again -
+nothing here edits a posted comment, so the header stands as written either way.
+
+Print the locator the **primary** call returns, which addresses this handoff rather than the
+issue. The pointers' own locators address nothing a run can read, and naming one to a
+launcher starts a run with no handoff to work from. Print it as it came back, unparsed: only
+the backend's own `fetch-handoff` has to understand its shape.
 
 An issue splits into several handoffs whenever its fix lands as more than one change, so
 the issue number addresses none of them and whatever launches the work takes the locator.

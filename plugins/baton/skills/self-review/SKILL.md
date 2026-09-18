@@ -119,6 +119,11 @@ what the code does now and why it is shaped that way, as though the final diff w
 version that ever existed. Delete whatever the current diff no longer supports, and never narrate
 the review rounds.
 
+`pr-update` replaces the body whole, so carry every issue reference line across unchanged. A
+handoff may name several issues, and each `closes` or `refs` line dropped here is an issue the
+merge silently stops settling - "whatever the current diff no longer supports" is about claims,
+never about these lines.
+
 When the user declines the push, say what that leaves undone rather than moving on.
 
 Either way, run `wrap-up` as the last action of the run, with `self-review` as `<skill>`. With

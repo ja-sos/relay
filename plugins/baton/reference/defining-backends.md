@@ -217,9 +217,10 @@ ships branches no person has looked at.
 Step 5, immediately after `pr-create` and **only where the handoff's header carries
 `pr-base`** - which is why a project whose `## Forge` predates the operation keeps running
 single-layer handoffs and stops only on a stacked one. `<pr-url>` is what `pr-create`
-returned and `<pr-base>` the branch below; `<id>` is the issue's number, as it is everywhere
-else in that step. Both shipped routes ship `none`: a pull request opened against another's
-branch already reads as stacked on GitHub, and `pr-create` has passed that base already.
+returned and `<pr-base>` the branch below; `<id>` is the **primary** issue's number, which the
+note below on the operations a bundle runs once per issue sets out. Both shipped routes ship
+`none`: a pull request opened against another's branch already reads as stacked on GitHub, and
+`pr-create` has passed that base already.
 
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
@@ -230,6 +231,21 @@ caller applies it.
 The last ten are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
 and `stopped` are `op: comment <id> <path>` - so a backend that has overridden `## Tracker`
 for Jira posts all three to Jira without naming them at all.
+
+Four of those operations run **once per issue the handoff's header names**, never once with a
+list: `post-handoff` at `write-handoff` Step 1, and `started`, `published` and `stopped` in
+`implement-handoff`. A handoff's `issue` line became a space-separated list in baton 0.1.12,
+paired positionally with `closes`; a header naming one issue calls each of them once, exactly
+as every header did before. So `<id>` is always a single issue whatever the header holds, and
+no entry - a shell command, a `tool:` JSON body, an `op:` - needs anything added to handle a
+bundle. An entry that reached for the whole list would have to be written for it on purpose,
+and nothing here passes one.
+
+`stack-link` is not one of the four, though it sits in the same step as two of them. It
+registers one pull request as one layer, and a bundle is still one pull request, so it runs
+once and its `<id>` is the **primary** issue - the first entry of the header's `issue` line.
+`closes` and `refs` are the other way about: Step 5 reads them once per issue, because the
+body carries a reference line for each.
 
 `started` is the eighth, added in baton 0.1.5. A `## Workflow` written before it does not
 name `started` at all, which leaves it undefined rather than `none`, and

@@ -54,6 +54,24 @@ to the user with what it already covers, and go no further without their say-so.
 waiting on an implementation run is settled work, and investigating it again ends in a second
 plan and a second run against the same change.
 
+**The marker may sit in a pointer rather than in a handoff.** An issue bundled into another
+issue's handoff carries a short comment holding the marker, the primary issue's id and that
+handoff's locator - and no fenced header, which is what tells the two apart. Follow it: run
+`view` against the issue the pointer names and read the handoff there, then put that handoff
+to the user as the one covering this issue, naming the primary issue and quoting the locator
+the pointer carried. The pointer alone says an issue is scoped without saying by what, which
+leaves the user nothing to overrule.
+
+Where that issue carries more than one handoff - `baton:write-handoff` posts a second for
+rework rather than editing the first - put them all to the user with the pointer's locator
+beside them and let the user say which one binds. `view` output need not carry a comment
+address to match the locator against, so the reader resolves it rather than this step: that
+reader is present, which is the whole difference between this skill and `implement-handoff`.
+
+An issue can also carry a pointer **and** a handoff of its own, on separate work. Neither
+outranks the other: put both to the user - the handoff read above and the bundle the pointer
+names - and go no further without their say-so, the same as for one.
+
 Take the `Found at <sha> on <branch>` line from the body and diff the files it cites:
 
 ```
@@ -156,6 +174,22 @@ git branch -a --list '*<n>*'
 
 Write the handoff under `baton:write-handoff`, which posts it to this issue and takes the
 body through `baton:write-deliverables`.
+
+Where the approach settles other issues in the same pull request, name them on the header's
+`issue` line after this one, each with its own `closes` value. This issue stays first - it
+drove the investigation and it keeps the handoff - and `write-handoff` Step 1 posts a pointer
+to it on each of the others. Bundle only issues this investigation actually covered; one that
+merely looks related is a separate investigation, and `closes: no` is the answer wherever a
+bundled issue keeps work beyond this change.
+
+**Every issue on that line lives in the repository this one does.** The handoff and its
+pointers are posted there, and every number the header carries resolves against it
+(`implement-handoff` Step 5), so a number bundled from another repository addresses whatever
+issue happens to hold it here - the pointer lands on that issue and the pull request's
+reference line names it, closing it on merge where its `closes` value is `yes`, while the
+issue meant by it is never linked. An issue in another repository takes a handoff of its own,
+posted on that issue, which the split below already writes where the change spans
+repositories.
 
 Its `base` is the HEAD that Step 2 reproduced against and Step 3 named the cause at, so
 the plan stays falsifiable against the code it was formed on.
