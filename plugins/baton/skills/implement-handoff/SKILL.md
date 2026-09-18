@@ -277,11 +277,13 @@ above the cut rather than inside the retry below, which would fire it once per a
 
 The gate holds the sequence to one pass per branch cut, and not to one call per issue for
 all time: a stop part-way through the list leaves the branch uncut, so the resuming turn
-finds HEAD off `<branch>`, cuts it, and runs the whole list again from the first issue. What
-that asks of `started` is that repeating it be harmless - moving a ticket that is already
-moved - which is what it asked of a one-issue header before lists existed, and why a partial
-failure needs no bookkeeping carried across the stop. An entry that cannot be repeated safely
-is one the project writes as `none`.
+finds HEAD off `<branch>`, cuts it, and runs the whole list again from the first issue. Every
+issue ahead of the failure therefore takes a second `started`, this one behind a call that
+already succeeded. What that asks of `started` is that repeating it be harmless - moving a
+ticket that is already moved - and that is what buys a partial failure its freedom from
+bookkeeping carried across the stop. An entry that cannot be repeated safely is one the
+project writes as `none`, which gives up the call on every issue rather than duplicating it
+on some.
 
 Where the header carries no `pr-base`, the branch is cut from `<base>`:
 

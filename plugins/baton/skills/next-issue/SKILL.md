@@ -60,16 +60,16 @@ produces a second investigation of settled work.
 An issue bundled into another issue's handoff carries the marker too, in a pointer comment
 `baton:write-handoff` posts on every issue its header names beyond the first. Nothing here
 changes for it: the marker is the whole test, so a pointer skips its issue exactly as a handoff
-does - and correctly, because that issue is waiting on the same implementation run as its
-primary. Keep what the marker sat in and, for a pointer, the issue it names: Step 3 reports
-that, and the marker alone does not carry it.
+does. What the marker records is that an implementation run was scoped over that issue, which
+holds for a pointer as for a handoff, and holds whether that run is still pending or has
+already merged. Keep what the marker sat in and, for a pointer, the issue it names: Step 3
+reports that, and the marker alone does not carry it.
 
 An issue whose handoff carried `closes: yes` is closed by its merged pull request once that
 handoff is implemented, so it never reaches `list-mine` again. One that carried `closes: no`
 stays open and keeps its marker, and this step goes on skipping it after the run that
 implemented it has finished - so an issue deliberately left open for further work is not
-offered again here. Say so in Step 3 rather than treating every skip as settled scope: a
-marker records that an implementation run was scoped, not that one is still pending.
+offered again here. Say so in Step 3 rather than treating every skip as settled scope.
 
 Stop walking at the first candidate that survives - `has-handoff` costs a call per issue, and
 the ones below the answer do not need one.
@@ -82,10 +82,13 @@ pointer into another issue's bundle - and for a pointer, the issue it names. A s
 does not explain is one nobody can judge.
 
 When nothing survives, say so and name what was skipped. Never invent an issue, and never
-return one that carries the marker because the list would otherwise be empty. Add which of the
-skipped issues carried `closes: no`, whose pull request may already have merged: those are the
-ones where the marker records finished work rather than pending work, and this step cannot
-tell the two apart. They are the candidates a person picks from when the answer is none.
+return one that carries the marker because the list would otherwise be empty. Add each skipped
+issue's `closes` value where the marker sat in a handoff: `closes: no` leaves an issue open
+after its pull request merges, so the marker there may record finished work rather than pending
+work. A pointer carries no `closes` value - the marker, the primary issue's id and the locator
+are the whole comment - so report that value as unread and name the primary issue whose handoff
+holds it, rather than asserting one this step never saw. Either way the skipped list is what a
+person picks from when the answer is none.
 
 ## Done
 

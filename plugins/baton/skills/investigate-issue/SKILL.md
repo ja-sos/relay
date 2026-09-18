@@ -182,6 +182,15 @@ to it on each of the others. Bundle only issues this investigation actually cove
 merely looks related is a separate investigation, and `closes: no` is the answer wherever a
 bundled issue keeps work beyond this change.
 
+**Every issue on that line lives in the repository this one does.** The handoff and its
+pointers are posted there, and every number the header carries resolves against it
+(`implement-handoff` Step 5), so a number bundled from another repository addresses whatever
+issue happens to hold it here - the pointer lands on that issue and the pull request's
+reference line names it, closing it on merge where its `closes` value is `yes`, while the
+issue meant by it is never linked. An issue in another repository takes a handoff of its own,
+posted on that issue, which the split below already writes where the change spans
+repositories.
+
 Its `base` is the HEAD that Step 2 reproduced against and Step 3 named the cause at, so
 the plan stays falsifiable against the code it was formed on.
 

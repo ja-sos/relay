@@ -217,9 +217,10 @@ ships branches no person has looked at.
 Step 5, immediately after `pr-create` and **only where the handoff's header carries
 `pr-base`** - which is why a project whose `## Forge` predates the operation keeps running
 single-layer handoffs and stops only on a stacked one. `<pr-url>` is what `pr-create`
-returned and `<pr-base>` the branch below; `<id>` is the issue's number, as it is everywhere
-else in that step. Both shipped routes ship `none`: a pull request opened against another's
-branch already reads as stacked on GitHub, and `pr-create` has passed that base already.
+returned and `<pr-base>` the branch below; `<id>` is the **primary** issue's number, which the
+note below on the operations a bundle runs once per issue sets out. Both shipped routes ship
+`none`: a pull request opened against another's branch already reads as stacked on GitHub, and
+`pr-create` has passed that base already.
 
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
