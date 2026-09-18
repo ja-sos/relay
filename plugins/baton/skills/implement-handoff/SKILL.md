@@ -81,6 +81,9 @@ unasked does not cover the run. These need no confirmation:
 - Dispatching the subagents Step 4 runs - the claim audit, and a reviewer an `agent:` entry
   names. They read and report; nothing they return reaches the tracker or the forge except
   through a step above.
+- Reading the files the header's `assets` line names, under the `root` the backend's
+  `## Assets` section gives. They are inputs to the work, resolved at Step 1, and reading them
+  is what the line exists for.
 - Deviating from the handoff's approach where the code contradicts it, so long as Step 5's
   body names the deviation.
 
@@ -92,6 +95,9 @@ the ask that would authorize it:
 - Merging the pull request, marking a draft ready, or adding a reviewer beyond what
   `request-reviewer` names. That operation is the project's standing answer to who reviews
   this, given ahead of the run, so Step 6 runs it without asking.
+- Writing, moving or deleting anything under the `## Assets` `root`, and copying an asset into
+  the worktree or a commit. Assets are read-only to the run: the folder is shared across every
+  repository on the machine, and some of what it holds is not cleared to live in one.
 
 Those are actions. A judgement this run can make on the evidence - which approach the
 code supports, whether a review finding holds - is one it must make rather than end the turn
@@ -104,7 +110,7 @@ prompts for it.
 
 Run `fetch-handoff` on the locator. Where the entry takes `<id>` or `<comment-id>`, derive
 each from the locator as the backend's notes on `fetch-handoff` say. The handoff's
-header gives `repo`, `base`, `issue`, `closes` and `branch`. Three more lines are optional,
+header gives `repo`, `base`, `issue`, `closes` and `branch`. Four more lines are optional,
 and a handoff written before they existed carries none of them - an absent line is not a
 stop:
 
@@ -113,6 +119,7 @@ stop:
 | `category` | `<category>` is empty |
 | `pr-base` | `<pr-base>` is `<default-branch>`, and the branch is cut from `<base>` |
 | `next` | Step 7 launches nothing |
+| `assets` | nothing is resolved, and no `## Assets` section is needed anywhere |
 
 A handoff with a `pr-base` line is a stop where the loaded `pr-create` entry never contains
 `<pr-base>`. A `## Forge` written before baton 0.1.9 has no such placeholder, and its pull
@@ -208,6 +215,57 @@ in the repository this run is building in. `verify-checkout` still has to equal 
 Check reachability with `reachable` when a tracker call fails; it separates a credential error
 from an undefined operation. A credential error is the session, not the plan, and the backend
 records what each one means.
+
+### `assets`
+
+**Where the header carries `assets`, resolve every path it lists - here, and before
+`EnterWorktree`.** The line is space-separated, and each entry is a path relative to the
+`root` of the backend's `## Assets` section. Check the root first, then each path:
+
+```
+test -d "<root>"
+test -e "<root>/<path>"
+```
+
+Four things are a stop, each **naming every path that did not resolve** rather than the first:
+
+- No loaded backend file defines `## Assets`. A cloud run reaches this stop as a matter of
+  course, because it clones the repository and never sees `~/.claude/baton.md`, where the
+  section lives; the report says that rather than reporting a broken backend.
+- The section defines no `root`, or its `root` is not an absolute path to an existing
+  directory. Check it before any path: an empty `<root>` turns the second line into
+  `test -e "/<path>"`, which answers about the filesystem root, so a run that skipped this
+  would carry on against a file the handoff never named.
+- A path is invalid. A path is valid only where **every character is a letter, a digit, `.`,
+  `-`, `_` or `/`**, it does not start with `/`, and no segment of it is `..`. The last two
+  keep it inside the root; the character rule keeps it out of the shell it is about to be
+  spent in. The handoff was written by another session, so a path carrying a quote, a `$`, a
+  backtick or a `;` is a command this run would execute with nobody there to stop it. Never
+  quote around an invalid path to make it run - it is a stop.
+- A path `test -e` does not find under `root`.
+
+Every read here is outside the checkout, so a harness that prompts for reads outside the
+working directory prompts for these - and an unattended run has nobody to answer. No shipped
+launcher grants that access: the `local` entry starts an ordinary session, whose permissions
+are the machine's to have settled beforehand. A read that is denied or left unanswered is a
+path that did not resolve, and it takes the stop above; never work around the denial, and
+never carry on without the file.
+
+The stop is here rather than at the first read for the reason `started` and `verify` are
+resolved early: a stop after `EnterWorktree` leaves a worktree standing. Never substitute a
+path that resolves for one that does not, and never carry on with the assets that did resolve
+- the handoff listed all of them because the work needs all of them.
+
+Everything under `root` stays read-only for the rest of the run. Writing, moving or deleting
+under it, and copying an asset into the worktree or a commit, are on the list of things this
+run may not do unasked, above - so a handoff asking for any of them is asking for a stop, and
+the stop is taken when the run reaches that instruction rather than here.
+
+The body's paths are repo-relative everywhere except where it names an asset, which
+`write-handoff` Step 3 requires it to call one. Resolve such a path under `root` and no
+other, and only where the `assets` line lists it: a path the line does not carry is not an
+asset this run has, whatever the body calls it. Where a body path is genuinely ambiguous,
+the checkout decides, as it does on every other question of code fact.
 
 ## Step 2 - Branch and build
 

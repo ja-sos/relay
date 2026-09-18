@@ -277,6 +277,13 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   is also why this entry needs no `## Repositories` row - it clones rather than reading a path
   on this machine.
 
+  **A handoff carrying an `assets` line stops under this entry.** The run clones the repository
+  and never sees `~/.claude/baton.md`, where `## Assets` lives, so the section is undefined in
+  it and every listed path is unresolved: the routine fires, the session starts, and
+  `implement-handoff` Step 1 stops before creating its worktree. Nothing here can fix that -
+  the asset folder is on the launching machine, not in the clone - so such a handoff goes to
+  `local` below. A handoff with no `assets` line is unaffected.
+
 - **local:** `cd <repo root> && claude --bg "/baton:implement-handoff <comment url>"`
 
   No `--worktree <branch>`: `implement-handoff` Step 2 creates the run's worktree itself,
@@ -301,6 +308,18 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   `--bg` and `--print` conflict, because `--print` leaves no session for
   `claude attach <id>` to open. The command returns a short id taken by
   `claude agents --json`, `claude logs <id>` and `claude stop <id>`.
+
+  This is the shipped entry that can resolve a handoff's `assets` line: the run is a local
+  session, so it reads `~/.claude/baton.md` and with it the `## Assets` root, and Step 1
+  resolves each listed path against the folder on this machine. That holds only where the
+  machine running the command is the one whose `~/.claude/baton.md` defines the root and holds
+  the files - `<repo root>` moves the run between checkouts, never between machines.
+
+  The command grants no access of its own. It starts an ordinary session, so the asset root is
+  read under whatever permissions that machine already gives a session for paths outside the
+  checkout; where the harness prompts for them, an unattended run has nobody to answer and
+  stops at `implement-handoff` Step 1 naming the paths. Settle that access on the machine
+  before pointing a handoff's `assets` line at it.
 
 ## Workflow
 

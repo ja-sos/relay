@@ -34,6 +34,7 @@ unattended run must use goes in `.claude/baton.md`.
 | `## Launcher` | how `investigate-issue` starts an implementation run |
 | `## Workflow` | the steps the skills run around the work: posting and finding handoffs, reviewing, publishing |
 | `## Repositories` | local paths of the repositories one change spans, for the `local` launcher and the `base` check. Optional |
+| `## Assets` | the local root of the one folder outside every repository that a handoff's `assets` line names paths under. Optional |
 
 Every `## Launcher` entry sends one prompt, `/baton:implement-handoff <locator>`. A
 run reads the handoff and nothing the starting session holds, so an entry that passes
@@ -70,6 +71,57 @@ handoff alone, and the other handoffs of the same investigation are unaffected.
 
 The `cloud` launcher ignores the section: it clones rather than reading a local path, so its
 `sources` takes the handoff's `repo` and no path on this machine means anything to it.
+
+`## Assets` is optional as well, and was added in baton 0.1.15. It holds a single entry, the
+absolute path of the one folder outside every repository that a handoff may name files in:
+
+- **root:** `/home/you/baton-assets`
+
+A handoff lists what it needs on its `assets` header line, as paths relative to that root.
+`write-handoff` Step 2 writes the line and checks it; `implement-handoff` Step 1 resolves it
+again before it creates a worktree. The entry is a value the skills read, as `closes`, `refs`
+and `review-wait` are, rather than a command they run: both callers use it as the prefix of a
+`test -e` on each listed path.
+
+A path is valid only where **every character is a letter, a digit, `.`, `-`, `_` or `/`**, it
+does not start with `/`, and no segment of it is `..`. Each valid path may name a file or a
+directory. The last two rules keep a handoff inside the root, which is the one place it may
+point at. The character rule is what keeps the path out of a shell's reach: both callers spend
+it inside `test -e "<root>/<path>"`, and a handoff is written by another session, so a path
+carrying a quote, a `$`, a backtick or a `;` would run as a command in an unattended run that
+has nobody to ask. It also settles the space-separated line, since whitespace is not on the
+list - a file whose name has a space is named by listing its containing directory instead.
+
+Both rules are read off the path's text, so they bound what a handoff may *write*, not where
+the filesystem ends up: a symlink under `root` resolves wherever it points, for `test -e` and
+for the read alike. The folder is therefore trusted as far as its contents are - it is one
+folder on one machine, filled by the person who configured it.
+
+`root` itself must be an absolute path to a directory that exists. An empty or missing `root`
+reads as configured and resolves to nothing: `test -e "<root>/<path>"` becomes
+`test -e "/<path>"`, which answers about the filesystem root and can pass against a file the
+handoff never meant. Both callers check the entry before they check any path, and a section
+whose `root` is missing or unusable is its own stop, reported as that rather than as a missing
+section: the two have different fixes, and a typo'd root on a local machine is not the absent
+section a cloud run always finds.
+
+The root differs per machine, so the section belongs in `~/.claude/baton.md` rather than the
+committed `.claude/baton.md`, for the reason `## Repositories` does. A backend with no
+`## Assets` at all behaves exactly as one did before 0.1.15 for every handoff carrying no
+`assets` line - which is every handoff written before it: nothing is resolved and no check
+runs. Neither skill's new stop fires on a handoff without the line.
+
+The `cloud` launcher cannot resolve the section, for the same reason it ignores
+`## Repositories` and one more: it clones the repository and never sees a home directory, so
+`## Assets` is undefined in the run and every path the handoff lists is unresolved. Such a run
+stops at `implement-handoff` Step 1, before its worktree exists. A handoff carrying `assets`
+belongs to the `local` launcher, or to a launcher of the project's own that starts the run on
+a machine whose `~/.claude/baton.md` defines the root.
+
+Assets are read-only to every run that resolves them. `implement-handoff` lists writing,
+moving or deleting anything under `root`, and copying an asset into the worktree or a commit,
+among the things an unattended run may not do - the folder is shared, and some of what it
+holds is not cleared to live in a repository.
 
 ## Operations
 

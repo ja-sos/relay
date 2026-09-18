@@ -24,6 +24,8 @@ routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 | Found | Action |
 |---|---|
 | The request is for `## Repositories` alone, whether or not a backend file exists | Add or replace that one section in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Repositories` checks and Step 4's `## Repositories` checks, then stop: the full Step 3 counts and the Step 4 check table test a backend's operations, which this request neither writes nor changes. It overrides no shipped operation, so it is not the duplicate the no-backend-file rows refuse. |
+| The request is for `## Assets` alone, whether or not a backend file exists | The same, for that section: add or replace it in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Assets` checks, then stop - the section defines no operation, so Step 4 has nothing of it to run. |
+| The request is for `## Repositories` and `## Assets` together, whether or not a backend file exists | Both rows above, in one pass over `~/.claude/baton.md`: write each section and run each one's checks. They are the two optional per-machine sections and neither overrides a shipped operation, so a request for both is still not the duplicate the no-backend-file rows refuse. |
 | No backend file; route 1 or 2 selected | Stop. The shipped defaults run as they are - through the GitHub MCP tools, or through `reference/backend-github-gh.md` - and a copy of them is a second file to keep in sync. |
 | No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
@@ -113,6 +115,50 @@ grep -c '^| `[^/`]*/[^`]*` | `/' ~/.claude/baton.md 2>/dev/null
 - PASS: one per repository the user named.
 - FAIL: fewer. A relative path resolves against whatever directory a launcher happens to start
   in, so a row that is not absolute is a row to rewrite.
+
+`## Assets` is the eighth section and the third optional one, added in baton 0.1.15. It stays
+out of `.claude/baton.md` for the reason `## Repositories` does and one more: a cloud run reads
+the committed file and has neither the folder nor a home directory to find it in, so a root
+written there resolves to nothing while looking configured. Write it in `~/.claude/baton.md`,
+and only on request. It holds a single entry:
+
+```
+## Assets
+
+- **root:** /home/you/baton-assets
+```
+
+A handoff with no `assets` line needs no such section, so no count above requires it and a
+backend without it runs every such handoff as one did before 0.1.15.
+
+```
+grep -c '^## Assets$' ~/.claude/baton.md 2>/dev/null
+```
+
+- PASS: `1` where the user asked for the section; `0`, or no output at all, where they did not.
+  `grep` prints nothing and exits 2 when the file does not exist, which is the usual case.
+- FAIL: more than 1. A second heading replaces the first wholesale, so the root the skills read
+  is whichever came last - keep one. The extraction below takes the last `root` entry in the
+  file for the same reason; with one heading, as this check requires, there is only one.
+
+This next check runs only where the check above found the section. Skip it where the user did
+not ask for `## Assets`: the file carries no `root`, and running it there prints a failure
+about an entry nobody meant to write.
+
+Written, its `root` must be an absolute path to a directory that exists. A relative path
+resolves against whatever directory the run happens to start in, and a root that is missing
+sends every handoff naming an asset to a stop at `implement-handoff` Step 1:
+
+```
+root=$(sed -n 's/^- \*\*root:\*\* *//p' ~/.claude/baton.md 2>/dev/null | tr -d '`' | tail -1)
+case "$root" in /*) test -d "$root" && echo "ok $root" || echo "FAIL not a directory: $root";;
+  *) echo "FAIL not absolute: $root";; esac
+```
+
+- PASS: `ok` and the path.
+- FAIL: either message. `FAIL not absolute:` with nothing after the colon is the section
+  carrying no `root` entry at all, which reads as configured and resolves to nothing. Fix the
+  entry before stopping.
 
 ## Step 4 - Verify by running
 

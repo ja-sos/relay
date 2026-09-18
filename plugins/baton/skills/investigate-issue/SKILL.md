@@ -194,6 +194,19 @@ repositories.
 Its `base` is the HEAD that Step 2 reproduced against and Step 3 named the cause at, so
 the plan stays falsifiable against the code it was formed on.
 
+**Where the implementation will need a file under the backend's `## Assets` root, list it on
+the handoff's `assets` line.** What decides the line is what the run needs, not what this
+session happened to open: a file identified here and never read is still a file the run has to
+have, and one read here that the plan has already extracted everything from is not. The
+implementing session shares no disk with this one, and the body may name such a file only by a
+path that line carries (`write-handoff` Step 3), so a file left off is a file the run silently
+builds without.
+
+List the paths relative to that root, and list only what the implementation needs:
+`write-handoff` Step 2 checks each one before posting and `implement-handoff` Step 1 resolves
+it again, so every entry is one more thing that can stop a run. Omit the line where the work
+needs nothing outside the repository, which is the usual case.
+
 **One handoff per affected repository.** Where Step 4 named more than one, post one handoff
 for each, held and unheld alike, in this same investigation. Each handoff's `repo` names its
 own repository, and its `base` is that repository's HEAD from Step 2 - a commit already on
@@ -215,6 +228,15 @@ the top, then each layer below it carrying the locator it just returned, down to
 Each layer above the bottom also carries `pr-base`, naming the branch of the layer below;
 that branch does not exist yet, and `write-handoff` Step 2 says why it is not checked here.
 
+Where any layer of a stack carries `assets`, that choice is already made: the whole stack runs
+on the machine holding the folder, with `local` in every `next` line, or no `next` anywhere
+points at that layer and it is started there by hand - a layer's own `next` starts the layer
+above it, so dropping that line strands the rest of the stack and changes nothing about how
+this one is launched. `cloud` cannot resolve `## Assets`, and a `local` entry
+run from inside a cloud run only moves the problem into that container
+(`write-handoff` Step 2). Say so when reporting the entries below, rather than taking an
+answer the stack cannot honour.
+
 A `next` line also names the `## Launcher` entry that starts the layer above, so **for a
 stack, ask which launcher here** rather than at Step 6 - the answer is written into every
 layer but the top before any of them is posted. Report what each entry would do, as Step 6
@@ -234,6 +256,14 @@ nothing.
 The entry carries a `<locator>` or a `<comment url>` placeholder; substitute the locator
 Step 5 returned for either one. A launcher that starts with anything else starts a session
 with no handoff to read.
+
+**A handoff carrying `assets` rules `cloud` out, and the report says so.** A cloud run clones
+the repository and never sees `~/.claude/baton.md`, where `## Assets` lives, so the section is
+undefined in it and every path the handoff lists is unresolved: the launch itself succeeds and
+the run it starts stops at `implement-handoff` Step 1. Report `local` as the shipped entry
+that resolves those paths, name any entry of the project's own that starts the run on a
+machine defining the root, and where the answer is `cloud` all the same, say what will happen
+before taking it. A handoff with no `assets` line is unaffected and launches under either.
 
 **Launch the unheld handoffs; report the held ones.** Start every handoff Step 4 called
 unheld, each through the chosen entry and each with its own locator - the `local` entry

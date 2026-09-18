@@ -88,6 +88,14 @@ and each handoff's `base` check and launch happen in that repository's own check
 differ per machine, so it belongs in `~/.claude/baton.md`. Leave it out and everything runs
 against the one repository the session is in, as it did before.
 
+`## Assets` is the eighth, and optional too: it holds one entry, `root`, the absolute path of
+a shared folder outside every repository. A handoff's optional `assets` header line names
+files under it, so a plan can point at run files, configuration or ticket attachments that are
+too large or not cleared to be committed. The root differs per machine, so this section belongs
+in `~/.claude/baton.md` as well - which is why a handoff carrying `assets` cannot be launched
+into the cloud, where no home directory is read. Leave both out and everything runs as it did
+before.
+
 `reference/defining-backends.md` carries the operation contract.
 
 ## Document contracts
