@@ -73,7 +73,7 @@ listed. Add or replace types in `.claude/doc-types.md` or `~/.claude/doc-types.m
 
 - **READER:** a participant on the GitHub issue the run was launched from, who did not watch it.
 - **GOAL:** know what the run left on the pull request, or where and why it stopped, and what still needs a person.
-- **ALREADY HAS:** the issue thread and everything already posted to it; for a reader with repository access, the pull request and its diff.
+- **ALREADY HAS:** the issue thread and everything already posted to it; where the run opened a pull request, that pull request and its diff, for a reader with repository access.
 
 **Must include**
 - The outcome first: the pull request, or the step the run stopped at and what stopped it.
