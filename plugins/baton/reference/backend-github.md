@@ -343,8 +343,12 @@ the comment's URL - `comment`'s `url` field, or its stdout under the `gh` route.
 derived ones; `<comment-id>` is the digits of the trailing `#issuecomment-<n>`, and `<id>`
 the number after `/issues/`.
 
-`has-handoff` prints the issue with its comments, and the caller scopes the answer to the
-`<!-- claude-handoff -->` marker in that output.
+`has-handoff` prints the issue with its comments, and the caller scopes the answer out of that
+output: the `<!-- claude-handoff -->` marker in it, and, since baton 0.1.16, each handoff's
+`base` and `branch`,
+each pointer's locator, and the obsolete reports that answer them. The comment text is what
+carries all of that, which is why this entry prints the comments rather than answering the
+question itself.
 
 `started` is `none`: a GitHub issue has no in-progress state to move into, so nothing runs
 when the implementation run cuts its branch. A tracker that has one defines the transition

@@ -11,7 +11,7 @@ handoff `fetch-handoff` resolves it to.
 
 Nobody is watching. Ask no questions - `AskUserQuestion` has no one to answer it, and a
 session waiting on input makes no progress. Nothing reaches the user except the pull
-request or a stop.
+request, a stop, or the no-change exit Step 2 takes for a handoff HEAD already satisfies.
 
 Every operation named below comes from the backend. Load it, later files overriding
 earlier by `##` heading:
@@ -62,10 +62,10 @@ unasked does not cover the run. These need no confirmation:
 
 - `git add`, `git commit` and `git push -u origin <branch>` on the branch the handoff names,
   or on the name Step 2 substitutes where that branch already exists.
-- `EnterWorktree` at Step 2, and `ExitWorktree` at Step 7 - `remove` with
-  `discard_changes: true` once both of that step's checks pass, `keep` otherwise. Their tool
-  descriptions otherwise hold `EnterWorktree` to an explicit instruction and `ExitWorktree`
-  to the user asking; for this run, these two steps are that instruction.
+- `EnterWorktree` at Step 2, and `ExitWorktree` at Step 7 or at Step 2's no-change exit -
+  `remove` with `discard_changes: true` once that step's checks pass, `keep` otherwise. Their
+  tool descriptions otherwise hold `EnterWorktree` to an explicit instruction and
+  `ExitWorktree` to the user asking; for this run, these steps are that instruction.
 - `pr-create` on that branch; `pr-update`, `request-reviewer`, `thread-reply` and
   `pr-comment` on the pull request it opens; `started`, `published` and `stopped` on **each
   issue the header names**, one call per issue. A header naming several issues is the
@@ -78,9 +78,9 @@ unasked does not cover the run. These need no confirmation:
 - The `## Launcher` entry the header's `next` names, run once at Step 7. That line is the
   authorization to start the layer above, given ahead of the run by whoever wrote the
   handoff.
-- Dispatching the subagents Step 4 runs - the claim audit, and a reviewer an `agent:` entry
-  names. They read and report; nothing they return reaches the tracker or the forge except
-  through a step above.
+- Dispatching the subagents this run needs - Step 4's claim audit, that same audit over Step
+  2's no-change evidence, and a reviewer an `agent:` entry names. They read and report;
+  nothing they return reaches the tracker or the forge except through a step above.
 - Reading the files the header's `assets` line names, under the `root` the backend's
   `## Assets` section gives. They are inputs to the work, resolved at Step 1, and reading them
   is what the line exists for.
@@ -313,11 +313,153 @@ long enough to push a test binary's path past the 259 characters Windows `Create
 accepts, and the run then reports a failing suite in which no test failed. The random suffix
 keeps two handoffs on one issue in separate directories.
 
+**Read the worktree's opening state immediately after that call and before the first edit**,
+and keep the reading for the exit below:
+
+```
+git status --porcelain
+```
+
+It is what tells that exit whether the directory held anything before this run, and it is
+worthless taken later: the handoff's commands run in there, and a suite's own `dist` or cache
+answers it exactly as a source file the run wrote and never added would. Taken here, before
+anything has run, it cannot confuse the two.
+
 Seeding is `EnterWorktree`'s and not this step's: a worktree checks out tracked files only,
 and it copies in whatever the project lists in `.worktreeinclude`. That list is the
 project's to write, and it is a prerequisite rather than a detail - a gitignored
 `.claude/settings.local.json` that is not on it does not follow the session into the
 worktree, and the run stalls on a permission prompt with nobody there to answer.
+
+### The no-change exit
+
+A handoff whose work is already in the tree has no pull request to open. Step 3 requires tests
+that fail at the branch point and pass against the change, and against a HEAD that already does
+what the handoff asks there is no such test to write. So before `started` and the branch cut,
+ask whether this is such a handoff. Everything below runs in the worktree, which is what keeps
+the handoff's commands out of the directory the session started in.
+
+**Ask it exactly where `git switch -c` runs, and skip it wherever that is skipped** - HEAD
+already on `<branch>` is a turn resuming from a stop, and what satisfies the handoff there is
+the run's own unpushed work. Taking the exit on that evidence would report a branch this run
+built as code that was already in the tree, then delete it: the one reading of "already
+satisfied" that is never true. The gate is the branch cut's, not `EnterWorktree`'s, for the
+reason `started` takes the same one.
+
+**A handoff carrying `pr-base` never takes this exit**, before any of the below is asked. Its
+work sits on an unmerged layer that HEAD does not carry, so a HEAD that looks satisfied is
+evidence about a different tree - and the layer above names this layer's branch as its base,
+which only the build will push.
+
+The tree to ask about is the tip of `<default-branch>` on `origin`, the branch this one would
+merge back into. The worktree's HEAD is wherever `EnterWorktree` or a launcher left it, which
+need not be that tip, so move it there first:
+
+```
+git fetch origin <default-branch>:refs/remotes/origin/<default-branch>
+git switch --detach origin/<default-branch>
+git merge-base --is-ancestor <base> HEAD
+git rev-parse HEAD
+```
+
+`<default-branch>` resolves as `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md` defines
+it. Where any of the first three lines exits non-zero, take no exit - continue to `started`,
+the branch cut and the build. Keep the fourth line's output as the **checked commit**: the
+worktree test and the report below both use it. HEAD satisfies the handoff only where all
+three of these hold across the whole of it:
+
+- **The handoff numbers acceptance criteria.** Commands alone cannot carry this exit: a
+  handoff may name commands and no criteria, and a project suite that passes at HEAD says
+  nothing about work nobody did.
+- **Every criterion it numbers** is satisfied by code at HEAD, and the run can name the
+  `file:line` there that satisfies it.
+- **Every command it names** beside those criteria passes at HEAD.
+
+Anything less is ordinary work: the run re-cuts the approach against what it found, as above,
+and builds the rest. A handoff posted before baton 0.1.7 numbers no criteria and so never
+reaches this exit, which is the right answer for a plan that left nothing to check against.
+`verify` is no part of this evidence either. It checks the repo rather than the handoff's
+outcome, and a run that changes nothing answers for neither its failures nor its passes.
+
+Then put that evidence through the claim audit before acting on it, dispatched exactly as Step
+4 dispatches it - the same skill named the same way, at the same resolved absolute path,
+through the dispatch tool found above - with the criteria, their `file:line` citations and each
+command's result as the claims. The verdict decides the exit:
+
+| The audit's verdicts | The run |
+|---|---|
+| every claim ACCEPTED | takes the exit |
+| a claim CORRECTED | re-read it - the exit stands only where the corrected form still says HEAD satisfies that criterion, and the report carries the corrected form |
+| any claim RETRACTED or LABELLED unverified | takes no exit - continue to `started`, the branch cut and the build |
+
+A CORRECTED claim is one the audit probed and found wrong, so it is never waved through: a
+correction that fixes a line number leaves the exit standing, and one narrowing "satisfies
+criterion 3" to "satisfies it for the expired case only" has destroyed the premise and cancels
+it. This is the claim a person closes an issue on. An unaudited one closes an issue whose work
+nobody did.
+
+**A dispatch that fails here is a stop**, and Step 4's reason is not why. There the branch is
+finished and the stop discards it; here nothing is built, so the stop costs a run that had
+nothing to lose - and the alternative is worse in both directions. Taking the exit unaudited
+posts the one claim this run must not get wrong. Continuing to the build sends the run to
+Step 3 for a change the tree already carries, where no test can fail at the branch point and
+the stop lands anyway, two steps later and with a branch to explain. Stop here instead, with
+the evidence gathered so far in the report, so a person can judge the close by hand.
+
+On the exit the run pushes nothing, opens no pull request, runs no `started`, launches no
+`next`, and closes nothing - closing stays with `baton:investigate-issue` Step 2, on the user's
+approval. It does three things, in this order.
+
+**First the worktree**, because the report names its path wherever it still stands and so
+cannot be written before the decision. Only a worktree this run created is its to remove.
+Where a launcher started the session in a worktree, the call is `keep` and nothing further is
+asked. Where this run's own `EnterWorktree` created it - in this turn, or in an earlier turn of
+this session that stopped and was resumed - two readings are the whole test: an empty
+`git status --porcelain` at entry and a HEAD still at the checked commit means this run wrote
+nothing into that directory, and the exit calls `ExitWorktree` with `action: "remove"` and
+`discard_changes: true`. A resumed turn that no longer holds the entry reading calls `keep`.
+
+Anything else is `keep`, with `.claude/worktrees/<name>` named in the report - and say which
+of the two failed, since a dirty entry state means the run inherited something rather than left
+it. What the directory holds **now** decides nothing: the handoff's commands ran in there and
+their artifacts are this exit's to discard, having been written by a check rather than by a
+change. Step 7's `origin` comparison has nothing to ask here either, since this exit pushes no
+branch for `origin` to hold.
+
+**Then the report**, one file written under `baton:write-deliverables` as a **Run report**,
+whose first line is the obsolete marker:
+
+```
+<!-- claude-handoff-obsolete -->
+```
+
+Under it, each on a line of its own, the handoff's locator this session opened with and the
+header's `base` and `branch`. Those three are what `baton:next-issue` Step 2 and
+`baton:investigate-issue` Step 1 match against a handoff or a pointer, so a report missing any
+of them leaves the issue skipped exactly as an unanswered handoff does.
+
+**That report never carries the handoff marker, not even quoted.** Both skills test an issue's
+comments for that string, and a report holding it reads as one more handoff waiting on a run -
+the state this exit exists to end.
+
+The rest of the report is the evidence: the checked commit, as `Checked at <sha>`, then each
+acceptance criterion with the `file:line` at that commit that satisfies it, each command the
+handoff names with its one-line result, and, where `git log -S` or `git blame` names it, the
+commit that introduced the satisfying code -
+`baton:investigate-issue` Step 2 asks for that commit when it proposes the close. Where the
+header carries `next`, the report also quotes the locator it did not launch and says the layer
+above was not started: that layer's `pr-base` names this layer's branch, which nothing pushed,
+and this report is the only place the locator reaches anyone.
+
+**Last `stopped`**, once per issue the header names, in header order, each call with that
+issue's id and that one file. A failure part-way through the list ends the run there, naming
+the operation, the issue it failed on, and every issue after it as not reached - the shape
+Step 1 sets for `started` and `published`.
+
+Then end the turn at `## Done`. This exit is neither the pull request nor a stop: nothing went
+wrong, and nothing shipped.
+
+### The branch cut
 
 Run `started` once per issue the header names, in header order, immediately before the branch
 cut below, under that cut's condition rather than one of its own: the whole sequence is
@@ -786,6 +928,14 @@ uses:
   the step, what stopped it, and the pull request URL - only Step 7's `published` would
   otherwise carry that URL to the issue.
 
+**Step 2's no-change exit borrows this shape and is not a stop.** It runs `stopped` over the
+header's issues exactly as the before-Step-5 shape does - one Run report, the same per-issue
+walk, the same failure shape part-way through that list, the same locator it did not launch.
+Two things differ. Its file opens with the obsolete marker rather than with a step and a
+blocker; and it settles its own worktree on the two checks Step 2 gives it, rather than leaving
+it standing as every stop below does - a stop is where work sits unpushed, and that exit wrote
+none. Nothing went wrong on it, so it ends at `## Done` rather than here.
+
 Either shape runs `stopped` **once per issue the header names**, in header order, each call
 with that issue's id and the same file: every ticket the run took on hears that it stopped,
 not just the primary. Where the header named one issue that is one call, as it always was.
@@ -837,9 +987,10 @@ for.
 
 ## Done
 
-Both exits end here. Report the pull request URL, the branch and how the handoff's commands
-and `verify` came out - or the blocker, the step it stopped at, and the pull request URL
-when Step 5 opened one.
+Three exits end here. Report the pull request URL, the branch and how the handoff's commands
+and `verify` came out - or, for Step 2's no-change exit, that HEAD already satisfies the
+handoff, the evidence saying so, and that no branch was pushed and no pull request opened - or
+the blocker, the step it stopped at, and the pull request URL when Step 5 opened one.
 
 Name every issue the header carried and what reached it: the reference line it got in the
 body, and whether `started`, `published` or `stopped` ran on it. An issue the report leaves
