@@ -106,7 +106,10 @@ tracker and nothing else - no file of this machine's, and no path that resolves.
 issue first; `baton:file-issue` covers that.
 
 Post a second handoff for rework rather than editing the first, which alone carries the
-approach that failed and the constraint that ruled the alternatives out.
+approach that failed and the constraint that ruled the alternatives out. Its `branch` must
+differ from every branch an earlier handoff on the issue named: `baton:next-issue` and
+`baton:investigate-issue` count a handoff answered by any obsolete report naming its `base`
+and `branch`, and a rework handoff formed against an unmoved HEAD shares that `base`.
 
 ## Step 2 - Header
 

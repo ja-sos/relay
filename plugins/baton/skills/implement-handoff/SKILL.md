@@ -314,17 +314,16 @@ accepts, and the run then reports a failing suite in which no test failed. The r
 keeps two handoffs on one issue in separate directories.
 
 **Read the worktree's opening state immediately after that call and before the first edit**,
-and keep both readings for the exit below:
+and keep the reading for the exit below:
 
 ```
-git rev-parse HEAD
 git status --porcelain
 ```
 
-They are what tells that exit whether the directory holds anything of this run's, and they are
+It is what tells that exit whether the directory held anything before this run, and it is
 worthless taken later: the handoff's commands run in there, and a suite's own `dist` or cache
-answers the second exactly as a source file the run wrote and never added would. Taken here,
-before anything has run, they cannot confuse the two.
+answers it exactly as a source file the run wrote and never added would. Taken here, before
+anything has run, it cannot confuse the two.
 
 Seeding is `EnterWorktree`'s and not this step's: a worktree checks out tracked files only,
 and it copies in whatever the project lists in `.worktreeinclude`. That list is the
@@ -352,9 +351,22 @@ work sits on an unmerged layer that HEAD does not carry, so a HEAD that looks sa
 evidence about a different tree - and the layer above names this layer's branch as its base,
 which only the build will push.
 
-The tree to ask about is the worktree's HEAD: the tip this branch would merge back into, and
-the only place "already in the tree" can mean anything. HEAD satisfies the handoff only where
-all three of these hold across the whole of it:
+The tree to ask about is the tip of `<default-branch>` on `origin`, the branch this one would
+merge back into. The worktree's HEAD is wherever `EnterWorktree` or a launcher left it, which
+need not be that tip, so move it there first:
+
+```
+git fetch origin <default-branch>:refs/remotes/origin/<default-branch>
+git switch --detach origin/<default-branch>
+git merge-base --is-ancestor <base> HEAD
+git rev-parse HEAD
+```
+
+`<default-branch>` resolves as `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md` defines
+it. Where any of the first three lines exits non-zero, take no exit - continue to `started`,
+the branch cut and the build. Keep the fourth line's output as the **checked commit**: the
+worktree test and the report below both use it. HEAD satisfies the handoff only where all
+three of these hold across the whole of it:
 
 - **The handoff numbers acceptance criteria.** Commands alone cannot carry this exit: a
   handoff may name commands and no criteria, and a project suite that passes at HEAD says
@@ -399,14 +411,16 @@ On the exit the run pushes nothing, opens no pull request, runs no `started`, la
 approval. It does three things, in this order.
 
 **First the worktree**, because the report names its path wherever it still stands and so
-cannot be written before the decision. Only a worktree this run created is its to remove, so
-where `EnterWorktree` was skipped above, the call is `keep` and nothing further is asked. Where
-it ran, the two readings taken at entry are the whole test: an empty `git status --porcelain`
-and a HEAD unmoved since means this run wrote nothing into that directory, and the exit calls
-`ExitWorktree` with `action: "remove"` and `discard_changes: true`.
+cannot be written before the decision. Only a worktree this run created is its to remove.
+Where a launcher started the session in a worktree, the call is `keep` and nothing further is
+asked. Where this run's own `EnterWorktree` created it - in this turn, or in an earlier turn of
+this session that stopped and was resumed - two readings are the whole test: an empty
+`git status --porcelain` at entry and a HEAD still at the checked commit means this run wrote
+nothing into that directory, and the exit calls `ExitWorktree` with `action: "remove"` and
+`discard_changes: true`. A resumed turn that no longer holds the entry reading calls `keep`.
 
 Anything else is `keep`, with `.claude/worktrees/<name>` named in the report - and say which
-reading failed, since a dirty entry state means the run inherited something rather than left
+of the two failed, since a dirty entry state means the run inherited something rather than left
 it. What the directory holds **now** decides nothing: the handoff's commands ran in there and
 their artifacts are this exit's to discard, having been written by a check rather than by a
 change. Step 7's `origin` comparison has nothing to ask here either, since this exit pushes no
@@ -428,9 +442,10 @@ of them leaves the issue skipped exactly as an unanswered handoff does.
 comments for that string, and a report holding it reads as one more handoff waiting on a run -
 the state this exit exists to end.
 
-The rest of the report is the evidence: each acceptance criterion with the `file:line` at HEAD
-that satisfies it, each command the handoff names with its one-line result, and, where
-`git log -S` or `git blame` names it, the commit that introduced the satisfying code -
+The rest of the report is the evidence: the checked commit, as `Checked at <sha>`, then each
+acceptance criterion with the `file:line` at that commit that satisfies it, each command the
+handoff names with its one-line result, and, where `git log -S` or `git blame` names it, the
+commit that introduced the satisfying code -
 `baton:investigate-issue` Step 2 asks for that commit when it proposes the close. Where the
 header carries `next`, the report also quotes the locator it did not launch and says the layer
 above was not started: that layer's `pr-base` names this layer's branch, which nothing pushed,
