@@ -115,13 +115,14 @@ closes: <yes or no, one value per issue in the same order>
 branch: <branch the work belongs on>
 ```
 
-Three optional lines may follow them inside that same block, each written only where it has a
+Four optional lines may follow them inside that same block, each written only where it has a
 value. Their padding is cosmetic - a header is read by line name, not by column:
 
 ```
 category: <the issue's label matching a row of the backend's ## Categories table>
 pr-base:  <the branch the pull request opens against>
 next:     <a ## Launcher entry name> <the locator of the layer above>
+assets:   <path> [<path> ...]
 ```
 
 `base` must already be on `origin`, because a session that clones never sees a commit
@@ -188,12 +189,63 @@ stack; nothing is launched then, which is what every handoff written before this
 A layer names `pr-base` and `next` independently. The bottom layer of a stack carries `next`
 and no `pr-base`; the top carries `pr-base` and no `next`.
 
+**A layer carrying `assets` does not belong in a cloud stack, and `next` cannot rescue it.** A
+cloud run clones the repository and never sees `~/.claude/baton.md`, so `## Assets` is
+undefined in it and every path that layer lists is unresolved: the launch reports success and
+the run it starts stops at `implement-handoff` Step 1. Naming `local` in the line below is not
+the fix. A `local` entry starts a session on the machine the launching run is on, so run from
+inside a cloud run it lands the layer in that same container, with the same missing folder -
+which is why `defining-backends.md` has a stack name one launcher throughout rather than mix
+the two.
+
+So a stack with a layer that needs assets runs entirely on the machine holding them, with
+`local` in every `next` line, or the layer below it carries no `next` and that layer is started
+by hand there, keeping its own `next` for the layer above. Settle this before posting, because
+the `next` lines are written on the way down and a layer's own header is fixed once it is
+posted.
+
 **Both lines are single-repository.** `pr-base` names a branch in the repository `repo` gives,
 and `next` fires at `implement-handoff` Step 7, the moment the layer below opens its pull
 request. Neither chains repositories. What a handoff for a repository downstream of another
 waits on is that upstream repository's next *published* version, which no run produces and no
 branch stands for, so such a handoff carries neither line: it is posted with the rest and
 launched by hand, in the order `investigate-issue` Step 6 reports.
+
+`assets` names files the work needs that live outside every repository, in the one folder the
+backend's `## Assets` section roots. Write each path relative to that root, separated by
+spaces as `issue` and `next` are; each may name a file or a directory. Omit the line wherever
+the work needs nothing outside the checkout, which is most handoffs and every one written
+before baton 0.1.15 - a handoff with no `assets` line needs no `## Assets` section anywhere,
+and nothing below runs for it.
+
+A path is valid only where **every character is a letter, a digit, `.`, `-`, `_` or `/`**, it
+does not start with `/`, and no segment of it is `..`. The last two keep the path inside the
+root. The character rule keeps it out of a shell: the path is spent inside `test -e` by this
+step and again by the run, so a quote, a `$`, a backtick or a `;` in it would execute there.
+Whitespace is not on the list either, which is why a file whose name has a space is named by
+listing its containing directory instead.
+
+**Check the line before posting**, in this order. A loaded backend file must define
+`## Assets`; its `root` must be an absolute path to an existing directory; and each listed
+path must be valid and exist under that root:
+
+```
+test -d "<root>"
+test -e "<root>/<path>"
+```
+
+An undefined `## Assets`, a missing or unusable `root`, an invalid path, or a path `test -e`
+does not find is a stop for this handoff alone, naming every path that failed; the other
+handoffs of the same investigation are unaffected. Check `root` before any path: an empty one
+turns the second line into `test -e "/<path>"`, which answers about the filesystem root and
+can pass on a file nobody meant. The check runs here because the session that reads the
+handoff has nobody to ask where a file went - `implement-handoff` Step 1 re-runs the same
+resolution and stops before it creates a worktree, so a path that is wrong now costs that run
+instead.
+
+Assets are read-only to the run, which stops rather than writing, moving or deleting anything
+under `root`, or copying an asset into the repository. Name what the run should read out of an
+asset, never what it should do to it.
 
 ## Step 3 - Body
 
@@ -207,6 +259,19 @@ Record only what cannot be settled until implementation is under way.
 Name nothing that exists only on this machine. Cite code as repo-relative `file:line`; an
 absolute path, a home directory or a hostname resolves to nothing in the session that
 reads it.
+
+**An asset is the one exception.** Where the header carries an `assets` line, the body may
+name a file that line lists, by that same path relative to the `## Assets` root and by nothing
+else. It resolves in the reading session because Step 2 checked it and `implement-handoff`
+Step 1 resolves it again. Absolute paths, home directories and hostnames stay banned, an
+asset's among them: the root is the backend's to supply per machine, and a body that spells it
+out is wrong on the next one.
+
+**Call it an asset where you name it.** A bare relative path reads as a repo-relative citation
+like every other one in the body, and the reading session would look for it in the checkout
+and find nothing - so write "the asset `config/prod.yaml`", or name it under a heading that
+says so. Only paths the `assets` line lists may be named this way; a path that is not on the
+line is a path the run will not have.
 
 Four sections beyond that contract turn the body into a spec the implementing session can
 check itself against. They belong to this collapsed implementation handoff and never to
