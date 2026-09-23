@@ -478,7 +478,7 @@ diff the correctness review could not read.
 | Entries complete | every operation the section owns is present |
 | Placeholders spelled | `<id>` not `<issue>`; an unrecognised placeholder is passed through literally |
 | Body arrives as a file | each operation taking `<path>` reads the file rather than a string, or sends `<body>` when it is a `tool:` entry |
-| Runs standalone | paste the command with real values into a shell; it must succeed there first. A literal - `none`, `repo-tests`, `closes`, `refs`, `review-wait` - is not a command and is exempt. So is `verify` whatever its value: its sequence may rewrite files, and `baton:setup` Step 4 never runs it |
+| Runs standalone | paste the command with real values into a shell; it must succeed there first. A literal - `none`, `repo-tests`, `closes`, `refs`, `review-wait`, `## Assets`'s `root` - is not a command and is exempt. So is `verify` whatever its value: its sequence may rewrite files, and `baton:setup` Step 4 never runs it |
 | Tool entries called | call each `tool:` entry of a read operation with real values, since it has no shell form to paste; never call one `baton:setup` Step 4 forbids running |
 | Agent entries dispatchable | each `agent:` entry names an agent type this session offers, and every `## Launcher` entry that names `allowed_tools` at all names both `Agent` and `Task` |
 

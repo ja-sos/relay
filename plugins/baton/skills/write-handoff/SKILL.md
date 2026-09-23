@@ -199,9 +199,10 @@ which is why `defining-backends.md` has a stack name one launcher throughout rat
 the two.
 
 So a stack with a layer that needs assets runs entirely on the machine holding them, with
-`local` in every `next` line, or that layer carries no `next` pointing at it and is started by
-hand there. Settle this before posting, because the `next` lines are written on the way down
-and a layer's own header is fixed once it is posted.
+`local` in every `next` line, or the layer below it carries no `next` and that layer is started
+by hand there, keeping its own `next` for the layer above. Settle this before posting, because
+the `next` lines are written on the way down and a layer's own header is fixed once it is
+posted.
 
 **Both lines are single-repository.** `pr-base` names a branch in the repository `repo` gives,
 and `next` fires at `implement-handoff` Step 7, the moment the layer below opens its pull
