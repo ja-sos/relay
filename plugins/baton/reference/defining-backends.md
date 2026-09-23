@@ -243,7 +243,7 @@ same, because what they reference is the issue rather than the pull request.
 | `request-reviewer` | `implement-handoff` Step 6 | `<id>` |
 | `review-wait` | `implement-handoff` Step 6 | - |
 | `published` | `implement-handoff` Step 7 | `<id>` `<path>` `<pr-url>` |
-| `stopped` | `implement-handoff` stop path | `<id>` `<path>` |
+| `stopped` | `implement-handoff` stop path and Step 2's no-change exit | `<id>` `<path>` |
 | `wrap-up` | `investigate-issue` Step 2 or 6, `review-pr` Step 5, `address-review` Done, `self-review` Step 4 | `<skill>` `<id>` `<pr-url>` `<head-branch>` |
 
 `pr-create` takes two values beyond the title and the body, both from the handoff's header
@@ -356,9 +356,23 @@ and the wrong one for a handoff recorded for a repository other than the issue's
 placeholders to that section's `closes` and `refs` before recording a handoff that spans
 repositories.
 
-`has-handoff` answers whether an issue already carries a handoff. Its default runs `view`,
-and the caller scopes the answer by looking for the handoff marker in that output; a
-backend that can ask the question directly returns output the caller reads the same way.
+`stopped` carries two outcomes since baton 0.1.16, and only one of them is a failure. Besides
+the stop path it also reports `implement-handoff`'s no-change exit, which is a run that found
+the work already done at HEAD and built nothing - nothing went wrong on it. **A `stopped` that
+moves a ticket's state needs to account for that**, the way `started` above needs a transition
+that repeats harmlessly: an entry that sends a ticket to Blocked will send it there on a
+successful run too. Where a tracker cannot express both, `op: comment` alone says what
+happened and moves nothing, which is what the shipped entry does.
+
+`has-handoff` returns the text of an issue's comments, and its callers scope the answer
+themselves. Its default runs `view`. **A yes/no answer is not enough**, however directly a
+tracker can give one: since baton 0.1.16 the callers read more than the handoff marker's
+presence out of that output - each handoff's header `base` and `branch`, each pointer's
+locator, and the obsolete reports that answer them, which `implement-handoff` posts when it
+finds the work already done at HEAD. A backend whose entry returns a bare yes, or only the
+marker-bearing comments' first lines, leaves every answered issue skipped for good:
+`next-issue` Step 2 never sees the report, and `investigate-issue` Step 1 never reaches the
+close. An entry that cannot return comment text is one to leave at the default `view`.
 
 `code-review` substitutes two placeholders. `<target>` is what to review - a pull request
 number, a branch, or empty for the working tree. `<locator>` is the handoff the work came

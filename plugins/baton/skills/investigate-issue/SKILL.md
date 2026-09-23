@@ -46,6 +46,12 @@ Without an issue number, resolve one with `baton:next-issue`, put it and everyth
 to the user, and wait for confirmation before going on. A resolver returning none is a stop:
 an empty answer means every candidate is already scoped, not that the choice falls to you.
 
+An answer of answered issues alone is not none. Those carry a handoff an implementation run
+already reported as satisfied at HEAD, and what they wait on is the close this skill's Step 2
+proposes - so put them to the user like any other answer, with the `closes` value the resolver
+read beside each, and carry the one they pick on to Step 2. Treating that answer as a stop
+leaves the issue reported as waiting on a close that nothing then performs.
+
 Run `view` against the issue. An earlier comment may already hold an investigation. Read it
 before starting another.
 
@@ -71,6 +77,35 @@ reader is present, which is the whole difference between this skill and `impleme
 An issue can also carry a pointer **and** a handoff of its own, on separate work. Neither
 outranks the other: put both to the user - the handoff read above and the bundle the pointer
 names - and go no further without their say-so, the same as for one.
+
+**A handoff or a pointer may already be answered.** `baton:implement-handoff` takes a no-change
+exit for a handoff HEAD already satisfies, and posts a report headed by a second marker:
+
+```
+<!-- claude-handoff-obsolete -->
+```
+
+That report names the handoff's locator, `base` and `branch`, and its evidence: the `file:line`
+at HEAD satisfying each acceptance criterion, each of the handoff's commands with its result,
+and, where it could be named, the commit that introduced the satisfying code. A handoff is
+answered by a report naming its header's `base` and `branch`; a pointer, by one naming the
+locator it carries. Match by that content rather than by comment order or address, for the
+reason above - `view` output need not carry an address to match a locator against.
+
+Where **every** handoff and pointer on the issue is answered, do not stop here. Put each
+handoff and the report answering it to the user, evidence included, and go on to Step 2. Carry
+each handoff's `closes` value with it, because Step 2's `Already fixed` row proposes
+`close-fixed` and that value is what says whether a close was ever this handoff's to ask for:
+under `closes: yes` propose it with the commit; under `closes: no` the author meant the issue
+to stay open, so report it answered and propose nothing. A pointer carries no `closes` value -
+read it from the primary issue's handoff, which the pointer's locator names, rather than
+assuming one. Where the report names no commit - it carries one only where `git log -S` or
+`git blame` could name it - that row's commit is this step's to find, from the report's
+`file:line` evidence, before the close is proposed. A person is reading here, which the
+unattended run that wrote the report had nobody to ask. Stopping would present
+finished work as an issue waiting on a run, which is the one state this issue is known not to
+be in. Where **any** of them is unanswered, the rule above stands and this step goes no further
+without the user's say-so - the answered ones are context for that decision, not a way past it.
 
 Take the `Found at <sha> on <branch>` line from the body and diff the files it cites:
 

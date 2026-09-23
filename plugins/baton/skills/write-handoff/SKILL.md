@@ -85,9 +85,15 @@ pointer would read as a second handoff, and a launcher handed its locator would 
 run on the branch the primary handoff already names - two runs on one branch, which is the
 race `implement-handoff` Step 7 exists to prevent.
 
-What the pointer buys is the marker on that issue. `has-handoff` looks for nothing else, so a
-bundled issue is skipped by `next-issue` exactly as its primary is, and `investigate-issue`
-reads the primary handoff by looking at the issue the pointer names.
+What the pointer buys is the marker on that issue, so a bundled issue is skipped by
+`next-issue` exactly as its primary is, and `investigate-issue` reads the primary handoff by
+looking at the issue the pointer names.
+
+**The locator earns its place beside the marker**, and a pointer written without it is a
+pointer nothing can ever answer. Since baton 0.1.16 both readers match an obsolete report
+against what a pointer carries - `implement-handoff` posts one on every issue its header named
+when it finds the work already done at HEAD - and the locator is the only thing in a pointer
+that a report can name back. Drop it and the issue stays skipped for good.
 
 Bundle only issues this investigation actually settled - it is a judgement made from the work
 just done, and nothing here checks it. An issue already waiting on a handoff of its own is
