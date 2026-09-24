@@ -99,7 +99,7 @@ raise `page` by one until it appears.
   - tool: mcp__github__issue_write {"method": "update", "owner": "<owner>", "repo": "<repo>", "issue_number": <pr-number>, "labels": ["<category>"]}
 - **stack-link:**      none
 - **pr-view:**
-  - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "head": "<head-owner>:<branch>", "state": "open"}
+  - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "state": "open", "fields": ["number", "html_url", "head"], "perPage": 100}
   - tool: mcp__github__pull_request_read {"method": "get", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
 - **pr-update:**       tool: mcp__github__update_pull_request {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "body": "<body>"}
 - **closes:**          Closes <owner>/<repo>#<id>
@@ -107,9 +107,9 @@ raise `page` by one until it appears.
 
 `verify-checkout` prints `<owner>/<repo>` from the `upstream` remote's URL, or from
 `origin`'s where there is no `upstream`, in HTTPS, SSH and proxied forms alike, with no
-GitHub call. `pr-create` and `pr-view` name the branch by `<head-owner>` instead, the owner
-in `origin`'s URL: in a fork clone `<owner>` is the upstream repository's owner, which does
-not hold the branch.
+GitHub call. `pr-create` names the branch by `<head-owner>` instead, the owner in `origin`'s
+URL, and `pr-view` matches the branch's repository against `origin`'s own `owner/name`: in a fork clone `<owner>` is
+the upstream repository's owner, which does not hold the branch.
 
 `pr-create` returns its **first** call's `{"id", "url"}`, and `url` is the pull request's
 URL; the second call returns nothing the caller keeps. The pull request exists from the
@@ -143,9 +143,27 @@ The `gh` route ships `none` for the same reason and one more: the `github/gh-sta
 that would supply a command was not installed where this was written, so its syntax is
 unverified and no guess at it ships.
 
-`pr-view` with an `<id>` runs only its second entry. With `<id>` empty, the first finds the
-open pull request for the current branch and its `number` is the second entry's `<id>`; an
-empty list means the branch has no open pull request.
+`pr-view` with an `<id>` runs only its second entry. With `<id>` empty, the first lists the
+open pull requests and the caller picks out the current branch's: keep each one whose
+`head.ref` equals `<branch>` and whose `head.repo.full_name` equals `origin`'s `owner/name`
+ignoring case, which this prints:
+
+```
+git remote get-url origin | sed -E 's#\.git$##; s#.*[/:]([^/:]+/[^/]+)$#\1#'
+```
+
+GitHub returns `full_name` in the repository's own case, while a remote URL keeps whatever
+case it was cloned with, so an exact comparison misses a clone of `Owner/Repo` made as
+`owner/repo`. `head.ref` is compared exactly: branch names are case-sensitive. A match's
+`number` is the second entry's `<id>`. The list pages with `page`: read on while a
+page comes back with 100 pull requests, and only when the last page holds no match does the
+branch have no open pull request.
+
+The entry passes no `head` filter because that filter returns `[]` in a fork whose owner also
+owns the parent - over REST as well as through the MCP tool - which read as "no open pull
+request" for a branch that had one. The match key is `origin`'s full name rather than
+`<head-owner>/<repo>` because in a fork clone `<repo>` is the upstream's name, and a fork
+owned by its parent's owner must carry a different one.
 
 `closes` and `refs` name the issue's repository as well as its number. One investigation can
 record a handoff per repository a change spans, so the pull request may open in a repository
