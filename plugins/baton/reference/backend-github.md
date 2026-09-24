@@ -108,8 +108,8 @@ raise `page` by one until it appears.
 `verify-checkout` prints `<owner>/<repo>` from the `upstream` remote's URL, or from
 `origin`'s where there is no `upstream`, in HTTPS, SSH and proxied forms alike, with no
 GitHub call. `pr-create` names the branch by `<head-owner>` instead, the owner in `origin`'s
-URL, and `pr-view` matches the branch's repository against `origin`'s own `owner/name`: in a fork clone `<owner>` is
-the upstream repository's owner, which does not hold the branch.
+URL, and `pr-view` matches the branch's repository against `origin`'s own `owner/name`: in a
+fork clone `<owner>` is the upstream repository's owner, which does not hold the branch.
 
 `pr-create` returns its **first** call's `{"id", "url"}`, and `url` is the pull request's
 URL; the second call returns nothing the caller keeps. The pull request exists from the
@@ -156,8 +156,8 @@ GitHub returns `full_name` in the repository's own case, while a remote URL keep
 case it was cloned with, so an exact comparison misses a clone of `Owner/Repo` made as
 `owner/repo`. `head.ref` is compared exactly: branch names are case-sensitive. A match's
 `number` is the second entry's `<id>`. The list pages with `page`: read on while a
-page comes back with 100 pull requests, and only when the last page holds no match does the
-branch have no open pull request.
+page comes back with 100 pull requests, and only when no page held a match does the branch
+have no open pull request.
 
 The entry passes no `head` filter because that filter returns `[]` in a fork whose owner also
 owns the parent - over REST as well as through the MCP tool - which read as "no open pull
