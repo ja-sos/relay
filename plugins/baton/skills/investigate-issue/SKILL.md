@@ -98,8 +98,8 @@ reason above - `view` output need not carry an address to match a locator agains
 
 Where **every** handoff and pointer on the issue is answered, do not stop here. Put each
 handoff and the report answering it to the user, evidence included, and go on to Step 2. Carry
-each handoff's `closes` value with it, because Step 2's `Already fixed` row proposes
-`close-fixed` and that value is what says whether a close was ever this handoff's to ask for:
+each handoff's `closes` value with it, because Step 2's `Already fixed` row is where `close-fixed`
+is proposed, and that value is what says whether a close was ever this handoff's to ask for:
 under `closes: yes` propose it with the commit; under `closes: no` the author meant the issue
 to stay open, so report it answered and propose nothing. Where `close-fixed` is `none`, a
 `closes: yes` handoff gets what `closes: no` gets: report it answered with its evidence, propose
@@ -158,14 +158,16 @@ Where the change spans repositories, reproduce against each one's HEAD, in its o
 record each HEAD as you go. Step 5 writes one handoff per repository and every handoff's
 `base` is its own repository's HEAD, so a HEAD not recorded here is a `base` guessed later.
 
-On either stop, report to the user and, unless that stop's operation is `none` or Step 1 carried
-`closes: no` for the issue, propose closing - `close-fixed` for a fix that landed,
-`close-invalid` for a finding that never held. Never close an issue without approval.
+On either stop, report to the user and propose closing - `close-fixed` for a fix that landed,
+`close-invalid` for a finding that never held - unless that stop's operation is `none`, or the
+stop is `Already fixed` on an issue whose handoffs Step 1 found all answered and none of them
+carried `closes: yes`. Never close an issue without approval.
 
-Each stop's `none` test reads only its own operation. Where `close-fixed` is `none`, an `Already fixed` stop
-reports the fixing commit and proposes no close; where `close-invalid` is `none`, a `Never held`
-stop reports the counter-evidence and proposes no close. Either way, say the close belongs to
-the tracker's own process: the project has decided that kind of close happens outside baton.
+Each stop's `none` test reads only its own operation. Where `close-fixed` is `none`, an
+`Already fixed` stop reports the fixing commit and proposes no close; where `close-invalid` is
+`none`, a `Never held` stop reports the counter-evidence and proposes no close. Either way, say
+the close belongs to the tracker's own process: the project has decided that kind of close
+happens outside baton.
 
 Either stop ends the investigation, so run `wrap-up` as the last action of the run, with the
 arguments Step 6 gives it.

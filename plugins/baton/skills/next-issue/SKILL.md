@@ -110,8 +110,8 @@ performs a `yes` close.** Where the loaded backend sets it to `none`, the projec
 outside baton, so a `closes: yes` issue waits on the tracker's own close process rather than on
 a close a person runs through baton - report it that way, not as a close candidate. This step
 reads the value only for an answered `closes: yes` issue, and never runs the operation; there,
-an undefined `close-fixed` is the stop it is everywhere else. A pointer carries no `closes` value at all -
-report it unread, as below, and name the primary issue whose handoff holds it.
+an undefined `close-fixed` is the stop it is everywhere else. A pointer carries no `closes`
+value at all - report it unread, as below, and name the primary issue whose handoff holds it.
 
 Stop walking at the first candidate that survives carrying no marker at all - `has-handoff`
 costs a call per issue, and the ones below the answer do not need one.
