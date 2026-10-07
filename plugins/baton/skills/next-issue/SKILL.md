@@ -109,8 +109,8 @@ would shut a ticket on the strength of work it was never scoped for. **`close-fi
 performs a `yes` close.** Where the loaded backend sets it to `none`, the project closes issues
 outside baton, so a `closes: yes` issue waits on the tracker's own close process rather than on
 a close a person runs through baton - report it that way, not as a close candidate. This step
-only reads the value and never runs the operation, so a backend that leaves `close-fixed`
-undefined is no stop here: read it as not `none`. A pointer carries no `closes` value at all -
+reads the value only for an answered `closes: yes` issue, and never runs the operation; there,
+an undefined `close-fixed` is the stop it is everywhere else. A pointer carries no `closes` value at all -
 report it unread, as below, and name the primary issue whose handoff holds it.
 
 Stop walking at the first candidate that survives carrying no marker at all - `has-handoff`
