@@ -654,7 +654,7 @@ The audit's verdict on each claim decides what the body may say:
 | ACCEPTED | stated as it stands |
 | CORRECTED | rewritten to the corrected form |
 | RETRACTED | left out |
-| LABELLED unverified | moved under the body's `## Not verified here` heading |
+| LABELLED unverified | moved under the body's `## Unverified claims` heading |
 
 A dispatch that fails here is a stop. Step 2 has already established the tool exists, so a
 failure at this point is the dispatch and not the launcher. Writing the body without the audit
@@ -668,12 +668,17 @@ git push -u origin <branch>
 ```
 
 Write the body under `baton:write-deliverables`, as a **PR description**, to a file in
-the scratchpad directory. Two things the run knows and a reviewer cannot recover go in it:
+the scratchpad directory. Beside the issue references and standing findings below, three
+things the run knows and a reviewer cannot recover go in it:
 
 - The handoff's "Not verified here" list where it carries one, copied as it stands under
   the body's `## Not verified here` heading.
   Each entry names a screen, a control and an expected result, and Step 3 covered none of
-  them - the list is what tells a reviewer which of them to open.
+  them - the list is what tells a reviewer which of them to open. That heading holds the
+  handoff's list alone.
+- Every claim Step 4's audit labelled unverified, under the body's `## Unverified claims`
+  heading. They are statements the run made and could not probe, kept apart from the
+  handoff's checks on a running application.
 - What Step 3 had to check against: the handoff's acceptance criteria and the commands
   that prove them, with each criterion no test covers named as such, or - where it named
   neither - a sentence saying so, and that `verify` alone checked the change.
@@ -688,9 +693,10 @@ a label, or the call that would have set one.
 
 The body states only what Step 4's audit accepted, in the form it accepted it. A corrected
 claim is rewritten, a retracted one is left out, and every claim the audit could only label
-unverified goes under a `## Not verified here` heading - listed rather than dropped, so a
-reviewer knows which claims to probe. With no such claim and no handoff list, there is no
-such heading.
+unverified goes under a `## Unverified claims` heading - listed rather than dropped, so a
+reviewer knows which claims to probe. Neither heading is written without its source:
+`## Not verified here` only where the handoff carries its list, `## Unverified claims` only
+where the audit labelled at least one claim.
 
 The findings the loop left standing go in the body as well, each with its severity and the
 reason it stands.
@@ -809,9 +815,11 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    these fixes add or change. A claim from Step 5's body stays unless this round's audit ruled
    on it, and then takes the form Step 4's verdict table gives. A finding from Step 5's body
    stays unless a fix this round resolved it. To those the body adds the claims this round's
-   audit accepted, the findings this round's loop left standing, the `## Not verified here`
-   list as it now stands, and - the lines easiest to lose - **every** issue reference Step 5's
-   table chose, one per issue the header names and each keeping the form that table gave it.
+   audit accepted, corrected or labelled, each in the form that table gives, the findings this
+   round's loop left standing, the `## Not verified here` list and the `## Unverified claims`
+   list as each now stands - each heading only where it still has entries, as Step 5 sets -
+   and - the lines easiest to lose - **every** issue reference Step 5's table chose, one per
+   issue the header names and each keeping the form that table gave it.
    `pr-update` replaces the body whole rather than appending to it, so a rewrite that drops a
    `closes` line leaves a pull request that no longer shuts its issue on merge, and one that
    keeps only the first line of a bundle leaves every issue after it unlinked - silently,
