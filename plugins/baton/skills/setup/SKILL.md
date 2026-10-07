@@ -71,6 +71,15 @@ grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-update\|cl
 - PASS: 7.
 - FAIL: fewer. Add the missing operations before Step 4.
 
+A tracker that carries no labels gets `- **list-categories:** none` rather than an entry that
+prints the `## Categories` labels back, and a `create` that sends no label. Both shipped
+routes' `create` passes `<category>`, so one copied from either has to drop it, and Step 4
+never runs `create` to find out. Read the `create` entry whole - every line of a fenced block,
+every bullet of a nested list - in whichever file defines it.
+
+- PASS: `list-categories` is not `none`, or `create` carries no `<category>`.
+- FAIL: `list-categories` is `none` and `create` carries `<category>`. Remove it before Step 4.
+
 `## Workflow` is the sixth section and stays out of the file unless the user asks for a step
 its defaults do not give - a ticket moved to in-progress when implementation starts, a
 pre-push sequence of the project's own rather than its test command alone, a reviewer
@@ -173,9 +182,13 @@ verify-checkout
 ```
 
 Where the file's notes say `list-categories` answers one `<category>` at a time, run it with
-the label from the first row of the file's `## Categories` table.
+the label from the first row of the file's `## Categories` table. Where `list-categories` is
+`none`, the tracker carries no labels: run nothing for it and report it as skipped. A
+`list-categories` the file does not define is not skipped - it fails the step as an
+undefined operation.
 
-- PASS: every row passes and all four operations return.
+- PASS: every row passes and all four operations return - or, where `list-categories` is
+  `none`, the other three return.
 - FAIL: any row fails or any operation errors. Fix the entry and restart Step 4.
 
 Where the file carries `## Repositories`, check every row of it too. A wrong path sends a run

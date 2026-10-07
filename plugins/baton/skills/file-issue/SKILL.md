@@ -51,11 +51,18 @@ git branch --show-current
 
 Record the SHA. Line numbers rot; the SHA is what keeps `src/hub.c:117` resolvable.
 
-Run `list-categories` and `list-open`. Where the backend's notes say `list-categories`
+Run `list-categories` and `list-open` - or `list-open` alone where `list-categories` is
+`none`, which is not a command to run. Where the backend's notes say `list-categories`
 answers one `<category>` at a time, run it once per row of the backend's `## Categories`
 table, with that row's label. Stop and ask when a category named in that table is missing
 from what `list-categories` returns, or comes back not-found from its own run. Never create
 one.
+
+Where `list-categories` is `none`, the tracker carries no labels, so there is no missing
+category to stop on. Read the loaded `create` entry instead - every line of it - and stop
+where it carries `<category>`: it would send a label the tracker does not have, and only after
+the user approved the filing. Only an explicit `none` does this - a `list-categories` the
+backend does not define is a stop, as every undefined operation is.
 
 ## Step 2 - Split
 
