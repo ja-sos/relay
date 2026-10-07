@@ -810,13 +810,17 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    on it, and then takes the form Step 4's verdict table gives. A finding from Step 5's body
    stays unless a fix this round resolved it. To those the body adds the claims this round's
    audit accepted, the findings this round's loop left standing, the `## Not verified here`
-   list as it now stands, and - the lines easiest to lose - **every** issue reference Step 5's
+   list as the end of this item defines it, and - the lines easiest to lose - **every** issue reference Step 5's
    table chose, one per issue the header names and each keeping the form that table gave it.
    `pr-update` replaces the body whole rather than appending to it, so a rewrite that drops a
    `closes` line leaves a pull request that no longer shuts its issue on merge, and one that
    keeps only the first line of a bundle leaves every issue after it unlinked - silently,
-   since a body missing a reference is as valid as one carrying it. The body describes the
-   branch as it is now, and never narrates the round that changed it.
+   since a body missing a reference is as valid as one carrying it. The `## Not verified
+   here` list holds the handoff's entries, every claim Step 5's audit labelled unverified that
+   this round's audit did not rule on again, and every claim this round's audit labelled
+   unverified; Step 5's no-heading case applies only where none of the three has an entry, so a claim this round's audit labels gets the heading even where Step 5's
+   body had none. The body describes the branch as it is now, and
+   never narrates the round that changed it.
 
 One round, with no re-request. A finding that holds is yours to judge on the diff, the
 same as a Step 4 finding - `request-reviewer` names who reviews, not who decides.
@@ -906,8 +910,17 @@ applied carries its reason, and every finding carries the severity Step 4 gave i
 unresolved Critical and a Minor left alone are different news. A finding the loop applied and
 a later round reopened takes the disposition it ends on.
 
-The findings, their dispositions and Step 6's outcome are required content whatever contract
-**Run report** resolves to. An override replaces a contract's must-include list wholesale
+That file also names each step or acceptance criterion of the handoff the run left undone
+because it needed a person - an approval, a credential, an answer nobody here could give -
+with what each one needed. The handoff's **Not verified here** list is not this item: Step 5
+already carries it into the pull request body, which the report does not repeat. A run that
+left nothing of that kind adds nothing about it, since "nothing left for a person" is not a
+line the reader needs - unless a project contract loaded for **Run report** explicitly requires
+the item stated when it is empty.
+
+The findings, their dispositions, Step 6's outcome and the work left for a person, where
+there is any, are required content whatever contract **Run report** resolves to. An
+override replaces a contract's must-include list wholesale
 (`skills/write-deliverables/reference/defining-doc-types.md`), so the shipped contract is not
 what holds them in - this step is, and a must-not-include that would cut them does not reach
 a file this step mandates. The type governs who the report is written for and the
