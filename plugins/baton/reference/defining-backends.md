@@ -353,33 +353,14 @@ leaves everything it already published in place and does not retry.
 before a push. It takes no placeholders: what it checks is the whole repo, not this
 change, which is what the handoff's own commands cover.
 
-`reviewed` is the eleventh, added in baton 0.2.0 with the `review-handoff` skill that runs it.
-A `## Workflow` written before it leaves `reviewed` undefined, and `review-handoff` stops at
-Step 1, before it reviews anything - add `- **reviewed:**         op: comment <id> <path>` to
-that section, or the entry the project's tracker records a finished review with. It is kept
-apart from `published` so that a `published` moving a ticket's status does not move it again
-when the review finishes; an entry that moves a ticket belongs in `published`, and `reviewed`
-says what the review did.
+`reviewed` is the eleventh. It is kept apart from `published` so that a `published` moving a
+ticket's status does not move it again when the review finishes; an entry that moves a ticket
+belongs in `published`, and `reviewed` says what the review did.
 
-A `## Launcher` restated in `.claude/baton.md` or `~/.claude/baton.md` before baton 0.2.0
-needs rewriting from the shipped one, and no run stops until it is. Its entries send only
-`/baton:implement-handoff <comment url>` and take no `<skill>`, so a reviewer launch run
-through such an entry would start `implement-handoff` again rather than `review-handoff`. With
-the locator substituted, that is a second implementation run of the same handoff: it finds
-`branch` taken, cuts `<branch>-<6 hex>`, opens a second pull request for work the first already
-carries, and launches through the same entry again. `implement-handoff` Step 7 holds its
-reviewer launch back on an entry with no `<skill>` for that reason, so until the section is
-re-copied no pull request gets its review, and no stack climbs past its bottom layer, since the
-reviewer is what launches `next`. Its `cloud` entry also keeps the `update`-then-`run` flow,
-whose interleaved launches both run the second launch's prompt, and it leaves alone the routine
-whose stored prompt still names the last handoff it launched - the shipped entry rewrites that
-prompt by name before its first `run`, and an old entry fires it as it stands. Re-copy the
-section, keeping the project's own changes.
-
-`stack-link` is the same shape of addition to `## Forge`, in baton 0.1.10. A section written
-before it leaves the operation undefined, and `implement-handoff` stops at Step 1 - but only
-on a handoff whose header carries `pr-base`, because that is the only case the run resolves
-it in. Add `- **stack-link:**      none`, or the entry the project's forge registers a stack
+`stack-link` is the same shape of addition as `started` and `verify`, made to `## Forge` in
+baton 0.1.10. A section written before it leaves the operation undefined, and
+`implement-handoff` stops at Step 1 - but only on a handoff whose header carries `pr-base`,
+because that is the only case the run resolves it in. Add `- **stack-link:**      none`, or the entry the project's forge registers a stack
 with. Two more edits belong to the same upgrade and neither errors when skipped, which is why
 they are named here:
 
@@ -585,7 +566,7 @@ skips `EnterWorktree` there, which refuses a second worktree, and the last step 
 `review-handoff` to keep it.
 
 A `cloud` entry adds whatever tool it itself is written with - `RemoteTrigger` on the shipped
-one, added in baton 0.1.10. Since baton 0.2.0 **every** cloud `implement-handoff` run needs
+one, added in baton 0.1.10. **Every** cloud `implement-handoff` run needs
 it, not only a stacked one: Step 7 launches the reviewer through the entry the run was started
 by, so a cloud run executes those same lines from inside the run on every pull request it
 opens. A cloud `review-handoff` run needs it too, for the layer above that the handoff's `next`

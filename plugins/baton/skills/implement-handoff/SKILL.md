@@ -192,19 +192,10 @@ after `EnterWorktree` leaves a worktree standing. Resolve it only where the head
 override predates the operation keeps running single-layer handoffs.
 
 Resolve the `## Launcher` entry `launcher=` names - `local` where the opening turn carried
-none - against the same loaded files. A name no loaded file defines is not a stop: the build
-does not depend on it, and a project whose own `## Launcher` defines no `local` would
-otherwise lose every run started by hand. Record it, and Step 7 holds the reviewer launch back
-on it. Record as well an entry whose text carries no `<skill>` placeholder: it was written
-before baton 0.2.0, sends only `/baton:implement-handoff`, and run as the reviewer launch it
-would start a second implementation run of this handoff, which would cut a suffixed branch,
-open a second pull request and launch through the same entry again. Step 7 holds the launch
-back on that too.
-
-Where the header carries `next`, resolve the `## Launcher` entry its first value names as
-well, and stop where no loaded file defines it. This run does not launch it - the reviewer
-does - but a name that cannot launch is cheapest caught here, before anything is built, rather
-than after the layer is built, pushed and reviewed.
+none - and, where the header carries `next`, the entry its first value names, against the same
+loaded files. Stop where no loaded file defines either one. Step 7 launches the reviewer
+through the first, and the reviewer launches the second; a name that cannot launch is
+cheapest caught here, before anything is built.
 
 The locator also fixes which repository this run's tracker calls address, for the whole run.
 One investigation can record a handoff per repository a change spans, so the issue driving
@@ -594,20 +585,15 @@ neither placeholder in its prompt and ignores both.
 
 ### Severity
 
-The loop needs a severity the stopping rule can read, and `code-review` resolves to whatever
-engine the project named, on whatever scale that engine uses. So the run classifies every
-finding itself, against this table, before deciding anything. Where an engine attaches a
-severity of its own, it is evidence about the finding and not the answer: map it onto a row
-here, and where it maps onto none, class the finding from what it says.
+Load the severity and disposition scales this run shares with its reviewer:
 
-| Severity | The finding says |
-|---|---|
-| Critical | The change is wrong or unsafe as written - a defect this diff introduces, a security hole, data loss, or a contradiction of an acceptance criterion the handoff set. |
-| Important | The change works, and a reviewer would still send it back - a case it fails to handle, a statement in code or docs it leaves false, a missing test for behaviour the handoff names. |
-| Minor | Everything else - style, naming, a cleanup in code this diff did not touch. |
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/reviewing-run-output.md
+```
 
-Severity is about the finding, not about how hard it is to fix. A Critical finding the run
-cannot fix stays Critical and goes in the body as one.
+Classify every finding against its "Severity" section before deciding anything about it. Its
+"Severity" and "Dispositions" sections apply to this run; every other section there governs a
+review of this run's output by another session, and none of it applies here.
 
 ### The loop
 
@@ -879,12 +865,8 @@ pull request URL Step 5 returned. The URL is passed rather than derived from the
 Run it **once, with no retry**, whatever it returns. Two reviewers on one pull request race to
 push to the same branch, and a launch that fails is reported rather than repeated.
 
-Two things hold it back, and neither is a stop:
-
-- **Either check above failed.** `origin` does not hold this branch's work, so the reviewer
-  would review a tree other than the one in that directory.
-- **Step 1 found the entry undefined, or carrying no `<skill>`.** There is nothing to run it
-  through, or running it would start `implement-handoff` again rather than the reviewer.
+Either check above failing holds it back, and is not a stop: `origin` does not hold this
+branch's work, so the reviewer would review a tree other than the one in that directory.
 
 The header's `next` is not launched here. `baton:review-handoff` launches it after its own
 push, so the layer above branches from the reviewed tip.
@@ -906,7 +888,7 @@ the pull request stays open and unaffected.
 
 Where the header carried `pr-base`, that file names the branch the pull request opens
 against and whether `stack-link` ran or is `none`. It records the reviewer launch: the entry
-run and what it returned, or which of the two conditions above held it back. Where the header carried
+run and what it returned, or which of the two checks above held it back. Where the header carried
 `next`, it says the reviewer carries that launch - naming both branch names on a rename,
 where the reviewer will hold it back - and, where the reviewer launch was held back or failed,
 quotes the `next` locator as unlaunched. That locator is how a person resumes the stack by
@@ -915,23 +897,7 @@ hand.
 That file also carries every review finding the run collected: every round of Step 4's loop,
 both the loop before Step 5's push and the one Step 6 item 6 runs over the reviewer's fixes,
 and, where Step 6 ran, every finding its reviewer round collected including the ones judged
-not to hold. Each carries one disposition:
-
-| Disposition | The finding | Carries |
-|---|---|---|
-| applied | is fixed on the branch | nothing further |
-| rejected | does not hold, or contradicts a decision the handoff recorded | which of the two, and why |
-| deferred | holds, and its fix is outside the handoff's scope or costs more than it is worth | what it waits on, or why it was left |
-| unresolved | needs an answer nobody here could give | what blocks the call |
-
-Step 4's three reasons for a finding the run cannot fix map onto these: outside the handoff's
-scope is deferred, contradicts a decision the handoff recorded is rejected, needs an answer
-nobody here can give is unresolved. The two judgements a round makes on its own take the
-remaining shapes - a finding read and found not to hold is rejected, a Minor one the loop
-chose to leave is deferred - so neither reaches the reader as silence. Every disposition but
-applied carries its reason, and every finding carries the severity Step 4 gave it: an
-unresolved Critical and a Minor left alone are different news. A finding the loop applied and
-a later round reopened takes the disposition it ends on.
+not to hold. Each carries one disposition from the reference's "Dispositions" section.
 
 Where the pull request body, as Step 5 or Step 6 last wrote it, carries a `## Not verified
 here` heading, that file also says checks wait there for a person to run; where it carries

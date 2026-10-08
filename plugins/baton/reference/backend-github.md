@@ -251,10 +251,8 @@ reviewer through the same entry.
 
   1. `action: "list"`, finding the routine by that name.
   2. Where it is absent, `action: "create"` with the body below.
-  3. Where it exists, compare its stored prompt - the `message.content` of its event, not the
-     event's `uuid`, which is fresh on every launch - and its `model`, `allowed_tools`,
-     `sources` and `enabled` with the body below. Where any of them differs, `action: "update"`
-     with those fields from the body.
+  3. Where it exists and its stored `model` differs from the model this session is running,
+     `action: "update"` with the body's `model`.
   4. One `action: "run"` on it, with the body `{"text": "<args> launcher=cloud"}`.
 
 ```json
@@ -280,9 +278,8 @@ reviewer through the same entry.
   to - which this one does - and a run given a stored prompt naming a skill invokes it with the
   payload verbatim as its arguments. A run with no payload ends in one turn. A `run` that
   passes `job_config.ccr.events`, `events` or `prompt` instead gets HTTP 200 and the stored
-  prompt alone. That is why each launch is one call: the entry before baton 0.2.0 re-pointed a
-  single routine with `update` and then fired it with `run`, and two launches interleaving
-  there both ran the second launch's prompt.
+  prompt alone. That is why each launch is one call: re-pointing one routine with `update` and
+  then firing it with `run` lets two interleaved launches both run the second launch's prompt.
 
   The routines are created disabled and stay disabled. `run` starts a disabled routine and
   delivers its payload, so no launch toggles `enabled`, and with no schedule there is no
@@ -290,22 +287,10 @@ reviewer through the same entry.
   claude.ai/code/routines. `action: "list_runs"` returns a run's session URL;
   `action: "get_run_log"` reads the run, permission denials included.
 
-  Step 3 runs on every launch because a routine keeps what it was last given. A routine
-  created before 0.2.0 still stores the last launch's prompt - for `implement <owner>/<repo>`,
-  `/baton:implement-handoff` with an old locator - and a `run` on it delivers that prompt
-  first and the new arguments after it as inert data: a second implementation run of an old
-  handoff, which cuts `<branch>-<6 hex>` and opens a second pull request. Rewriting the stored
-  prompt by name is what retires it. `model` is reconciled for the reason it is in the body
-  at all: an investigation formed under one model does not hand its plan to a weaker one, and
-  a launch from a session on another model would otherwise run under the routine's old one.
-  `sources` and `enabled` are compared so an old routine ends in the same state a new one
-  starts in. New routine names would skip the comparison, but would leave each old routine on
-  the account, holding a prompt that runs if anything fires it.
-
-  Step 3 is the one place two launches can still interleave. The prompt, `sources`, `enabled`
-  and `allowed_tools` it writes are the same on every launch, so an interleaving there changes
-  nothing; `model` is not, and two launches from sessions on different models at the same
-  moment can each run under the other's.
+  Step 3 updates `model` because an investigation formed under one model does not hand its plan
+  to a weaker one, and a launch from a session on another model would otherwise run under the
+  routine's stored one. It is the one place two launches can still interleave: two launches
+  from sessions on different models at the same moment can each run under the other's.
 
   `sources` is what attaches the repository - the field `claude --cloud` leaves empty,
   which is why a `--cloud` session arrives with an uploaded copy of the checkout and no

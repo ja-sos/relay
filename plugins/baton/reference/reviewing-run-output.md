@@ -1,9 +1,11 @@
 # Reviewing run output
 
 The rules a review follows when the branch under it was written by an unattended
-`baton:implement-handoff` run. `baton:self-review` loads this file for a person-attended review;
-`baton:review-handoff` loads it for the unattended review that run launches. Each skill says at
-which of its steps each section below applies, and neither changes what a section says.
+`baton:implement-handoff` run, and the severity and disposition scales that run and its
+reviewer share. `baton:self-review` loads this file for a person-attended review;
+`baton:review-handoff` loads it for the unattended review that run launches;
+`baton:implement-handoff` loads it for "Severity" and "Dispositions" alone. Each skill says at
+which of its steps each section below applies, and none changes what a section says.
 
 ## Whose code this is
 
@@ -73,6 +75,42 @@ Every check ends in one of four dispositions - stands, fixed as claimed, the rej
 or the finding does not hold - each with the evidence that settled it, so every collected
 thread gets one whether it was resolved or answered or neither. A thread whose finding stands
 is a finding like any `code-review` returns, and is fixed the same way.
+
+## Severity
+
+Classify every finding against this table before deciding anything about it. `code-review`
+resolves to whatever engine the project named, on whatever scale that engine uses, so a
+severity the engine attaches is evidence about the finding and not the answer: map it onto a
+row here, and where it maps onto none, class the finding from what it says.
+
+| Severity | The finding says |
+|---|---|
+| Critical | The change is wrong or unsafe as written - a defect this diff introduces, a security hole, data loss, or a contradiction of an acceptance criterion the handoff set. |
+| Important | The change works, and a reviewer would still send it back - a case it fails to handle, a statement in code or docs it leaves false, a missing test for behaviour the handoff names. |
+| Minor | Everything else - style, naming, a cleanup in code this diff did not touch. |
+
+Severity is about the finding, not about how hard it is to fix. A Critical finding the run
+cannot fix stays Critical and is reported as one.
+
+## Dispositions
+
+Every finding ends with one disposition:
+
+| Disposition | The finding | Carries |
+|---|---|---|
+| applied | is fixed on the branch the run commits to | nothing further |
+| rejected | does not hold, or contradicts a decision the handoff recorded | which of the two, and why |
+| deferred | holds, and its fix is outside the handoff's scope or costs more than it is worth | what it waits on, or why it was left |
+| unresolved | needs an answer nobody here could give | what blocks the call |
+
+The three reasons a finding cannot be fixed map onto these: outside the handoff's scope is
+deferred, contradicts a decision the handoff recorded is rejected, needs an answer nobody here
+can give is unresolved. The two judgements a round makes on its own take the remaining shapes -
+a finding read and found not to hold is rejected, a Minor one the loop chose to leave is
+deferred - so neither reaches the reader as silence. Every disposition but applied carries its
+reason, and every finding carries its severity: an unresolved Critical and a Minor left alone
+are different news. A finding a round applied and a later round reopened takes the disposition
+it ends on.
 
 ## Red flags - you are deferring to an agent
 

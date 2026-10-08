@@ -95,6 +95,9 @@ against pushing unasked does not cover the run. These need no confirmation:
 - The `## Launcher` entry the header's `next` names, run once at Step 6. That line is the
   authorization to start the layer above, given ahead of the run by whoever wrote the handoff;
   it moved here from `implement-handoff` so the layer above branches from the reviewed tip.
+- Reading the files the header's `assets` line names, under the `root` the backend's
+  `## Assets` section gives, resolved at Step 1. The handoff's commands run after every fix,
+  and a command that reads an asset needs the file the implementation run read.
 - Dispatching the subagents its review needs - Step 4's claim audit, and a reviewer an
   `agent:` entry in `code-review` names. They read and report; nothing they return reaches the
   tracker or the forge except through a step above.
@@ -108,8 +111,8 @@ the ask that would authorize it:
   writing to a review thread or a pull request comment.
 - `started` or `published` on any issue: `implement-handoff` already ran them, and a tracker
   whose `published` moves a ticket would move it twice.
-- Reading, writing, moving or deleting anything under the `## Assets` `root`. A handoff command
-  that cannot run without an asset fails, and that failure is a stop like any other.
+- Writing, moving or deleting anything under the `## Assets` `root`, and copying an asset into
+  the worktree or a commit.
 
 Those are actions. A judgement this run can make on the evidence - whether a finding holds,
 which fix the code supports - is one it must make rather than end the turn over.
@@ -158,10 +161,11 @@ session's tools. Any of these missing is a stop here, for the reason `implement-
 Steps 1 and 2 resolve theirs early: the same stop reached after `EnterWorktree` leaves a
 worktree standing.
 
-Where the header carries `next`, resolve the `## Launcher` entry its first value names as well.
-A name no loaded file defines is not a stop: the review does not depend on it, and stopping
-here would leave the pull request unreviewed over a launch that comes after it. Record it, and
-Step 6 holds `next` back on it.
+Where the header carries `next`, resolve the `## Launcher` entry its first value names as well,
+and stop where no loaded file defines it.
+
+Where the header carries `assets`, resolve every path it lists, before `EnterWorktree`, with
+the checks and stops of `implement-handoff` Step 1's `assets` section.
 
 ## Step 2 - Worktree
 
@@ -217,20 +221,7 @@ Collect the pull request's threads as the reference's "Collecting the review thr
 Run `code-review` with the pull request number as `<target>` and the handoff locator as
 `<locator>`. Then check each collected thread as the reference's "Checking the threads" says: a
 thread whose finding stands joins the findings, and every thread keeps its own disposition for
-the Run report.
-
-### Severity
-
-Classify every finding against `implement-handoff`'s severity table, which this run applies
-unchanged. An engine's own severity is evidence about the finding, not the answer:
-
-| Severity | The finding says |
-|---|---|
-| Critical | The change is wrong or unsafe as written - a defect this diff introduces, a security hole, data loss, or a contradiction of an acceptance criterion the handoff set. |
-| Important | The change works, and a reviewer would still send it back - a case it fails to handle, a statement in code or docs it leaves false, a missing test for behaviour the handoff names. |
-| Minor | Everything else - style, naming, a cleanup in code this diff did not touch. |
-
-Severity is about the finding, not about how hard it is to fix.
+the Run report. Classify every finding against the reference's "Severity" section.
 
 ### The loop
 
@@ -256,15 +247,8 @@ code the pull request's own diff does not change is outside the handoff's scope,
 includes the layer below on a stacked pull request: from the second round the target is a
 branch, which a review engine may compare with the default branch rather than with the
 pull request's base, and so shows that layer's commits as well. Each
-finding, from `code-review` or from a thread, ends with one of `implement-handoff` Step 7's
-dispositions, mapped the way that step maps them:
-
-| Disposition | The finding | Carries |
-|---|---|---|
-| applied | is fixed on the review branch | nothing further |
-| rejected | does not hold, or contradicts a decision the handoff recorded | which of the two, and why |
-| deferred | holds, and its fix is outside the handoff's scope or costs more than it is worth | what it waits on, or why it was left |
-| unresolved | needs an answer nobody here could give | what blocks the call |
+finding, from `code-review` or from a thread, ends with one of the dispositions in the
+reference's "Dispositions" section, applied on the review branch.
 
 A finding the run cannot decide is `unresolved`, never dropped. Keep every round's findings,
 with severity and disposition: the Run report names all of them, applied ones included.
@@ -366,11 +350,11 @@ no retry**, whatever it returns: two runs on one branch race, the second takes a
 `implement-handoff` Step 2, and the stack gains a layer nobody asked for. A launch that fails is
 reported rather than repeated.
 
-Three things hold it back, and none is a stop:
+Two things hold it back, and neither is a stop:
 
-- **Step 1 found the entry undefined.** There is nothing to run it through.
-- **Either check above failed.** `origin` does not hold the reviewed tip, so the run above
-  would branch from a `pr-base` missing the commits it builds on.
+- **`HEAD` and `origin/<head ref>` differ.** `origin` does not hold the reviewed tip, so the
+  run above would branch from a `pr-base` missing the commits it builds on. Output from
+  `git status --porcelain` alone decides the worktree, not this launch.
 - **The head ref differs from the header's `branch`.** The next layer's `pr-base` names
   `branch`, which holds somebody else's work; launching would stack the layer above onto the
   wrong history.
