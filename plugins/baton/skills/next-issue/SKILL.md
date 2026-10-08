@@ -96,9 +96,11 @@ for a pointer the issue it names, and for either whether a report answered it: S
 all three, and the markers alone carry none of it.
 
 An issue whose handoff carried `closes: yes` is closed by its merged pull request once that
-handoff is implemented, so it never reaches `list-mine` again. One that carried `closes: no`
-stays open and keeps its marker, and this step goes on skipping it after the run that
-implemented it has finished - so an issue deliberately left open for further work is not
+handoff is implemented, so it never reaches `list-mine` again. Where the backend's `closes` is
+`none`, the body carries no line for it, so whether the merge closes it is the project's
+linking to decide, and while it stays open this step skips it on its marker. One that carried
+`closes: no` stays open and keeps its marker, and this step goes on skipping it after the run
+that implemented it has finished - so an issue deliberately left open for further work is not
 offered again here. Say so in Step 3 rather than treating every skip as settled scope.
 
 **`closes` decides what an answered issue is waiting for, and this step does not assume.** Read
