@@ -93,9 +93,10 @@ With a pull request open, read its body from Step 0's `pr-view` output and colle
 
 Standing findings sit under no fixed heading. `baton:implement-handoff` writes each one with
 its severity and the reason it stands, so collect them by that content wherever in the body
-they appear. A standing finding that Step 1's `code-review` also returned - the same defect at
-the same place - is one item, not two: it is ruled on here and listed only in this step's group
-at the gate. A thread Step 0 collected keeps its own disposition row even where it raises a
+they appear. A standing finding that Step 1's `code-review` also returned - the same failure,
+at the same file and an overlapping line range at the reviewed head - is one item, not two: it
+is ruled on here and listed only in this step's group at the gate. Where either differs, they
+are two items. A thread Step 0 collected keeps its own disposition row even where it raises a
 standing finding, and that finding's row here names the thread. With no pull request there
 is no body, and this step collects nothing.
 
@@ -120,9 +121,8 @@ reach - ends the turn with a question to the user naming what verifying it needs
 such question in one final message, the way the gate stops, resume at this step with the
 answers, and take each answer as that item's evidence. The item is never carried forward
 unverified, with one exception: an item the user rules can only be verified after merge takes
-exactly that as its verdict. The session is not done while any
-collected item lacks a verdict, or, for a finding outside the handoff's scope, lacks the
-user's decision at the gate.
+exactly that as its verdict. The session is not done while any collected item lacks a verdict,
+or, for a finding outside the handoff's scope, lacks the user's decision at the gate.
 
 ## Step 3 - The gate
 

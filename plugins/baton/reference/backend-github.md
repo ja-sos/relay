@@ -185,9 +185,7 @@ entry follows the tracker's placeholder rule, which `defining-backends.md` state
 issue and the work are in one repository, which is every handoff recorded before baton 0.1.11,
 the reference reads as `Closes owner/repo#12` and resolves to the same issue `Closes #12` did.
 
-GitHub documents that cross-repository form for closing keywords. That it closes the issue on
-merge was not tested here, and `implement-handoff`'s pull request body lists it for the
-reviewer.
+GitHub documents that cross-repository form for closing keywords.
 
 A 403 naming `add_repo` means the session holds no grant for the repo, not that the
 credentials are wrong. Attach the repo at `access: push`; the read default covers neither
