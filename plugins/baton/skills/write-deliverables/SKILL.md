@@ -168,8 +168,7 @@ specific-looking detail reads as evidence. Cite the bridge itself, or state what
 and stop.
 
 Audit by shape, not by feel. Run `baton:claim-audit` over every one of these whether or not
-it feels solid - it classes each claim observed, inferred or recalled, and retracts what
-recall cannot support:
+it feels solid:
 
 - a causal claim - "because", "due to", "which is why", "so that"
 - a scope claim - "no other callers", "only", "always", "nothing else"

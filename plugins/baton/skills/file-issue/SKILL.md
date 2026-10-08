@@ -9,24 +9,21 @@ Turn review findings into tracker issues. Applies when the findings already exis
 session. Does not apply to filing from a description alone, or to commenting on an issue
 that exists.
 
-Every operation named below comes from the backend. Load it, later files overriding
-earlier by `##` heading:
+Every operation named below comes from the backend. The files load in the order
+`defining-backends.md` "Where overrides live" sets:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ```
 
-That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
-opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
-file next, so it replaces those three sections:
+Run the route check at the top of `backend-github.md`, and load `backend-github-gh.md` only
+where that check selects it:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Where neither route is available, `backend-github.md` says what that means. Either way, the
-project's own files load last:
+Then, whatever the check found:
 
 ```
 cat .claude/baton.md 2>/dev/null
@@ -51,16 +48,10 @@ git branch --show-current
 
 Record the SHA. Line numbers rot; the SHA is what keeps `src/hub.c:117` resolvable.
 
-Run `list-categories` and `list-open` - or `list-open` alone where `list-categories` is
-`none`, which is not a command to run. Where the backend's notes say `list-categories`
-answers one `<category>` at a time, run it once per row of the backend's `## Categories`
-table, with that row's label. Stop and ask when a category named in that table is missing
-from what `list-categories` returns, or comes back not-found from its own run. Never create
-one.
+Run `list-open`, and `list-categories` as the backend's notes on it say. Stop and ask when a
+`## Categories` label is missing from the `list-categories` answer. Never create one.
 
-Where `list-categories` is `none`, the tracker carries no labels, so there is no missing
-category to stop on. Only an explicit `none` does this - a `list-categories` the backend does
-not define is a stop, as every undefined operation is.
+Where `list-categories` is `none`, run `list-open` alone and skip the category check.
 
 ## Step 2 - Split
 
@@ -105,8 +96,7 @@ hunting for the session's scratchpad directory.
 
 Issues are public on creation and close rather than disappear.
 
-On approval, run `create` per issue. It takes `<path>`, never body text: an argument
-carrying the body inline mangles backticks, headings and fenced blocks through the shell.
+On approval, run `create` per issue. It takes `<path>`, never body text.
 Where `list-categories` is `none`, pass `<category>` empty - the tracker has no label to give
 it - and apply what the backend's notes on its own `create` say an empty value drops.
 

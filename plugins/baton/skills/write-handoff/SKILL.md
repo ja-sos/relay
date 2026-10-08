@@ -10,24 +10,21 @@ context note** contract. Applies when the next session starts cold, on a machine
 need not be this one. Does not apply to a document belonging in the repo, or to an issue
 body - `baton:file-issue` covers issues.
 
-Every operation named below comes from the backend. Load it, later files overriding
-earlier by `##` heading:
+Every operation named below comes from the backend, its files loaded in the order
+`${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md` "Where overrides live" sets. Load the
+shipped file and run the route check at its top:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ```
 
-That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
-opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
-file next, so it replaces those three sections:
+Load `backend-github-gh.md` only where that check selects it:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Where neither route is available, `backend-github.md` says what that means. Either way, the
-project's own files load last:
+Then the project's own files:
 
 ```
 cat .claude/baton.md 2>/dev/null
@@ -44,9 +41,8 @@ not define - an improvised equivalent writes to a tracker the project did not ch
 ## Step 1 - Place
 
 The handoff is one record against the issue, posted with `post-handoff` once Steps 2-4 have
-written it - a comment by default, and whatever the backend says otherwise. The marker is
-what `has-handoff` finds. The update follows it, and the handoff sits collapsed beneath,
-labelled as a work order rather than a decision the project has taken:
+written it. The marker is what `has-handoff` finds. The update follows it, and the handoff
+sits collapsed beneath, labelled as a work order rather than a decision the project has taken:
 
 ````
 <!-- claude-handoff -->
@@ -82,19 +78,10 @@ as well.
 
 The marker is the first line and there is **no fenced header anywhere in it**. With one the
 pointer would read as a second handoff, and a launcher handed its locator would start a second
-run on the branch the primary handoff already names - two runs on one branch, which is the
-race the once-only launches in `implement-handoff` Step 7 and `review-handoff` Step 6 exist to
-prevent.
+run on the branch the primary handoff already names.
 
-What the pointer buys is the marker on that issue, so a bundled issue is skipped by
-`next-issue` exactly as its primary is, and `investigate-issue` reads the primary handoff by
-looking at the issue the pointer names.
-
-**The locator earns its place beside the marker**, and a pointer written without it is a
-pointer nothing can ever answer. Since baton 0.1.16 both readers match an obsolete report
-against what a pointer carries - `implement-handoff` posts one on every issue its header named
-when it finds the work already done at HEAD - and the locator is the only thing in a pointer
-that a report can name back. Drop it and the issue stays skipped for good.
+The pointer puts the marker on its issue. The locator beside it says which handoff on the
+primary issue covers this one, where the primary carries more than one.
 
 Bundle only issues this investigation actually settled - it is a judgement made from the work
 just done, and nothing here checks it. An issue already waiting on a handoff of its own is
@@ -107,10 +94,7 @@ tracker and nothing else - no file of this machine's, and no path that resolves.
 issue first; `baton:file-issue` covers that.
 
 Post a second handoff for rework rather than editing the first, which alone carries the
-approach that failed and the constraint that ruled the alternatives out. Its `branch` must
-differ from every branch an earlier handoff on the issue named: `baton:next-issue` and
-`baton:investigate-issue` count a handoff answered by any obsolete report naming its `base`
-and `branch`, and a rework handoff formed against an unmoved HEAD shares that `base`.
+approach that failed and the constraint that ruled the alternatives out.
 
 ## Step 2 - Header
 
@@ -160,9 +144,7 @@ it is unchanged. Every entry names an issue in the repository this handoff is po
 which is where `post-handoff` puts the pointers too - not necessarily the `repo` line's
 repository, which names where the work goes.
 
-**The two lists must be the same length.** `implement-handoff` Step 1 stops on a pair that is
-not, rather than pairing what it can: a guess that lands on `yes` shuts an issue this handoff
-said to leave open, and a merge cannot be taken back.
+**The two lists must be the same length.**
 
 **The first entry is the primary issue.** The investigation, this whole handoff comment and the
 run's worktree name all come from it, and every other entry gets the pointer Step 1 describes.
@@ -170,16 +152,13 @@ run's worktree name all come from it, and every other entry gets the pointer Ste
 `closes` is `yes` on the handoff that finishes the issue and `no` on every other, so the
 issue is not marked done while work on it remains. `no` is the safe value whenever the
 split is unsettled. It is judged per entry, not per handoff: a bundle that finishes one issue
-and leaves another open writes `yes` for the first and `no` for the second, and the run writes
-each issue's reference line from that issue's own value. Where the backend sets the entry that
-value selects to `none`, the issue gets no line, and the value decides nothing on merge.
+and leaves another open writes `yes` for the first and `no` for the second.
 
 `category` is the label the pull request will carry. Read the primary issue's own labels -
 one pull request carries one label, so a bundle takes the primary's - keep the one matching
 a row of the backend's `## Categories` table, and write it exactly as that row
 spells it - a project can rename its categories, so the row is the spelling, not this
-skill. An issue carrying no such label gets no `category` line, and the run opens an
-unlabelled pull request.
+skill. An issue carrying no such label gets no `category` line.
 
 `pr-base` is for a handoff that is one layer of a stack: its work sits on top of the layer
 below, so its pull request opens against that layer's branch rather than the default branch,
@@ -187,13 +166,10 @@ and the run cuts its own branch from there. Omit the line everywhere else.
 
 That branch is not checked here, unlike `base`. A stack is written top layer first - see
 `## Done` - so at the moment this handoff is posted the layer below has usually not pushed
-yet, and a check here would fail on every layer but the bottom one. `implement-handoff`
-Step 2 checks it instead, at the one moment it has to hold: when the run cuts its branch.
+yet, and a check here would fail on every layer but the bottom one.
 
-`next` names the layer above, and it is the authorization to start that layer: the
-`review-handoff` run that reviews this layer's pull request launches it at its Step 6, after
-its own push, once and with no retry - so the layer above branches from the reviewed tip. Write
-two values separated by a space - the name of a `## Launcher` entry the backend defines,
+`next` names the layer above and authorizes starting it; `review-handoff` Step 6 launches it.
+Write two values separated by a space - the name of a `## Launcher` entry the backend defines,
 `local` or `cloud` on the shipped one, and the locator `post-handoff` returned for that
 layer's handoff. Omit the line on the top layer, and on any handoff that is not part of a
 stack; nothing is launched then, which is what every handoff written before this line did.
@@ -201,27 +177,18 @@ stack; nothing is launched then, which is what every handoff written before this
 A layer names `pr-base` and `next` independently. The bottom layer of a stack carries `next`
 and no `pr-base`; the top carries `pr-base` and no `next`.
 
-**A layer carrying `assets` does not belong in a cloud stack, and `next` cannot rescue it.** A
-cloud run clones the repository and never sees `~/.claude/baton.md`, so `## Assets` is
-undefined in it and every path that layer lists is unresolved: the launch reports success and
-the run it starts stops at `implement-handoff` Step 1. Naming `local` in the line below is not
-the fix. A `local` entry starts a session on the machine the launching run is on, so run from
-inside a cloud run it lands the layer in that same container, with the same missing folder -
-which is why `defining-backends.md` has a stack name one launcher throughout rather than mix
-the two.
-
-So a stack with a layer that needs assets runs entirely on the machine holding them, with
-`local` in every `next` line, or the layer below it carries no `next` and that layer is started
-by hand there, keeping its own `next` for the layer above. Settle this before posting, because
-the `next` lines are written on the way down and a layer's own header is fixed once it is
-posted.
+**A layer carrying `assets` does not belong in a cloud stack, and naming `local` in `next`
+does not rescue it** (`backend-github.md` `## Launcher`; `defining-backends.md`, "Tools an
+unattended run needs"). A stack with a layer that needs assets runs entirely on the machine
+holding them, with `local` in every `next` line, or the layer below it carries no `next` and
+that layer is started by hand there, keeping its own `next` for the layer above. Settle this
+before posting, because the `next` lines are written on the way down and a layer's own header
+is fixed once it is posted.
 
 **Both lines are single-repository.** `pr-base` names a branch in the repository `repo` gives,
-and `next` fires at `review-handoff` Step 6, once the layer below's pull request is open and
-reviewed. Neither chains repositories. What a handoff for a repository downstream of another
-waits on is that upstream repository's next *published* version, which no run produces and no
-branch stands for, so such a handoff carries neither line: it is posted with the rest and
-launched by hand, in the order `investigate-issue` Step 6 reports.
+and neither line chains repositories. A handoff for a repository downstream of another waits on
+that upstream repository's next *published* version, which no run produces and no branch
+stands for, so such a handoff carries neither line.
 
 `assets` names files the work needs that live outside every repository, in the one folder the
 backend's `## Assets` section roots. Write each path relative to that root, separated by
@@ -251,13 +218,10 @@ does not find is a stop for this handoff alone, naming every path that failed; t
 handoffs of the same investigation are unaffected. Check `root` before any path: an empty one
 turns the second line into `test -e "/<path>"`, which answers about the filesystem root and
 can pass on a file nobody meant. The check runs here because the session that reads the
-handoff has nobody to ask where a file went - `implement-handoff` Step 1 re-runs the same
-resolution and stops before it creates a worktree, so a path that is wrong now costs that run
-instead.
+handoff has nobody to ask where a file went.
 
-Assets are read-only to the run, which stops rather than writing, moving or deleting anything
-under `root`, or copying an asset into the repository. Name what the run should read out of an
-asset, never what it should do to it.
+Assets are read-only to the run (`implement-handoff`, "What this run may do unasked"). Name
+what the run should read out of an asset, never what it should do to it.
 
 ## Step 3 - Body
 
@@ -272,12 +236,11 @@ Name nothing that exists only on this machine. Cite code as repo-relative `file:
 absolute path, a home directory or a hostname resolves to nothing in the session that
 reads it.
 
-**An asset is the one exception.** Where the header carries an `assets` line, the body may
-name a file that line lists, by that same path relative to the `## Assets` root and by nothing
-else. It resolves in the reading session because Step 2 checked it and `implement-handoff`
-Step 1 resolves it again. Absolute paths, home directories and hostnames stay banned, an
-asset's among them: the root is the backend's to supply per machine, and a body that spells it
-out is wrong on the next one.
+**An asset is the one exception.** Where the header carries an `assets` line, the body may name
+a file that line lists, by that same path relative to the `## Assets` root and by nothing else.
+It resolves in the reading session because Step 2 checked it. Absolute paths, home directories
+and hostnames stay banned, an asset's among them: the root is the backend's to supply per
+machine, and a body that spells it out is wrong on the next one.
 
 **Call it an asset where you name it.** A bare relative path reads as a repo-relative citation
 like every other one in the body, and the reading session would look for it in the checkout
@@ -296,14 +259,13 @@ it, which is read by the issue's participants and states no criteria:
    sections runs with `verify` alone" is a criterion, "add a paragraph to Step 3" is a step,
    and "the review is thorough" is neither. Cover every part of the approach, since a part
    no row names is a part nothing checks.
-3. **Commands** that prove those criteria, which `implement-handoff` Step 3 runs and reruns
-   after every round of fixes. Every one is headless: that run is unattended, so a command
-   opening a window or waiting on a keypress hangs it with nobody there to answer. Name
-   the output that counts as a pass beside each, since the run has no other way to read
-   the result.
+3. **Commands** that prove those criteria. Every one is headless: the implementation run is
+   unattended, so a command opening a window or waiting on a keypress hangs it with nobody
+   there to answer. Name the output that counts as a pass beside each, since the run has no
+   other way to read the result.
 4. **Not verified here**, listing anything needing eyes on a running application: the
-   screen, the control, and the expected result. The run carries this list into the pull
-   request body, so it reaches the reviewer who can open them. Write it only where the
+   screen, the control, and the expected result, for the reviewer who can open them
+   (`implement-handoff` Step 5 copies it into the pull request body). Write it only where the
    change has something to check in a running application, and leave the section out where
    it has nothing: an empty list copied into every pull request body tells the reviewer
    nothing, and pushes the run to fill it with entries that are not checks.
@@ -316,21 +278,12 @@ to state. Carry the ones this handoff writes into the Step 2 brief as part of `G
 verified here** included where it applies, or the outline verdict cuts them as sections no
 reader question asks for - the reader here is a run that cannot check itself without them.
 
-Each criterion changes what that run does. `implement-handoff` Step 3 writes at least one
-test for it, and Step 4 classes a review finding that contradicts it as Critical rather than
-a remark. Nothing in the shipped backend walks the list row by row against the diff: only a
-backend that has paired `code-review` with an `agent:` compliance reviewer gets that check.
-Write the criteria for the person reviewing the pull request either way - they are the list
-that reviewer ticks off, and a row only a machine could settle helps nobody.
+Write the criteria for the person reviewing the pull request - they are the list that reviewer
+ticks off, and a row only a machine could settle helps nobody.
 
-A handoff for work no test reaches states that under the criteria rather than dropping
-Steps, Acceptance criteria or Commands, and `implement-handoff` Step 3 proves such a
-criterion with the Commands alone. Steps are the edit list the run follows, so dropping them
-leaves it to re-derive the change. Dropped, Acceptance criteria and Commands are
-indistinguishable from a handoff written before baton 0.1.7, which the run executes with
-`verify` alone. **Not verified here** carries no such reading: `implement-handoff` copies it
-only where the handoff carries one, so leaving it out says only that nothing needs a running
-application.
+A handoff for work no test reaches says so under the criteria and still carries Steps,
+Acceptance criteria and Commands; `implement-handoff` Step 3 says how it proves such a
+criterion.
 
 ## Step 4 - Update
 
@@ -338,28 +291,24 @@ Write the update under `baton:write-deliverables` as a separate document.
 Its reader is the issue's participants, not the implementation run. It carries the cause, the
 approach chosen and what it rules out, and the next step.
 
-Every claim in the update is one the handoff also makes. `fetch-handoff` returns the whole
-comment, so the run reads the update too, and a claim found only there reaches the run
-without the handoff's reasoning.
+Every claim in the update is one the handoff also makes: a claim found only there reaches the
+run without the handoff's reasoning.
 
 ## Done
 
 `post-handoff` runs once per issue the header names, primary first. That order is forced: the
-pointers carry the locator the primary's call returns. The operation's signature does not
-change - each call takes one `<id>` and one file, and never a list.
+pointers carry the locator the primary's call returns.
 
 A pointer call that fails is a stop, and the report names which issues carry the marker and
 which do not - and the primary locator too, even though the stop lands before `## Done`,
-because nothing else in the run recovers it. The primary handoff is already posted by then
-and stays posted: it names the whole bundle and is still the handoff to run. What an issue
-without its pointer loses is the marker, so `next-issue` offers it as fresh work and a second
-investigation of it begins. Post the missing pointer by hand and the bundle is whole again -
-nothing here edits a posted comment, so the header stands as written either way.
+because nothing else in the run recovers it. The primary handoff is already posted by then and
+stays posted: it names the whole bundle and is still the handoff to run. What an issue without
+its pointer loses is the marker. Post the missing pointer by hand and the bundle is whole
+again - nothing here edits a posted comment, so the header stands as written either way.
 
 Print the locator the **primary** call returns, which addresses this handoff rather than the
 issue. The pointers' own locators address nothing a run can read, and naming one to a
-launcher starts a run with no handoff to work from. Print it as it came back, unparsed: only
-the backend's own `fetch-handoff` has to understand its shape.
+launcher starts a run with no handoff to work from. Print it as it came back, unparsed.
 
 An issue splits into several handoffs whenever its fix lands as more than one change, so
 the issue number addresses none of them and whatever launches the work takes the locator.
@@ -372,4 +321,4 @@ branch nothing has pushed yet, and it is why the branch is checked in the run ra
 here.
 
 Starting that work is the caller's decision, not this skill's. For a stack it is one
-decision: launch the bottom layer, whose reviewer launches its `next`, carrying the rest up.
+decision: launch the bottom layer, and `review-handoff` Step 6 launches each layer above.

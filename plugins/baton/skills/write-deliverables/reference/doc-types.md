@@ -84,8 +84,8 @@ listed. Add or replace types in `.claude/doc-types.md` or `~/.claude/doc-types.m
 - The outcome first: the pull request; or the step the run stopped at and what stopped it; or
   the no-change exit, with the evidence that HEAD already satisfied the handoff and nothing was
   built.
-- Every review finding the run collected, each with its disposition - applied; rejected, with
-  the reason; deferred, with what it waits on; unresolved, with what blocks the call.
+- Every review finding the run collected, each with its severity and its disposition as
+  `${CLAUDE_PLUGIN_ROOT}/reference/reviewing-run-output.md` "Dispositions" sets them.
 - A review round that was skipped, timed out, or stopped part-way, said as that rather than
   left silent.
 - What is left for a person to do, and where. Left out, not filled, where there is nothing

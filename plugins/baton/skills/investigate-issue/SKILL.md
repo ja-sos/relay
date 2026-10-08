@@ -9,24 +9,21 @@ Work out what is wrong behind one issue and leave the answer on the issue. Appli
 issue describing a defect or a proposal. Does not apply to writing the fix, or to filing
 a new issue - `baton:file-issue` covers filing.
 
-Every operation named below comes from the backend. Load it, later files overriding
-earlier by `##` heading:
+Every operation named below comes from the backend, its files loaded in the order
+`${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md` "Where overrides live" sets. Load the
+shipped file and run the route check at its top:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ```
 
-That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
-opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
-file next, so it replaces those three sections:
+Load `backend-github-gh.md` only where that check selects it:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Where neither route is available, `backend-github.md` says what that means. Either way, the
-project's own files load last:
+Then the project's own files:
 
 ```
 cat .claude/baton.md 2>/dev/null
@@ -43,17 +40,8 @@ not define - an improvised equivalent writes to a tracker the project did not ch
 ## Step 1 - Load
 
 Without an issue number, resolve one with `baton:next-issue`, put it and everything it skipped
-to the user, and wait for confirmation before going on. A resolver returning none is a stop:
-an empty answer means every candidate is already scoped, not that the choice falls to you.
-
-An answer of answered issues alone is not none. Those carry a handoff an implementation run
-already reported as satisfied at HEAD, and what they wait on is a person's decision on that
-evidence - for a `closes: yes` handoff, the close this skill's Step 2 proposes, or, where
-`close-fixed` is `none`, the one the tracker's own process performs, which Step 2 reports the
-evidence for rather than proposing. Either way, put them to the user like any other answer,
-with the `closes` value the resolver read beside each, and carry the one they pick on to Step 2.
-Treating that answer as a stop leaves the issue reported as waiting on a decision with nobody
-shown the evidence for it.
+to the user, and wait for confirmation before going on. A resolver returning none is a stop,
+not a choice that falls to you.
 
 Run `view` against the issue. An earlier comment may already hold an investigation. Read it
 before starting another.
@@ -61,59 +49,25 @@ before starting another.
 Run `has-handoff` too. When its output carries the handoff marker, read that handoff, put it
 to the user with what it already covers, and go no further without their say-so. An issue
 waiting on an implementation run is settled work, and investigating it again ends in a second
-plan and a second run against the same change.
+plan and a second run against the same change. That holds where `baton:implement-handoff`
+reported HEAD already satisfying the handoff: what happens to that issue is the user's to
+decide.
 
 **The marker may sit in a pointer rather than in a handoff.** An issue bundled into another
-issue's handoff carries a short comment holding the marker, the primary issue's id and that
-handoff's locator - and no fenced header, which is what tells the two apart. Follow it: run
-`view` against the issue the pointer names and read the handoff there, then put that handoff
-to the user as the one covering this issue, naming the primary issue and quoting the locator
-the pointer carried. The pointer alone says an issue is scoped without saying by what, which
-leaves the user nothing to overrule.
+issue's handoff carries a pointer: a comment carrying the marker and no fenced header
+(`write-handoff` Step 1). Follow it: run `view` against the issue the pointer names and read
+the handoff there, then put that handoff to the user as the one covering this issue, naming the
+primary issue and quoting the locator the pointer carried. The pointer alone says an issue is
+scoped without saying by what, which leaves the user nothing to overrule.
 
-Where that issue carries more than one handoff - `baton:write-handoff` posts a second for
-rework rather than editing the first - put them all to the user with the pointer's locator
-beside them and let the user say which one binds. `view` output need not carry a comment
+Where that issue carries more than one handoff, put them all to the user with the pointer's
+locator beside them and let the user say which one binds. `view` output need not carry a comment
 address to match the locator against, so the reader resolves it rather than this step: that
 reader is present, which is the whole difference between this skill and `implement-handoff`.
 
 An issue can also carry a pointer **and** a handoff of its own, on separate work. Neither
 outranks the other: put both to the user - the handoff read above and the bundle the pointer
 names - and go no further without their say-so, the same as for one.
-
-**A handoff or a pointer may already be answered.** `baton:implement-handoff` takes a no-change
-exit for a handoff HEAD already satisfies, and posts a report headed by a second marker:
-
-```
-<!-- claude-handoff-obsolete -->
-```
-
-That report names the handoff's locator, `base` and `branch`, and its evidence: the commit it
-checked, on a `Checked at <sha>` line, the `file:line` at that commit satisfying each
-acceptance criterion, each of the handoff's commands with its result,
-and, where it could be named, the commit that introduced the satisfying code. A handoff is
-answered by a report naming its header's `base` and `branch`; a pointer, by one naming the
-locator it carries. Match by that content rather than by comment order or address, for the
-reason above - `view` output need not carry an address to match a locator against.
-
-Where **every** handoff and pointer on the issue is answered, do not stop here. Put each
-handoff and the report answering it to the user, evidence included, and go on to Step 2. Carry
-each handoff's `closes` value with it, because Step 2's `Already fixed` row is where `close-fixed`
-is proposed, and that value is what says whether a close was ever this handoff's to ask for:
-under `closes: yes` propose it with the commit; under `closes: no` the author meant the issue
-to stay open, so report it answered and propose nothing. Where `close-fixed` is `none`, a
-`closes: yes` handoff gets what `closes: no` gets: report it answered with its evidence, propose
-nothing, and say the close belongs to the tracker's own close process. A pointer carries
-no `closes` value - read it from the primary issue's handoff, which the pointer's locator names,
-rather than assuming one. Where the report names no commit - it carries one only where
-`git log -S` or `git blame` could name it - that row's commit is this step's to find, from the
-report's `file:line` evidence resolved against its `Checked at` commit rather than HEAD, before
-the close is proposed, or, under `close-fixed: none`, before the outcome is reported. A person
-is reading here, which the unattended run that wrote the report had nobody to ask. Stopping
-would present finished work as an issue waiting on a run, which is the one state this issue is
-known not to be in. Where **any** of them is unanswered, the rule above stands and this step
-goes no further without the user's say-so - the answered ones are context for that decision, not
-a way past it.
 
 Take the `Found at <sha> on <branch>` line from the body and diff the files it cites:
 
@@ -133,13 +87,13 @@ backend's `## Repositories` section gives. A citation resolves against the repos
 to and nothing else, so a line number located in the wrong clone is worse than no line number at
 all.
 
-A citation carries no repository of its own, and `baton:file-issue` writes a single
-`Found at <sha>` line for the repository it filed from. Attribute each citation by its path,
-checking it against this checkout and every mapped repository before assigning it. A path that
-resolves in exactly one of them belongs to that one. In this checkout it resolves against the
-`Found at` anchor as above; in a mapped repository there is no anchor, so locate it by content,
-as a citation with no anchor is above. A path resolving in more than one repository is
-ambiguous - say which, and ask rather than picking. A repository the issue cites that
+A citation carries no repository of its own, and the `Found at` line anchors only the
+repository the issue was filed from (`file-issue` Steps 1 and 4). Attribute each citation by
+its path, checking it against this checkout and every mapped repository before assigning it. A
+path that resolves in exactly one of them belongs to that one. In this checkout it resolves
+against the `Found at` anchor as above; in a mapped repository there is no anchor, so locate it
+by content, as a citation with no anchor is above. A path resolving in more than one repository
+is ambiguous - say which, and ask rather than picking. A repository the issue cites that
 `## Repositories` has no row for cannot be read from here: name that repository and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`, and ask the user for the row before
 going on rather than investigating it blind.
@@ -159,17 +113,13 @@ record each HEAD as you go. Step 5 writes one handoff per repository and every h
 `base` is its own repository's HEAD, so a HEAD not recorded here is a `base` guessed later.
 
 On either stop, report to the user and propose closing - `close-fixed` for a fix that landed,
-`close-invalid` for a finding that never held - unless that stop's operation is `none`, or the
-stop is `Already fixed` and Step 1 found at least one handoff or pointer on the issue, every one
-answered and none with a `closes` entry of `yes` for this issue. A handoff's entry for an issue
-is the value in the same position as that issue on its `issue` line; a pointer's is the entry
-for this issue in the primary handoff it names. Never close an issue without approval.
+`close-invalid` for a finding that never held - unless that stop's operation is `none`. Never
+close an issue without approval.
 
 Each stop's `none` test reads only its own operation. Where `close-fixed` is `none`, an
 `Already fixed` stop reports the fixing commit and proposes no close; where `close-invalid` is
 `none`, a `Never held` stop reports the counter-evidence and proposes no close. Either way, say
-the close belongs to the tracker's own process: the project has decided that kind of close
-happens outside baton.
+the close belongs to the tracker's own process.
 
 Either stop ends the investigation, so run `wrap-up` as the last action of the run, with the
 arguments Step 6 gives it.
@@ -207,11 +157,8 @@ its change needs from the repositories below it:
 | nothing another repository has yet to publish | **unheld** - Step 6 launches it |
 | another repository's next *published* version - a release, not a branch | **held** - Step 6 reports it, and a person launches it once that release exists |
 
-The dependency is between repositories, not between pull requests, so a stack does not
-express it. `pr-base` and `next` chain layers inside one repository, where the layer below is
-a branch the layer above can open against; `next` fires when the reviewer of that layer's pull
-request has pushed, which is long before any upstream release exists. `write-handoff` Step 2 says the
-same from the other side.
+The dependency is between repositories, so a stack does not express it (`write-handoff` Step 2,
+"Both lines are single-repository").
 
 Order the repositories by that dependency: contracts before what is built on them. That order
 is what Step 5 puts `closes: yes` at the end of and what Step 6 reports.
@@ -234,14 +181,9 @@ to it on each of the others. Bundle only issues this investigation actually cove
 merely looks related is a separate investigation, and `closes: no` is the answer wherever a
 bundled issue keeps work beyond this change.
 
-**Every issue on that line lives in the repository this one does.** The handoff and its
-pointers are posted there, and every number the header carries resolves against it
-(`implement-handoff` Step 5), so a number bundled from another repository addresses whatever
-issue happens to hold it here - the pointer lands on that issue and the pull request's
-reference line names it, closing it on merge where its `closes` value is `yes`, while the
-issue meant by it is never linked. An issue in another repository takes a handoff of its own,
-posted on that issue, which the split below already writes where the change spans
-repositories.
+**Every issue on that line lives in the repository this one does** (`write-handoff` Step 2).
+An issue in another repository takes a handoff of its own, which the split below writes where
+the change spans repositories.
 
 Its `base` is the HEAD that Step 2 reproduced against and Step 3 named the cause at, so
 the plan stays falsifiable against the code it was formed on.
@@ -250,44 +192,29 @@ the plan stays falsifiable against the code it was formed on.
 the handoff's `assets` line.** What decides the line is what the run needs, not what this
 session happened to open: a file identified here and never read is still a file the run has to
 have, and one read here that the plan has already extracted everything from is not. The
-implementing session shares no disk with this one, and the body may name such a file only by a
-path that line carries (`write-handoff` Step 3), so a file left off is a file the run silently
-builds without.
+implementing session shares no disk with this one, and the run reaches only the asset files
+that line lists (`write-handoff` Step 3), so a file left off is a file the run silently builds
+without.
 
-List the paths relative to that root, and list only what the implementation needs:
-`write-handoff` Step 2 checks each one before posting and `implement-handoff` Step 1 resolves
-it again, so every entry is one more thing that can stop a run. Omit the line where the work
-needs nothing outside the repository, which is the usual case.
+List the paths relative to that root, and list only what the implementation needs: each entry
+is one more thing that can stop a run. Omit the line where the work needs nothing outside the
+repository, which is the usual case.
 
 **One handoff per affected repository.** Where Step 4 named more than one, post one handoff
 for each, held and unheld alike, in this same investigation. Each handoff's `repo` names its
-own repository, and its `base` is that repository's HEAD from Step 2 - a commit already on
-that repository's `origin`, which is what `write-handoff` Step 2 checks. That is why a held
-handoff is posted now rather than written later: nothing here asks for a `base` that does not
-exist yet. The accepted cost is that a held plan can go stale before it is launched, and what
-it waits on is recorded so its reader can tell.
+own repository, and its `base` is that repository's HEAD from Step 2, so a held handoff is
+posted now rather than written later: nothing here asks for a `base` that does not exist yet.
+The accepted cost is that a held plan can go stale before it is launched, and what it waits on
+is recorded so its reader can tell.
 
 `closes: yes` goes on the one handoff launched last - the top of Step 4's dependency order,
 whose pull request finishes the issue - and every other handoff gets `closes: no`, so the
-issue stays open while work on it remains. The `closes` line names the issue's own repository,
-which is what lets the keyword work from a pull request opened in a different one;
-`implement-handoff` Step 5 fills it.
+issue stays open while work on it remains.
 
-Where Step 4 split the work into a stack of pull requests, each layer is its own handoff and
-**they are posted top layer first**. A layer's `next` line carries the locator of the layer
-above, which exists only once that layer is posted, so writing upwards is impossible. Post
-the top, then each layer below it carrying the locator it just returned, down to the bottom.
-Each layer above the bottom also carries `pr-base`, naming the branch of the layer below;
-that branch does not exist yet, and `write-handoff` Step 2 says why it is not checked here.
-
-Where any layer of a stack carries `assets`, that choice is already made: the whole stack runs
-on the machine holding the folder, with `local` in every `next` line, or no `next` anywhere
-points at that layer and it is started there by hand - a layer's own `next` starts the layer
-above it, so dropping that line strands the rest of the stack and changes nothing about how
-this one is launched. `cloud` cannot resolve `## Assets`, and a `local` entry
-run from inside a cloud run only moves the problem into that container
-(`write-handoff` Step 2). Say so when reporting the entries below, rather than taking an
-answer the stack cannot honour.
+Where Step 4 split the work into a stack of pull requests, each layer is its own handoff. Post
+the layers top first, as `write-handoff` `## Done` requires, with `next` and `pr-base` as its
+Step 2 defines them. Where any layer of the stack carries `assets`, `write-handoff` Step 2
+constrains the launcher; say so when reporting the entries below.
 
 A `next` line also names the `## Launcher` entry that starts the layer above, so **for a
 stack, ask which launcher here** rather than at Step 6 - the answer is written into every
@@ -306,43 +233,29 @@ stack, that question was already asked and answered there; use that answer and a
 nothing.
 
 The entry takes `<skill>` and `<args>`: launch `implement-handoff`, with the locator Step 5
-returned as `<args>`. A launcher that starts with anything else starts a session with no
-handoff to read. The entry appends `launcher=<its name>` itself, and the run launches the
-review of its own pull request through that same entry, so the answer here chooses where the
-reviewer runs as well.
+returned as `<args>`. The run launches its reviewer through the same entry
+(`defining-backends.md` `## Sections`), so the answer also chooses where the reviewer runs.
 
-**A handoff carrying `assets` rules `cloud` out, and the report says so.** A cloud run clones
-the repository and never sees `~/.claude/baton.md`, where `## Assets` lives, so the section is
-undefined in it and every path the handoff lists is unresolved: the launch itself succeeds and
-the run it starts stops at `implement-handoff` Step 1. Report `local` as the shipped entry
-that resolves those paths, name any entry of the project's own that starts the run on a
-machine defining the root, and where the answer is `cloud` all the same, say what will happen
-before taking it. A handoff with no `assets` line is unaffected and launches under either.
+**A handoff carrying `assets` cannot run under `cloud`** (`backend-github.md` `## Launcher`),
+and the report says so. Report `local` as the shipped entry that resolves those paths, name any
+entry of the project's own that starts the run on a machine defining the root, and where the
+answer is `cloud` all the same, say what will happen before taking it. A handoff with no
+`assets` line is unaffected and launches under either.
 
-**Launch the unheld handoffs; report the held ones.** Start every handoff Step 4 called
-unheld, each through the chosen entry and each with its own locator - the `local` entry
-resolves `<repo root>` through `## Repositories` for that handoff's `repo`, so each run starts
-in its own checkout. Then report each held handoff in the order it is to be launched: its
-locator, the repository it belongs to, and what it waits on, named as the upstream repository
-and the release. Launch none of them. A held handoff's run would build against an upstream
-version that does not exist, and the report is what the developer relaunching it later works
-from.
+**Launch the unheld handoffs; report the held ones.** Start every handoff Step 4 called unheld,
+each through the chosen entry and each with its own locator. Then report each held handoff in
+the order it is to be launched: its locator, the repository it belongs to, and what it waits
+on, named as the upstream repository and the release. Launch none of them. A held handoff's run
+would build against an upstream version that does not exist, and the report is what the
+developer relaunching it later works from.
 
-**A stack is launched once, at the bottom.** Start the bottom layer alone and nothing else:
-its run opens its pull request, pushes its branch and launches `review-handoff` on that pull
-request, and the reviewer, after its own push, launches the layer above through the bottom
-layer's `next` line, which carries the rest up. Starting a higher layer here starts a run
-whose `pr-base` branch nothing has pushed, and that run stops at its Step 2.
+**A stack is launched once, at the bottom.** Start the bottom layer alone and nothing else.
 
 Then run `wrap-up` as the last action of the run, with `investigate-issue` as `<skill>` and
 the issue number as `<id>`. `<pr-url>` and `<head-branch>` are empty: no pull request exists
 yet, and the implementation run cuts its own branch. It runs where the answer names no
-launcher too - the investigation ended either way, and the handoff is on the issue whether or
-not a run was started. `none` is its shipped default, and that value skips the call, as does
-a backend that leaves `wrap-up` undefined.
-
-A `wrap-up` that fails is reported by name. The handoff stays posted, a launched run keeps
-running, and nothing is retried.
+launcher too - the investigation ended either way. An undefined `wrap-up` reads as `none`, and
+a failed one is reported by name and not retried (`defining-backends.md`, `wrap-up`).
 
 ## Done
 

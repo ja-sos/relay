@@ -9,24 +9,21 @@ Turn review feedback on one pull request into changes and answers. Sibling to
 `baton:review-pr`, which is the outbound direction: someone else's code, findings that leave
 as a review.
 
-Every operation named below comes from the backend. Load it, later files overriding earlier by
-`##` heading:
+Every operation named below comes from the backend. The files load in the order
+`defining-backends.md` "Where overrides live" sets:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ```
 
-That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
-opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
-file next, so it replaces those three sections:
+Run the route check at the top of `backend-github.md`, and load `backend-github-gh.md` only
+where that check selects it:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Where neither route is available, `backend-github.md` says what that means. Either way, the
-project's own files load last:
+Then, whatever the check found:
 
 ```
 cat .claude/baton.md 2>/dev/null
@@ -44,7 +41,8 @@ not define - an improvised equivalent writes to a tracker the project did not ch
 
 In order:
 
-1. A number in the request - "PR 631", "#631", "pull 631" - is the target.
+1. A number in the request - "PR 631", "#631", "pull 631" - is the target: run `pr-view`
+   with it.
 2. No number: run `pr-view` with an empty `<id>` to get the pull request for the current branch.
 3. Still nothing: say so and ask which one.
 
@@ -56,15 +54,10 @@ A pull request this side does not own is not this skill's. Stop and switch to
 
 ## Step 2 - Collect every surface
 
-Run `review-bodies`, `pr-comments` and `review-threads`. All three, before evaluating anything:
-each reads a surface the others cannot see, and two of them are invisible to the endpoint that
-returns inline comments.
+Run `review-bodies`, `pr-comments` and `review-threads` - all three, before evaluating
+anything. Apply each entry's author filter during collection, as the backend's notes name it.
 
-Run them as the backend defines them. Their author filters are part of collection, not a step to
-defer and redo later.
-
-Never pre-filter on resolved state. It exists on `review-threads` alone, so an unresolved-only
-query drops the other two surfaces wholesale rather than narrowing them.
+Never pre-filter on resolved state.
 
 ## Step 3 - Inventory, then stop
 
@@ -102,11 +95,8 @@ undecided inverts the order.
 Only once verification clears and the user approves, in this order:
 
 1. Push.
-2. Run `pr-update` when the changes left the body inaccurate. It replaces the body whole, so
-   carry every issue reference line across unchanged - a handoff may name several issues, and
-   each `closes` or `refs` line dropped here is an issue the merge silently stops settling.
-   Carry the `## Not verified here` and `## Unverified claims` headings across too: an entry
-   leaves only where this session verified it, and a heading leaves with its last entry.
+2. Run `pr-update` when the changes left the body inaccurate, carrying every issue reference
+   line across unchanged (`defining-backends.md`, `pr-update`).
 3. Answer every Step 3 row in the venue it arrived: an inline finding takes `thread-reply` in its
    own thread, while rows from summary bodies and conversation comments take one `pr-comment`
    covering them, there being no thread to reply into.
@@ -127,7 +117,5 @@ Then run `wrap-up` as the last action of the run, with `address-review` as `<ski
 request number as `<id>`, and its URL and head branch as `<pr-url>` and `<head-branch>`, from
 Step 1's `pr-view`.
 
-It runs on the path where the user declines the push, too: the round ended either way. `none`
-is its shipped default, and that value skips the call, as does a backend that leaves `wrap-up`
-undefined. A `wrap-up` that fails is reported by
-name - the replies and the push stay as they are, and nothing is retried.
+Run it where the user declines the push, too. An undefined `wrap-up` reads as `none`, and a
+failed one is reported by name and not retried (`defining-backends.md`, `wrap-up`).

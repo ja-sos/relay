@@ -1,6 +1,6 @@
 ---
 name: next-issue
-description: Use when the next issue to work on has to be chosen rather than named - "what should I work on", "pick the next issue", "/baton:next-issue", or investigate-issue invoked with no issue number. Resolves one issue assigned to the user that is not already waiting on a handoff, and reports what it skipped.
+description: Use when the next issue to work on has to be chosen rather than named - "what should I work on", "pick the next issue", "/baton:next-issue", or investigate-issue invoked with no issue number. Resolves one issue assigned to the user that no handoff already covers, and reports what it skipped.
 ---
 
 # Next issue
@@ -8,24 +8,21 @@ description: Use when the next issue to work on has to be chosen rather than nam
 Answer which issue to pick up next, and nothing else. This resolves; it does not investigate,
 comment, or change anything on the tracker.
 
-Every operation named below comes from the backend. Load it, later files overriding earlier
-by `##` heading:
+Every operation named below comes from the backend, its files loaded in the order
+`${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md` "Where overrides live" sets. Load the
+shipped file and run the route check at its top:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ```
 
-That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
-opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
-file next, so it replaces those three sections:
+Load `backend-github-gh.md` only where that check selects it:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Where neither route is available, `backend-github.md` says what that means. Either way, the
-project's own files load last:
+Then the project's own files:
 
 ```
 cat .claude/baton.md 2>/dev/null
@@ -41,122 +38,50 @@ not define - an improvised equivalent writes to a tracker the project did not ch
 
 ## Step 1 - Candidates
 
-Run `list-mine`. It returns the issues assigned to the user in the order they should be picked
-up, so the first survivor of Step 2 that carries no marker at all is the answer - Step 2 says
-why an answered issue survives without being that answer. Ordering is the backend's job; do not
-re-rank the list here.
+Run `list-mine` and keep its order (`defining-backends.md`, `list-mine`). The first candidate
+Step 2 does not skip is the answer.
 
 ## Step 2 - Skip what is already scoped
 
-Walking the list from the top, run `has-handoff` on each candidate and read its output for two
-markers. The first heads a handoff, or a pointer to one:
+Walking the list from the top, run `has-handoff` on each candidate and read its output for the
+marker that heads a handoff or a pointer to one:
 
 ```
 <!-- claude-handoff -->
 ```
 
-That issue has been investigated and is waiting for its implementation run. Picking it up again
-produces a second investigation of settled work.
+**Skip every issue whose output carries the marker**, whatever became of the handoff it sits
+in. The issue has been investigated, and picking it up again produces a second investigation of
+settled work. That holds for a pointer as for a handoff, and whether the run it scoped is
+pending or has already merged.
 
-The second heads an obsolete report, which `baton:implement-handoff` posts on every issue its
-handoff's header named when it finds the work already done at HEAD and exits without a pull
-request:
+A comment carrying the marker and no fenced header is a pointer (`write-handoff` Step 1). Keep
+what each marker sat in, and for a pointer the issue it names: Step 3 reports both.
 
-```
-<!-- claude-handoff-obsolete -->
-```
+An issue whose handoff carried `closes: no` stays open after its pull request merges and keeps
+its marker, so this step goes on skipping it after its run has finished - an issue deliberately
+left open for further work is not offered again here.
 
-**Test each marker as a whole string, never as a prefix.** The two share the opening
-`<!-- claude-handoff`, and a scan for that prefix reads every obsolete report as a second
-handoff - one carrying `base` and `branch` lines, which is exactly what an unanswered handoff
-looks like, so the issue stays skipped for good and this step's own fix does nothing. The
-handoff marker ends in a space and `-->` where the obsolete marker continues into `-obsolete`,
-which is what tells them apart and why they are spelled this way.
-
-**Skip the issue while any handoff or pointer on it is unanswered.** A handoff is answered by
-an obsolete report on that issue naming the handoff's header `base` and `branch`; a pointer is
-answered by one naming the locator the pointer carries. Matching is by that content and never
-by comment order or comment address: `view` output need not carry an address, and nothing fixes
-the order comments come back in - so a count of markers, or the newest comment, decides
-nothing here.
-
-An issue whose every handoff and pointer is answered survives this step. Its scope is no longer
-pending work: an implementation run has reported that HEAD already satisfies it, and what it
-waits on is a person's decision - a close, unless its handoff meant it to stay open - which it
-will never get while this step keeps hiding it. Whether a close is owed, and who performs it, is
-read below, from its `closes` value and the backend's `close-fixed`.
-
-An issue bundled into another issue's handoff carries the handoff marker too, in a pointer
-comment `baton:write-handoff` posts on every issue its header names beyond the first. A pointer
-skips its issue exactly as a handoff does, and is answered exactly as one is - by its own
-locator rather than by a `base` and `branch` it never carried. What the marker records is that
-an implementation run was scoped over that issue, which holds for a pointer as for a handoff,
-and holds whether that run is still pending or has already merged. Keep what the marker sat in,
-for a pointer the issue it names, and for either whether a report answered it: Step 3 reports
-all three, and the markers alone carry none of it.
-
-An issue whose handoff carried `closes: yes` is closed by its merged pull request once that
-handoff is implemented, so it never reaches `list-mine` again. Where the backend's `closes` is
-`none`, the body carries no line for it, so whether the merge closes it is the project's
-linking to decide, and while it stays open this step skips it on its marker. One that carried
-`closes: no` stays open and keeps its marker, and this step goes on skipping it after the run
-that implemented it has finished - so an issue deliberately left open for further work is not
-offered again here. Say so in Step 3 rather than treating every skip as settled scope.
-
-**`closes` decides what an answered issue is waiting for, and this step does not assume.** Read
-it off the handoff that the obsolete report answers, the same output both came out of. `yes`
-leaves an issue waiting on a close that its pull request will never perform, since there is no
-pull request. `no` leaves one its author meant to keep open, and calling that a close candidate
-would shut a ticket on the strength of work it was never scoped for. **`close-fixed` decides who
-performs a `yes` close.** Where the loaded backend sets it to `none`, the project closes issues
-outside baton, so a `closes: yes` issue waits on the tracker's own close process rather than on
-a close a person runs through baton - report it that way, not as a close candidate. This step
-reads the value only for an answered `closes: yes` issue, and never runs the operation; there,
-an undefined `close-fixed` is the stop it is everywhere else. A pointer carries no `closes`
-value at all - report it unread, as below, and name the primary issue whose handoff holds it.
-
-Stop walking at the first candidate that survives carrying no marker at all - `has-handoff`
-costs a call per issue, and the ones below the answer do not need one.
-
-**An answered issue does not stop the walk.** It survives, and it is reported, but what it needs
-is a person's decision on the evidence rather than a session's work, so keep walking past it and
-let the first unmarked survivor be the answer. Stopping there would return an issue with nothing
-to build and hide every workable issue beneath it, on this call and on every call until it is
-closed - by a person through baton, or under `close-fixed: none` by the tracker's own close
-process - one skip traded for another. Where the walk reaches the end of the list with only
-answered issues to show, those are the answer, and Step 3 says what they are waiting on.
+Stop walking at the first candidate whose output carries no marker - `has-handoff` costs a call
+per issue, and the ones below the answer do not need one.
 
 ## Step 3 - Report
 
 Name the surviving issue by number and title. List every issue skipped above it and why, so the
-choice can be overruled. "Why" is what the unanswered marker sat in: a handoff of the issue's
-own, or a pointer into another issue's bundle - and for a pointer, the issue it names. A skip
-the report does not explain is one nobody can judge.
+choice can be overruled. "Why" is what the marker sat in: a handoff of the issue's own, or a
+pointer into another issue's bundle - and for a pointer, the issue it names. A skip the report
+does not explain is one nobody can judge.
 
-**Name every answered issue the walk passed**, each with the obsolete report that answered it
-and the `closes` value its handoff carried, above the answer and apart from the skips. Such an
-issue is not work waiting to start: an implementation run found HEAD already satisfying its
-handoff, and the report holds the evidence a close would rest on. It is listed so a person can
-act on it, and marked so a caller does not take it for fresh work and investigate a change
-already in the tree. Under `closes: yes` what it waits on is that close - and where `close-fixed`
-is `none`, say it waits on the tracker's own close process rather than on a close a person runs
-through baton; under `closes: no` its author meant it to stay open, so report it as answered
-and say the close is not this handoff's to ask for; under a pointer, report the value unread
-beside the primary issue it names.
+Add each skipped issue's `closes` value where the marker sat in a handoff: under `closes: no`
+the marker may record finished work rather than pending work. A pointer carries no `closes`
+value, so report that value as unread and name the primary issue whose handoff holds it, rather
+than asserting one this step never saw.
 
-When only answered issues survive, they are what this step returns, said as what each is
-waiting on rather than as work. When nothing survives at all, say so and name what was skipped.
-Never invent an issue, and never return one carrying a handoff or pointer that no obsolete
-report answers, because the list would otherwise be empty. Add each skipped
-issue's `closes` value where the marker sat in a handoff: `closes: no` leaves an issue open
-after its pull request merges, so the marker there may record finished work rather than pending
-work. A pointer carries no `closes` value - the marker, the primary issue's id and the locator
-are the whole comment - so report that value as unread and name the primary issue whose handoff
-holds it, rather than asserting one this step never saw. Either way the skipped list is what a
-person picks from when the answer is none.
+When nothing survives, say so and name what was skipped; that list is what a person picks from.
+Never invent an issue, and never return one carrying the marker because the list would
+otherwise be empty.
 
 ## Done
 
-One issue number, or none - beside it, the answered issues the walk passed, each waiting on a
-person's decision on the evidence rather than on work. Starting work on any of them, or closing
-one, is the caller's decision, not this skill's.
+One issue number, or none, with the skipped list beside it. Starting work on it is the caller's
+decision, not this skill's.

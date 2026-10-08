@@ -2,10 +2,8 @@
 
 The rules a review follows when the branch under it was written by an unattended
 `baton:implement-handoff` run, and the severity and disposition scales that run and its
-reviewer share. `baton:self-review` loads this file for a person-attended review;
-`baton:review-handoff` loads it for the unattended review that run launches;
-`baton:implement-handoff` loads it for "Severity" and "Dispositions" alone. Each skill says at
-which of its steps each section below applies, and none changes what a section says.
+reviewer share. Each skill that loads this file says at which of its steps each section below
+applies, and none changes what a section says.
 
 ## Whose code this is
 
@@ -36,11 +34,10 @@ Carry this rule into every subagent prompt the review spawns, not only the first
 ## Collecting the review threads
 
 With the pull request settled, run `review-threads` on it and keep every thread it returns.
-No resolved-state filter and no author filter. `address-review` Step 3 takes a resolved
-thread as context rather than a row; that rule does not hold here, where a thread marked
-resolved records an agent's claim and nothing more. An author filter cannot help either:
-the run commits under the user's git identity and replies through the credentials
-`reachable` resolves to, so its replies and the user's are indistinguishable by author.
+No resolved-state filter: unlike in `address-review`, a resolved thread here records an
+agent's claim and nothing more. No author filter either: the run commits under the user's git
+identity and replies through the credentials `reachable` resolves to, so its replies and the
+user's are indistinguishable by author.
 
 Write down three facts per thread:
 
@@ -48,17 +45,16 @@ Write down three facts per thread:
 - what the code at the reviewed head does now at that thread's path;
 - what the latest reply claimed, or `no reply`.
 
-The thread comment's numeric id is not among them: neither skill loading this file names a
-`thread-reply`, and nothing a review here does writes back to a thread.
+The thread comment's numeric id is not among them: nothing a review here does writes back to
+a thread.
 
 Where there is no pull request, or it carries no threads, this collects nothing and the review
 covers the diff alone.
 
 ## Checking the threads
 
-The collected threads stay out of the `code-review` call: `code-review` takes `<target>` and
-`<locator>` and nothing else, so no thread reaches it. Once it returns, check each thread
-yourself against its three facts, by its latest reply:
+The collected threads stay out of the `code-review` call, whose inputs `defining-backends.md`
+fixes. Once it returns, check each thread yourself against its three facts, by its latest reply:
 
 - A reply claiming a fix: check the claim against the diff. Where the diff contains the fix,
   the thread is fixed as claimed.
