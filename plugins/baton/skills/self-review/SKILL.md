@@ -169,6 +169,11 @@ handoff may name several issues, and each `closes` or `refs` line dropped here i
 merge silently stops settling - "whatever the current diff no longer supports" is about claims,
 never about these lines.
 
+Carry the `## Not verified here` and `## Unverified claims` headings across the same way. Their
+entries are checks and claims the diff cannot support by definition, so the deletion rule above
+never reaches them. An entry leaves only where this session verified it, and a heading leaves
+with its last entry.
+
 When the user declines the push, say what that leaves undone rather than moving on.
 
 Either way, run `wrap-up` as the last action of the run, with `self-review` as `<skill>`. With

@@ -74,6 +74,9 @@ page, because the assignee filter below runs on each page's issues. `issue_read`
 include the `login` that `get_me` returned. Its `ASC` order is the pick order `next-issue`
 reads off the top: oldest assigned issue first.
 
+`create` leaves `labels` out of the call where `<category>` is empty, as `file-issue` passes it
+under a `list-categories` of `none`. An issue meant to carry no label must not be sent `[""]`.
+
 `comment` returns `{"id", "url"}`, and `url` is the comment's URL - the locator
 `post-handoff` reports.
 

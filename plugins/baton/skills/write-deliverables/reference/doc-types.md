@@ -17,8 +17,13 @@ listed. Add or replace types in `.claude/doc-types.md` or `~/.claude/doc-types.m
 - The approach taken, only where the diff does not make it obvious.
 - Anything not visible in the diff: behavior changes, migration or deploy steps,
   compatibility breaks, config or secret changes.
-- What is deliberately out of scope, and known gaps.
+- What is deliberately out of scope, and known gaps. Left out, not filled, where there is
+  nothing true to state.
 - What the reviewer should look at hardest.
+- On a rewrite, the `## Not verified here` and `## Unverified claims` sections the body
+  already carries, with their entries: checks a person must run and claims a person must
+  probe, which the diff cannot support. An entry leaves only once verified, and a section
+  leaves with its last entry.
 
 **Must not include**
 - A list of changed files, or a per-file walkthrough.
@@ -72,7 +77,7 @@ listed. Add or replace types in `.claude/doc-types.md` or `~/.claude/doc-types.m
 ## Run report
 
 - **READER:** a participant on the tracker issue the run was launched from, who did not watch it.
-- **GOAL:** know what the run left on the pull request, where and why it stopped, or that HEAD already satisfies the handoff and nothing was built - and what still needs a person.
+- **GOAL:** know what the run left on the pull request, where and why it stopped, or that HEAD already satisfies the handoff and nothing was built - and what still needs a person, where anything does.
 - **ALREADY HAS:** the issue thread and everything already posted to it; where the run opened a pull request, that pull request and its diff, for a reader with repository access.
 
 **Must include**
@@ -83,7 +88,8 @@ listed. Add or replace types in `.claude/doc-types.md` or `~/.claude/doc-types.m
   the reason; deferred, with what it waits on; unresolved, with what blocks the call.
 - A review round that was skipped, timed out, or stopped part-way, said as that rather than
   left silent.
-- What is left for a person to do, and where.
+- What is left for a person to do, and where. Left out, not filled, where there is nothing
+  true to state.
 
 **Must not include**
 - What the pull request body is for: the approach, what a reviewer should scrutinize, the
