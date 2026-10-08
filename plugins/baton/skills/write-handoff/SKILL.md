@@ -282,10 +282,10 @@ and find nothing - so write "the asset `config/prod.yaml`", or name it under a h
 says so. Only paths the `assets` line lists may be named this way; a path that is not on the
 line is a path the run will not have.
 
-Four sections beyond that contract turn the body into a spec the implementing session can
-check itself against. They belong to this collapsed implementation handoff and never to
-the update Step 4 writes above it, which is read by the issue's participants and states no
-criteria:
+Up to four sections beyond that contract turn the body into a spec the implementing session
+can check itself against - three always, and a fourth where the change needs one. They
+belong to this collapsed implementation handoff and never to the update Step 4 writes above
+it, which is read by the issue's participants and states no criteria:
 
 1. **Steps**, numbered, for the code change - what to edit, in what order.
 2. **Acceptance criteria**, numbered, each one an outcome a test can cover and someone who
@@ -300,14 +300,18 @@ criteria:
    the result.
 4. **Not verified here**, listing anything needing eyes on a running application: the
    screen, the control, and the expected result. The run carries this list into the pull
-   request body, so it reaches the reviewer who can open them.
+   request body, so it reaches the reviewer who can open them. Write it only where the
+   change has something to check in a running application, and leave the section out where
+   it has nothing: an empty list copied into every pull request body tells the reviewer
+   nothing, and pushes the run to fill it with entries that are not checks.
 
-These four are must-include for the implementation handoff, alongside the four the **Handoff / context
-note** contract lists. They are named here rather than in that contract because it also
-covers the note left when stopping mid-task, which has no criteria to state. Carry them
-into the Step 2 brief as part of `GOAL`, or the outline verdict cuts Acceptance criteria
-and Commands as sections no reader question asks for - the reader here is a run that
-cannot check itself without them.
+The first three are must-include for every implementation handoff, and the fourth for one
+whose change has something to check in a running application. They sit alongside the four
+the **Handoff / context note** contract lists. They are named here rather than in that
+contract because it also covers the note left when stopping mid-task, which has no criteria
+to state. Carry the ones this handoff writes into the Step 2 brief as part of `GOAL`, **Not
+verified here** included where it applies, or the outline verdict cuts them as sections no
+reader question asks for - the reader here is a run that cannot check itself without them.
 
 Each criterion changes what that run does. `implement-handoff` Step 3 writes at least one
 test for it, and Step 4 classes a review finding that contradicts it as Critical rather than
@@ -316,10 +320,14 @@ backend that has paired `code-review` with an `agent:` compliance reviewer gets 
 Write the criteria for the person reviewing the pull request either way - they are the list
 that reviewer ticks off, and a row only a machine could settle helps nobody.
 
-A handoff for work no test reaches states that under the criteria rather than dropping the
-sections, and `implement-handoff` Step 3 proves such a criterion with the Commands alone.
-Dropped, the sections are indistinguishable from a handoff written before baton 0.1.7,
-which the run executes with `verify` alone.
+A handoff for work no test reaches states that under the criteria rather than dropping
+Steps, Acceptance criteria or Commands, and `implement-handoff` Step 3 proves such a
+criterion with the Commands alone. Steps are the edit list the run follows, so dropping them
+leaves it to re-derive the change. Dropped, Acceptance criteria and Commands are
+indistinguishable from a handoff written before baton 0.1.7, which the run executes with
+`verify` alone. **Not verified here** carries no such reading: `implement-handoff` copies it
+only where the handoff carries one, so leaving it out says only that nothing needs a running
+application.
 
 ## Step 4 - Update
 
