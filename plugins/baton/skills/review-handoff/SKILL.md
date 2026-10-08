@@ -76,7 +76,7 @@ where its two thread sections apply. Where it speaks of what a person says in th
 nobody here says anything: the diff and the code around it are the only evidence this run
 has.
 
-That file is read, never `baton:self-review` invoked. `self-review` Step 2 ends the turn on its
+That file is read, never `baton:self-review` invoked. `self-review` Step 3 ends the turn on its
 findings for a person to rule on, and nobody here will.
 
 ## What this run may do unasked

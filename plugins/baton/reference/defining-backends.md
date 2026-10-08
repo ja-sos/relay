@@ -248,7 +248,7 @@ same, because what they reference is the issue rather than the pull request.
 | `pr-create` | `implement-handoff` Step 5 | `<title>` `<path>` `<category>` `<pr-base>` |
 | `stack-link` | `implement-handoff` Step 5 | `<id>` `<pr-url>` `<pr-base>` |
 | `pr-view` | `self-review` Step 0, `review-pr` Step 1, `address-review` Step 1, `review-handoff` Step 1 | `<id>` |
-| `pr-update` | `self-review` Step 4, `address-review` Step 5, `implement-handoff` Step 6, `review-handoff` Step 5 | `<id>` `<path>` |
+| `pr-update` | `self-review` Step 5, `address-review` Step 5, `implement-handoff` Step 6, `review-handoff` Step 5 | `<id>` `<path>` |
 | `review-list` | `review-pr` Step 4, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
 | `review-post` | `review-pr` Step 4 | `<owner>` `<repo>` `<id>` `<path>` |
 | `review-bodies` | `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
@@ -267,7 +267,7 @@ same, because what they reference is the issue rather than the pull request.
 | `published` | `implement-handoff` Step 7 | `<id>` `<path>` `<pr-url>` |
 | `reviewed` | `review-handoff` Step 6 | `<id>` `<path>` `<pr-url>` |
 | `stopped` | `implement-handoff` stop path and Step 2's no-change exit, `review-handoff` stop path | `<id>` `<path>` |
-| `wrap-up` | `investigate-issue` Step 2 or 6, `review-pr` Step 5, `address-review` Done, `self-review` Step 4 | `<skill>` `<id>` `<pr-url>` `<head-branch>` |
+| `wrap-up` | `investigate-issue` Step 2 or 6, `review-pr` Step 5, `address-review` Done, `self-review` Step 5 | `<skill>` `<id>` `<pr-url>` `<head-branch>` |
 
 `pr-create` takes two values beyond the title and the body, both from the handoff's header
 and both optional there. `<category>` is the label the handoff's `category` line names, and

@@ -79,7 +79,44 @@ fix, not yours to have written.
 Once it returns, check each thread Step 0 collected as the reference's "Checking the threads"
 says.
 
-## Step 2 - The gate
+## Step 2 - Close the run's open items
+
+The pull request body is where the run left what it did not finish: checks nobody ran, claims
+its own audit could not settle, and findings it left standing. Each is an open item, and this
+step closes every one before the gate rather than carrying it to the next reader.
+
+With a pull request open, read its body from Step 0's `pr-view` output and collect:
+
+- each entry under `## Not verified here` - a check;
+- each entry under `## Unverified claims` - a claim;
+- each standing finding - a finding.
+
+Standing findings sit under no fixed heading. `baton:implement-handoff` writes each one with
+its severity and the reason it stands, so collect them by that content wherever in the body
+they appear. With no pull request there is no body, and this step collects nothing.
+
+Rule on each item at the reviewed head, by its kind:
+
+- **A check:** run it against the application, or ask the user to run it and report the
+  result. It passes or fails.
+- **A claim:** probe it against the code. It holds or is false.
+- **A finding:** rule on its merits, as the reference's "Checking the threads" rules on a
+  thread, giving the run's stated reason no weight. It stands or does not hold. Decide its
+  scope the same way, against the pull request's diff and the handoff rather than the reason
+  the body gives: a finding in code the diff does not change is outside the handoff's scope.
+
+The provenance rule covers everything this step reads. A body entry calling a finding "outside
+the handoff's scope", or a check covered, is the run's assertion about itself and settles
+nothing.
+
+An item the session cannot verify - a check only the user can run, a claim no probe here can
+reach - ends the turn with a question to the user naming what verifying it needs. Ask it as
+the final message of the turn, the way the gate stops, and take the answer as that item's
+evidence. The item is never carried forward unverified. The session is not done while any
+collected item lacks a verdict, or, for a finding outside the handoff's scope, lacks the
+user's decision at the gate.
+
+## Step 3 - The gate
 
 Present the findings with severity, a verdict on each, and the proposed fix, as the **final
 message of the turn**. End the turn there, with no tool call after it.
@@ -91,16 +128,32 @@ collected thread gets a row, whether it was resolved or answered or neither.
 
 A thread whose finding stands carries a proposed fix like any `code-review` finding does.
 Separating the dispositions from the findings is a matter of presentation, not of standing:
-a re-opened finding the user approves is applied in Step 3 the same way.
+a re-opened finding the user approves is applied in Step 4 the same way.
+
+In a third group, kept apart from both, list one row per item Step 2 collected: its kind, its
+verdict, the evidence that settled it, and the proposed action.
+
+| Item and verdict | Proposed action |
+|---|---|
+| a check that fails, or a finding that stands within the handoff's scope | a code fix |
+| a claim that is false | a code fix, or a correction to the body |
+| a check that passes, a claim that holds, or a finding that does not hold | dismissed, with the evidence |
+| a finding that stands outside the handoff's scope | none - the verdict alone |
+
+A standing finding outside the handoff's scope is the user's to decide, one finding at a time:
+keep it in the body with its severity and reason, file it with `baton:file-issue`, or whatever
+else they say. This skill sets no default for it and never decides for them, so its row
+proposes nothing.
 
 Which fixes to apply is input only the user can give, so stopping is this step's required
 outcome, not a failure to finish. Applying a fix in the same turn as the findings does not
 satisfy the gate, whatever text precedes it.
 
-## Step 3 - Apply and verify
+## Step 4 - Apply and verify
 
-Apply only the fixes the user approved. Report what changed, the verification command with its
-actual output, and what was left alone.
+Apply only the fixes the user approved, and file with `baton:file-issue` each out-of-scope
+finding the user chose to file - only those. Report what changed, the verification command with
+its actual output, and what was left alone.
 
 Ask about any pre-publish check the repo's own instructions leave to a human - one its
 `CLAUDE.md` or `AGENTS.md` says to run before publishing, or forbids running unprompted. A check
@@ -109,16 +162,18 @@ never asked about leaves this step open rather than merely unused, and it belong
 Keep that question separate from asking to publish: asking to push while verification is still
 undecided inverts the order.
 
-## Step 4 - Publish
+## Step 5 - Publish
 
 Nothing leaves the machine until the user approves it, and a passing suite is not that approval.
 Pushing is not pre-authorized here, unlike in `baton:implement-handoff`, because someone is
 present to ask.
 
 On an explicit go-ahead, push. Where Step 0 found no pull request, that is the end of it -
-there is no body to update, and opening one is not this skill's.
+there is no body to update, and opening one is not this skill's. Where no fix was applied
+there is nothing to push, and the go-ahead covers `pr-update` alone.
 
-With one open, run `pr-update` when the applied fixes left its body inaccurate. Write that
+With one open, run `pr-update` when the applied fixes left its body inaccurate, and whenever
+Step 2 collected an item, fix or no fix: closing an item changes the body. Write that
 body under `baton:write-deliverables`, as a **PR description**:
 what the code does now and why it is shaped that way, as though the final diff were the only
 version that ever existed. Delete whatever the current diff no longer supports, and never narrate
@@ -129,10 +184,12 @@ handoff may name several issues, and each `closes` or `refs` line dropped here i
 merge silently stops settling - "whatever the current diff no longer supports" is about claims,
 never about these lines.
 
-Carry the `## Not verified here` and `## Unverified claims` headings across the same way. Their
-entries are checks and claims the diff cannot support by definition, so the deletion rule above
-never reaches them. An entry leaves only where this session verified it, and a heading leaves
-with its last entry.
+Step 2 closed every open item, so none of them is carried. The rewritten body has no
+`## Not verified here` heading, no `## Unverified claims` heading and no standing finding
+within the handoff's scope. A false claim the user chose to correct in the body is written in
+its corrected form, and a finding the user filed leaves the body. The only findings left in it
+are those outside the handoff's scope that the user chose to keep, each with its severity and
+reason.
 
 When the user declines the push, say what that leaves undone rather than moving on.
 
