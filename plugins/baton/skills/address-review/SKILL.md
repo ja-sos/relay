@@ -34,7 +34,7 @@ cat ~/.claude/baton.md 2>/dev/null
 ```
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
-defines - save `pr-title`, which reads as `<title>` where it is undefined - and an operation that fails because its tool is missing or unauthenticated - a
+defines, and an operation that fails because its tool is missing or unauthenticated - a
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
@@ -105,12 +105,6 @@ Only once verification clears and the user approves, in this order:
 2. Run `pr-update` when the changes left the body inaccurate. It replaces the body whole, so
    carry every issue reference line across unchanged - a handoff may name several issues, and
    each `closes` or `refs` line dropped here is an issue the merge silently stops settling.
-   The one line a body may lack is the handoff's primary issue's, and only where both hold: the
-   backend's `pr-title` contains `<id>` (a `pr-title` no loaded file defines reads as
-   `<title>`), and the pull request's title as it stands names that issue - `implement-handoff`
-   Step 5 writes no line for it then. Add none there, and do not read its absence as a dropped
-   reference. Where either does not hold, the line is owed: restore it. Every other reference
-   line is carried across.
    Carry the `## Not verified here` and `## Unverified claims` headings across too: an entry
    leaves only where this session verified it, and a heading leaves with its last entry.
 3. Answer every Step 3 row in the venue it arrived: an inline finding takes `thread-reply` in its

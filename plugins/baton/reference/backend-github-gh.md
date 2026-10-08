@@ -60,7 +60,6 @@ real credentials on outbound requests. `reachable` is the check that works.
 - **pr-update:**       gh pr edit --body-file <path>
 - **closes:**          Closes <owner>/<repo>#<id>
 - **refs:**            Refs <owner>/<repo>#<id>
-- **pr-title:**        <title>
 
 `pr-create` returns its first command's stdout, the pull request's URL, and the second command
 takes that URL as `<pr-url>`. Skip the second command where `<category>` is empty.
@@ -84,10 +83,6 @@ where this was written, so its syntax is unverified.
 and the note there says why: the pull request may open in a repository other than the issue's
 once one investigation records a handoff per repository a change spans. `implement-handoff`
 Step 5 fills all three values from the locator rather than from `verify-checkout`.
-
-`pr-title` is a bare `<title>` here as it is on the MCP route, and the note there says why:
-the body's `Closes` line is what closes the issue on GitHub, so the title carries no id that
-would make `implement-handoff` Step 5 leave that line out.
 
 A 403 naming `add_repo` means the session holds no grant for the repo, not that the
 credentials are wrong. Attach the repo at `access: push`; the read default covers neither

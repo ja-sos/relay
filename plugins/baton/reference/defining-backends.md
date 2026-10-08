@@ -29,7 +29,7 @@ unattended run must use goes in `.claude/baton.md`.
 |---|---|
 | `## Tracker` | reading, creating, commenting on and closing issues |
 | `## Categories` | the condition-to-label table `file-issue` picks from |
-| `## Forge` | checkout verification, pull requests and their title format, stack registration, closing keywords |
+| `## Forge` | checkout verification, pull requests, stack registration, closing keywords |
 | `## Review` | collecting review feedback on a pull request, and answering it |
 | `## Launcher` | how `investigate-issue` starts an implementation run |
 | `## Workflow` | the steps the skills run around the work: posting and finding handoffs, reviewing, publishing |
@@ -79,8 +79,8 @@ absolute path of the one folder outside every repository that a handoff may name
 
 A handoff lists what it needs on its `assets` header line, as paths relative to that root.
 `write-handoff` Step 2 writes the line and checks it; `implement-handoff` Step 1 resolves it
-again before it creates a worktree. The entry is a value the skills read, as `closes`, `refs`,
-`pr-title` and `review-wait` are, rather than a command they run: both callers use it as the prefix of a
+again before it creates a worktree. The entry is a value the skills read, as `closes`, `refs`
+and `review-wait` are, rather than a command they run: both callers use it as the prefix of a
 `test -e` on each listed path.
 
 A path is valid only where **every character is a letter, a digit, `.`, `-`, `_` or `/`**, it
@@ -128,9 +128,9 @@ holds is not cleared to live in a repository.
 Entries are `- **<name>:** <value>`. A value spanning lines goes in a fenced block below
 the entry, and a fenced block is one multi-line command rather than a sequence of them.
 
-A bare value is a shell command, wherever the operation is one the skills *run*. Four are
-values they read instead - `closes`, `refs`, `pr-title` and `review-wait` - and those stay
-literal text whatever they look like. `verify` is run, but takes one literal besides a command:
+A bare value is a shell command, wherever the operation is one the skills *run*. Three are
+values they read instead - `closes`, `refs` and `review-wait` - and those stay literal text
+whatever they look like. `verify` is run, but takes one literal besides a command:
 `repo-tests`, in the table below. A prefix names something else:
 
 | Value | Meaning |
@@ -150,8 +150,7 @@ tracks no stack to register a layer in, that the review round does not run, that
 when a person-attended flow ends, that this project closes issues outside baton, that the
 tracker carries no labels to check categories against; undefined says the backend is
 incomplete, and every skill treats it as a stop - except an undefined `wrap-up`, which the
-attended skills read as `none`, and an undefined `pr-title`, which every skill reads as
-`<title>`.
+attended skills read as `none`.
 
 `close-fixed` and `close-invalid` each take `none` on their own, because a tracker can let
 baton resolve an issue as done while a triager owns "not planned", or the reverse. Under `none`
@@ -200,8 +199,8 @@ come from, not which section holds it:
 
 | Placeholder | Value |
 |---|---|
-| `<owner>` `<repo>` on an entry addressing the **issue** - every `## Tracker` entry, the `## Workflow` entries resolving through one, and `closes` / `refs` / `pr-title` | the **issue's** repository: the locator's, where a handoff is in play, and `verify-checkout`'s answer split at the slash otherwise |
-| `<owner>` `<repo>` on an entry addressing the **pull request or the checkout** - `## Forge` and `## Review` apart from `closes` / `refs` / `pr-title`, and `request-reviewer` | the **checkout's** repository: `verify-checkout`'s answer, split at the slash |
+| `<owner>` `<repo>` on an entry addressing the **issue** - every `## Tracker` entry, the `## Workflow` entries resolving through one, and `closes` / `refs` | the **issue's** repository: the locator's, where a handoff is in play, and `verify-checkout`'s answer split at the slash otherwise |
+| `<owner>` `<repo>` on an entry addressing the **pull request or the checkout** - `## Forge` and `## Review` apart from `closes` / `refs`, and `request-reviewer` | the **checkout's** repository: `verify-checkout`'s answer, split at the slash |
 | `<owner>` `<repo>` on a `## Launcher` entry | the **handoff's** `repo` line, split at the slash: the entry starts a run for that repository, in a session that is not in it yet |
 | `<head-owner>` | the owner in `origin`'s URL, printed by the command below |
 | `<branch>` | `git branch --show-current` |
@@ -219,8 +218,8 @@ The tracker and the checkout name one repository for every handoff recorded befo
 a handoff per repository a change spans: the issue stays in the repository it was filed in,
 while the run happens in the repository the handoff names. `implement-handoff` Step 1 carries
 the same table for its own run, and `fetch-handoff` took its `<owner>`/`<repo>` from the
-locator already. `closes`, `refs` and `pr-title` sit in `## Forge` and follow the tracker's
-rule all the same, because what they reference is the issue rather than the pull request.
+locator already. `closes` and `refs` sit in `## Forge` and follow the tracker's rule all the
+same, because what they reference is the issue rather than the pull request.
 
 | Operation | Called by | Substitutes |
 |---|---|---|
@@ -246,7 +245,6 @@ rule all the same, because what they reference is the issue rather than the pull
 | `thread-reply` | `address-review` Step 5, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` `<comment-id>` `<path>` |
 | `pr-comment` | `address-review` Step 5, `implement-handoff` Step 6 | `<id>` `<path>` |
 | `closes` / `refs` | `implement-handoff` Step 5 | `<owner>` `<repo>` `<id>` |
-| `pr-title` | `implement-handoff` Step 5 | `<title>` `<id>` `<owner>` `<repo>` |
 | `post-handoff` | `write-handoff` Step 1 | `<id>` `<path>` |
 | `has-handoff` | `next-issue` Step 2, `investigate-issue` Step 1 | `<id>` |
 | `started` | `implement-handoff` Step 2 | `<id>` |
@@ -313,18 +311,16 @@ and nothing here passes one.
 `stack-link` is not one of the four, though it sits in the same step as two of them. It
 registers one pull request as one layer, and a bundle is still one pull request, so it runs
 once and its `<id>` is the **primary** issue - the first entry of the header's `issue` line.
-`pr-title` is read once for the same reason, and its `<id>` is the primary issue too. `closes`
-and `refs` are the other way about: Step 5 reads them once per issue, because the body carries
-a reference line for each - save the primary issue's, which Step 5 leaves out where `pr-title`
-contains `<id>`.
+`closes` and `refs` are the other way about: Step 5 reads them once per issue, because the
+body carries a reference line for each.
 
 `started` is the eighth, added in baton 0.1.5. A `## Workflow` written before it does not
 name `started` at all, which leaves it undefined rather than `none`, and
 `implement-handoff` stops at Step 2 - add `- **started:**          none` to that section,
 or the entry the project's tracker moves its ticket with.
 
-`wrap-up` is the ninth, added in baton 0.1.6. Unlike every other operation but `pr-title`,
-leaving it undefined is not a stop: `investigate-issue`, `review-pr`, `address-review` and
+`wrap-up` is the ninth, added in baton 0.1.6. Unlike every other operation, leaving it
+undefined is not a stop: `investigate-issue`, `review-pr`, `address-review` and
 `self-review` treat a `wrap-up` no loaded file defines as `none`, so a `## Workflow` written
 before 0.1.6 keeps working unchanged. Add the entry the project runs when an attended flow
 ends to use it.
@@ -369,29 +365,6 @@ the pull request's own repository, which is the right issue for every single-rep
 and the wrong one for a handoff recorded for a repository other than the issue's. Add both
 placeholders to that section's `closes` and `refs` before recording a handoff that spans
 repositories.
-
-`pr-title` is the format of the pull request's title, added to `## Forge` in baton 0.1.22.
-`implement-handoff` Step 5 writes a title for the change, substitutes it into the entry as
-`<title>` - with the **primary** issue, the first entry of the header's `issue` line, as `<id>`,
-and the issue's repository as `<owner>` and `<repo>`, the rule `closes` and `refs` follow - and
-passes the text that results to `pr-create` as that operation's own `<title>`. Where the
-entry's value contains the literal text `<id>`, the title names the primary issue, so Step 5
-writes **no reference line for the primary issue alone**: every later issue in the header keeps
-its `closes` or `refs` line, chosen by its own `closes` value. The primary issue's `closes`
-value does not change the test. A tracker that links a pull request to its issue by an id in
-the title - `PROJ-123: <title>` - writes `- **pr-title:**        <id>: <title>` and gets the
-id there instead of a line in the body.
-
-Only put `<id>` in `pr-title` where the forge treats an id in the title the way it treats the
-body's reference line. On GitHub the body's closing keyword is what closes an issue on merge,
-and an id in the title closes nothing, so a GitHub backend whose `pr-title` holds `<id>` loses
-the `Closes` line and with it the close. Nothing checks for that; both shipped GitHub routes
-set a bare `<title>`.
-
-Unlike the other `## Forge` operations, a `pr-title` no loaded file defines is not a stop:
-`implement-handoff` reads it as `<title>`, the shipped value, so a `## Forge` restated before
-0.1.22 keeps its titles and its reference lines unchanged. It is not a value `none` may take
-either - a title is never skipped.
 
 `stopped` carries two outcomes since baton 0.1.16, and only one of them is a failure. Besides
 the stop path it also reports `implement-handoff`'s no-change exit, which is a run that found
@@ -544,7 +517,7 @@ diff the correctness review could not read.
 | Entries complete | every operation the section owns is present |
 | Placeholders spelled | `<id>` not `<issue>`; an unrecognised placeholder is passed through literally |
 | Body arrives as a file | each operation taking `<path>` reads the file rather than a string, or sends `<body>` when it is a `tool:` entry |
-| Runs standalone | paste the command with real values into a shell; it must succeed there first. A literal - `none`, `repo-tests`, `closes`, `refs`, `pr-title`, `review-wait`, `## Assets`'s `root` - is not a command and is exempt. So is `verify` whatever its value: its sequence may rewrite files, and `baton:setup` Step 4 never runs it |
+| Runs standalone | paste the command with real values into a shell; it must succeed there first. A literal - `none`, `repo-tests`, `closes`, `refs`, `review-wait`, `## Assets`'s `root` - is not a command and is exempt. So is `verify` whatever its value: its sequence may rewrite files, and `baton:setup` Step 4 never runs it |
 | Tool entries called | call each `tool:` entry of a read operation with real values, since it has no shell form to paste; never call one `baton:setup` Step 4 forbids running |
 | Agent entries dispatchable | each `agent:` entry names an agent type this session offers, and every `## Launcher` entry that names `allowed_tools` at all names both `Agent` and `Task` |
 

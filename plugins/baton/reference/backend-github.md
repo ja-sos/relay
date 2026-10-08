@@ -107,7 +107,6 @@ raise `page` by one until it appears.
 - **pr-update:**       tool: mcp__github__update_pull_request {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "body": "<body>"}
 - **closes:**          Closes <owner>/<repo>#<id>
 - **refs:**            Refs <owner>/<repo>#<id>
-- **pr-title:**        <title>
 
 `verify-checkout` prints `<owner>/<repo>` from the `upstream` remote's URL, or from
 `origin`'s where there is no `upstream`, in HTTPS, SSH and proxied forms alike, with no
@@ -189,11 +188,6 @@ the reference reads as `Closes owner/repo#12` and resolves to the same issue `Cl
 GitHub documents that cross-repository form for closing keywords. That it closes the issue on
 merge was not tested here, and `implement-handoff`'s pull request body lists it for the
 reviewer.
-
-`pr-title` is a bare `<title>`, so the pull request's title is the one the run wrote and
-carries no issue id. That keeps the body's `Closes` line for the header's first issue: a
-`pr-title` holding `<id>` makes `implement-handoff` Step 5 leave that line out, and on GitHub
-the body's closing keyword, not an id in the title, is what closes the issue on merge.
 
 A 403 naming `add_repo` means the session holds no grant for the repo, not that the
 credentials are wrong. Attach the repo at `access: push`; the read default covers neither

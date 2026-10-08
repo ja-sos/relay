@@ -170,10 +170,7 @@ run's worktree name all come from it, and every other entry gets the pointer Ste
 issue is not marked done while work on it remains. `no` is the safe value whenever the
 split is unsettled. It is judged per entry, not per handoff: a bundle that finishes one issue
 and leaves another open writes `yes` for the first and `no` for the second, and the run writes
-each issue's reference line from that issue's own value. The one exception is a backend whose
-`pr-title` contains `<id>`: the pull request's title names the primary issue, the run writes no
-body line for it, and the primary's `closes` value then decides nothing - the forge decides
-what an id in the title does.
+each issue's reference line from that issue's own value.
 
 `category` is the label the pull request will carry. Read the primary issue's own labels -
 one pull request carries one label, so a bundle takes the primary's - keep the one matching

@@ -34,7 +34,7 @@ cat ~/.claude/baton.md 2>/dev/null
 ```
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
-defines - save `pr-title`, which reads as `<title>` where it is undefined - and an operation that fails because its tool is missing or unauthenticated - a
+defines, and an operation that fails because its tool is missing or unauthenticated - a
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
@@ -167,12 +167,7 @@ the review rounds.
 `pr-update` replaces the body whole, so carry every issue reference line across unchanged. A
 handoff may name several issues, and each `closes` or `refs` line dropped here is an issue the
 merge silently stops settling - "whatever the current diff no longer supports" is about claims,
-never about these lines. The one line a body may lack is the handoff's primary issue's, and only
-where both hold: the backend's `pr-title` contains `<id>` (a `pr-title` no loaded file defines
-reads as `<title>`), and the pull request's title as it stands names that issue -
-`implement-handoff` Step 5 writes no line for it then. Add none there, and do not read its
-absence as a dropped reference. Where either does not hold, the line is owed: restore it. Every
-other reference line is carried across.
+never about these lines.
 
 Carry the `## Not verified here` and `## Unverified claims` headings across the same way. Their
 entries are checks and claims the diff cannot support by definition, so the deletion rule above
