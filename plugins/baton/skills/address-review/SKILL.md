@@ -105,6 +105,8 @@ Only once verification clears and the user approves, in this order:
 2. Run `pr-update` when the changes left the body inaccurate. It replaces the body whole, so
    carry every issue reference line across unchanged - a handoff may name several issues, and
    each `closes` or `refs` line dropped here is an issue the merge silently stops settling.
+   Carry the `## Not verified here` and `## Unverified claims` headings across too: an entry
+   leaves only where this session verified it, and a heading leaves with its last entry.
 3. Answer every Step 3 row in the venue it arrived: an inline finding takes `thread-reply` in its
    own thread, while rows from summary bodies and conversation comments take one `pr-comment`
    covering them, there being no thread to reply into.

@@ -20,6 +20,10 @@ listed. Add or replace types in `.claude/doc-types.md` or `~/.claude/doc-types.m
 - What is deliberately out of scope, and known gaps. Left out, not filled, where there is
   nothing true to state.
 - What the reviewer should look at hardest.
+- On a rewrite, the `## Not verified here` and `## Unverified claims` sections the body
+  already carries, with their entries: checks a person must run and claims a person must
+  probe, which the diff cannot support. An entry leaves only once verified, and a section
+  leaves with its last entry.
 
 **Must not include**
 - A list of changed files, or a per-file walkthrough.

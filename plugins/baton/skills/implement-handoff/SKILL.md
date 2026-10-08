@@ -654,7 +654,7 @@ The audit's verdict on each claim decides what the body may say:
 | ACCEPTED | stated as it stands |
 | CORRECTED | rewritten to the corrected form |
 | RETRACTED | left out |
-| LABELLED unverified | moved under the body's `## Not verified here` heading |
+| LABELLED unverified | moved under the body's `## Unverified claims` heading |
 
 A dispatch that fails here is a stop. Step 2 has already established the tool exists, so a
 failure at this point is the dispatch and not the launcher. Writing the body without the audit
@@ -668,12 +668,17 @@ git push -u origin <branch>
 ```
 
 Write the body under `baton:write-deliverables`, as a **PR description**, to a file in
-the scratchpad directory. Two things the run knows and a reviewer cannot recover go in it:
+the scratchpad directory. Beside the issue references and standing findings below, three
+things the run knows and a reviewer cannot recover go in it:
 
 - The handoff's "Not verified here" list where it carries one, copied as it stands under
   the body's `## Not verified here` heading.
   Each entry names a screen, a control and an expected result, and Step 3 covered none of
-  them - the list is what tells a reviewer which of them to open.
+  them - the list is what tells a reviewer which of them to open. That heading holds the
+  handoff's list alone.
+- Every claim Step 4's audit labelled unverified, placed as its verdict table sets. They are
+  statements the run made and could not probe, kept apart from the handoff's checks on a
+  running application.
 - What Step 3 had to check against: the handoff's acceptance criteria and the commands
   that prove them, with each criterion no test covers named as such, or - where it named
   neither - a sentence saying so, and that `verify` alone checked the change.
@@ -686,11 +691,10 @@ Run `pr-create` with that file, with `<category>` and `<pr-base>` as Step 1 reso
 Where `<category>` is empty, the backend's notes on its own `pr-create` say what that drops -
 a label, or the call that would have set one.
 
-The body states only what Step 4's audit accepted, in the form it accepted it. A corrected
-claim is rewritten, a retracted one is left out, and every claim the audit could only label
-unverified goes under a `## Not verified here` heading - listed rather than dropped, so a
-reviewer knows which claims to probe. With no such claim and no handoff list, there is no
-such heading.
+The body states each audited claim in the form Step 4's verdict table gives it, a labelled
+one listed rather than dropped so a reviewer knows which claims to probe. Neither heading is
+written without its source: `## Not verified here` only where the handoff carries its list,
+`## Unverified claims` only where the audit labelled at least one claim.
 
 The findings the loop left standing go in the body as well, each with its severity and the
 reason it stands.
@@ -809,18 +813,17 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    these fixes add or change. A claim from Step 5's body stays unless this round's audit ruled
    on it, and then takes the form Step 4's verdict table gives. A finding from Step 5's body
    stays unless a fix this round resolved it. To those the body adds the claims this round's
-   audit accepted and the findings this round's loop left standing. Its `## Not verified
-   here` list holds the handoff's entries, every claim Step 5's audit labelled unverified that
-   this round's audit did not rule on again, and every claim this round's audit labelled
-   unverified. The heading is left out only where all three are empty, so a claim this
-   round's audit labels gets it even where Step 5's body had none. The body also carries -
-   the lines easiest to lose - **every** issue reference Step 5's table chose, one per issue
-   the header names and each keeping the form that table gave it. `pr-update` replaces the
-   body whole rather than appending to it, so a rewrite that drops a `closes` line leaves a
-   pull request that no longer shuts its issue on merge, and one that keeps only the first
-   line of a bundle leaves every issue after it unlinked - silently, since a body missing a
-   reference is as valid as one carrying it. The body describes the branch as it is now, and
-   never narrates the round that changed it.
+   audit ruled on, each in the form Step 4's verdict table gives, and the findings this
+   round's loop left standing. `## Not verified here` holds the handoff's list as Step 5
+   copied it. `## Unverified claims` is written wherever a claim from either audit sits under
+   it, so a claim this round's audit labels gets the heading even where Step 5's body had none.
+   The body also carries - the lines easiest to lose - **every** issue reference Step 5's
+   table chose, one per issue the header names and each keeping the form that table gave it.
+   `pr-update` replaces the body whole rather than appending to it, so a rewrite that drops a
+   `closes` line leaves a pull request that no longer shuts its issue on merge, and one that
+   keeps only the first line of a bundle leaves every issue after it unlinked - silently,
+   since a body missing a reference is as valid as one carrying it. The body describes the
+   branch as it is now, and never narrates the round that changed it.
 
 One round, with no re-request. A finding that holds is yours to judge on the diff, the
 same as a Step 4 finding - `request-reviewer` names who reviews, not who decides.
@@ -911,14 +914,15 @@ unresolved Critical and a Minor left alone are different news. A finding the loo
 a later round reopened takes the disposition it ends on.
 
 Where the pull request body, as Step 5 or Step 6 last wrote it, carries a `## Not verified
-here` heading, that file also says checks wait there for a person and points to that
-heading, without repeating its entries. With no such heading, this step requires nothing
-here, and whether the report says that nothing waits for a person is for the contract
-**Run report** resolves to.
+here` heading, that file also says checks wait there for a person to run; where it carries
+`## Unverified claims`, that claims wait there for a person to probe. Each of those
+statements points to its heading without repeating the entries under it. With neither
+heading, this step requires nothing here, and whether the report says that nothing waits for
+a person is for the contract **Run report** resolves to.
 
-The findings, their dispositions, Step 6's outcome and the pointer to checks waiting for a
-person, where the body has them, are required content whatever contract **Run report**
-resolves to. An override replaces a contract's must-include list wholesale
+The findings, their dispositions, Step 6's outcome and the pointer to each of those headings
+the body carries are required content whatever contract **Run report** resolves to. An
+override replaces a contract's must-include list wholesale
 (`skills/write-deliverables/reference/defining-doc-types.md`), so the shipped contract is not
 what holds them in - this step is, and a must-not-include that would cut them does not reach
 a file this step mandates. The type governs who the report is written for and the
