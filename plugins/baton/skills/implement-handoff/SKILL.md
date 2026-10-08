@@ -721,13 +721,17 @@ each issue's line chosen by that issue's own `closes` value:
 | `yes` | the backend's `closes` line, with that issue as `<id>` |
 | `no` | the backend's `refs` line, with that issue as `<id>` |
 
-A header naming one issue writes one line, as every header did before baton 0.1.12. `closes`
-is judged per entry, so a bundle that finishes one issue and leaves another open writes a
-`closes` line for the first and a `refs` line for the second: a `closes` line on the second
-would shut it on merge whatever remains open on it, and the run has no way to reopen it.
+Where the backend's `closes` or `refs` entry is `none`, an issue whose value selects that entry
+gets no line, and the project links it to the pull request by its own means.
 
-An issue the body names in no line is unlinked on merge. Nothing errors - the pull request is
-valid without it, and the ticket simply never moves.
+A header naming one issue writes one line, as every header did before baton 0.1.12, unless
+the entry its value selects is `none`. `closes` is judged per entry, so a bundle that finishes
+one issue and leaves another open writes a `closes` line for the first and a `refs` line for
+the second: a `closes` line on the second would shut it on merge whatever remains open on it,
+and the run has no way to reopen it.
+
+An issue whose line goes missing from the body is unlinked on merge. Nothing errors - the pull
+request is valid without it, and the ticket never moves.
 
 Fill each line's `<owner>`, `<repo>` and `<id>` from the locator, per Step 1's table. The
 reference names the issue's repository, which is not this pull request's wherever the handoff
@@ -819,6 +823,7 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    it, so a claim this round's audit labels gets the heading even where Step 5's body had none.
    The body also carries - the lines easiest to lose - **every** issue reference Step 5's
    table chose, one per issue the header names and each keeping the form that table gave it.
+   An issue Step 5 wrote no line for, under a `none` entry, gets none here either.
    `pr-update` replaces the body whole rather than appending to it, so a rewrite that drops a
    `closes` line leaves a pull request that no longer shuts its issue on merge, and one that
    keeps only the first line of a bundle leaves every issue after it unlinked - silently,
@@ -1008,8 +1013,8 @@ handoff, the evidence saying so, and that no branch was pushed and no pull reque
 the blocker, the step it stopped at, and the pull request URL when Step 5 opened one.
 
 Name every issue the header carried and what reached it: the reference line it got in the
-body, and whether `started`, `published` or `stopped` ran on it. An issue the report leaves
-out is one nobody knows to check.
+body, or that it got none under a `none` entry, and whether `started`, `published` or
+`stopped` ran on it. An issue the report leaves out is one nobody knows to check.
 
 A handoff carrying `next` reports the launch too, in whichever form Step 7 recorded it. The
 run above is a separate session: this one does not wait for it, watch it, or report anything
