@@ -116,13 +116,13 @@ value at all - report it unread, as below, and name the primary issue whose hand
 Stop walking at the first candidate that survives carrying no marker at all - `has-handoff`
 costs a call per issue, and the ones below the answer do not need one.
 
-**An answered issue does not stop the walk.** It survives, and it is reported, but what it
-needs is a close rather than a session's work, so keep walking past it and let the first
-unmarked survivor be the answer. Stopping there would return an issue with nothing to build and
-hide every workable issue beneath it, on this call and on every call until it is closed - by a
-person through baton, or under `close-fixed: none` by the tracker's own close process - one
-skip traded for another. Where the walk reaches the end of the list with only answered
-issues to show, those are the answer, and Step 3 says what they are waiting on.
+**An answered issue does not stop the walk.** It survives, and it is reported, but what it needs
+is a person's decision on the evidence rather than a session's work, so keep walking past it and
+let the first unmarked survivor be the answer. Stopping there would return an issue with nothing
+to build and hide every workable issue beneath it, on this call and on every call until it is
+closed - by a person through baton, or under `close-fixed: none` by the tracker's own close
+process - one skip traded for another. Where the walk reaches the end of the list with only
+answered issues to show, those are the answer, and Step 3 says what they are waiting on.
 
 ## Step 3 - Report
 
@@ -156,5 +156,5 @@ person picks from when the answer is none.
 ## Done
 
 One issue number, or none - beside it, the answered issues the walk passed, each waiting on a
-close rather than on work. Starting work on any of them, or closing one, is the caller's
-decision, not this skill's.
+person's decision on the evidence rather than on work. Starting work on any of them, or closing
+one, is the caller's decision, not this skill's.

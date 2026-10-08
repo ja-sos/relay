@@ -103,7 +103,7 @@ is proposed, and that value is what says whether a close was ever this handoff's
 under `closes: yes` propose it with the commit; under `closes: no` the author meant the issue
 to stay open, so report it answered and propose nothing. Where `close-fixed` is `none`, a
 `closes: yes` handoff gets what `closes: no` gets: report it answered with its evidence, propose
-nothing, and say the close belongs to whatever closes issues in that tracker. A pointer carries
+nothing, and say the close belongs to the tracker's own close process. A pointer carries
 no `closes` value - read it from the primary issue's handoff, which the pointer's locator names,
 rather than assuming one. Where the report names no commit - it carries one only where
 `git log -S` or `git blame` could name it - that row's commit is this step's to find, from the
@@ -160,8 +160,10 @@ record each HEAD as you go. Step 5 writes one handoff per repository and every h
 
 On either stop, report to the user and propose closing - `close-fixed` for a fix that landed,
 `close-invalid` for a finding that never held - unless that stop's operation is `none`, or the
-stop is `Already fixed` on an issue whose handoffs Step 1 found all answered and none of them
-carried `closes: yes`. Never close an issue without approval.
+stop is `Already fixed` and Step 1 found at least one handoff or pointer on the issue, every one
+answered and none with a `closes` entry of `yes` for this issue. A handoff's entry for an issue
+is the value in the same position as that issue on its `issue` line; a pointer's is the entry
+for this issue in the primary handoff it names. Never close an issue without approval.
 
 Each stop's `none` test reads only its own operation. Where `close-fixed` is `none`, an
 `Already fixed` stop reports the fixing commit and proposes no close; where `close-invalid` is
