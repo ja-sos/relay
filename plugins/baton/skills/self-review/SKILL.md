@@ -34,7 +34,7 @@ cat ~/.claude/baton.md 2>/dev/null
 ```
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
-defines, and an operation that fails because its tool is missing or unauthenticated - a
+defines - save `pr-title`, which reads as `<title>` where it is undefined - and an operation that fails because its tool is missing or unauthenticated - a
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does

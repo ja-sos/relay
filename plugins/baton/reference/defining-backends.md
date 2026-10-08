@@ -150,7 +150,8 @@ tracks no stack to register a layer in, that the review round does not run, that
 when a person-attended flow ends, that this project closes issues outside baton, that the
 tracker carries no labels to check categories against; undefined says the backend is
 incomplete, and every skill treats it as a stop - except an undefined `wrap-up`, which the
-attended skills read as `none`.
+attended skills read as `none`, and an undefined `pr-title`, which every skill reads as
+`<title>`.
 
 `close-fixed` and `close-invalid` each take `none` on their own, because a tracker can let
 baton resolve an issue as done while a triager owns "not planned", or the reverse. Under `none`
