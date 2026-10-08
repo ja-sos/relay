@@ -101,23 +101,26 @@ is no body, and this step collects nothing.
 
 Rule on each item at the reviewed head, by its kind:
 
-- **A check:** run it against the application, or ask the user to run it and report the
-  result. It passes or fails.
+- **A check:** run it against the application where the repo's own instructions allow running
+  it unprompted; otherwise ask the user to run it and report the result. It passes or fails.
 - **A claim:** probe it against the code. It holds or is false.
 - **A finding:** rule on its merits, as the reference's "Checking the threads" rules on a
   thread, giving the run's stated reason and severity no weight. It takes a severity from the
-  reference's "Severity" table, and it stands or does not hold. Decide its
-  scope the same way, against the pull request's diff and the handoff rather than the reason
-  the body gives: a finding in code the diff does not change is outside the handoff's scope.
+  reference's "Severity" table, and it stands or does not hold. Decide its scope the same way,
+  against the pull request's diff and the handoff rather than the reason the body gives: a
+  finding in code the diff does not change, and that no step or criterion of the handoff
+  required changing, is outside the handoff's scope.
 
 The provenance rule covers everything this step reads. A body entry calling a finding "outside
 the handoff's scope", or a check covered, is the run's assertion about itself and settles
 nothing.
 
 An item the session cannot verify - a check only the user can run, a claim no probe here can
-reach - ends the turn with a question to the user naming what verifying it needs. Ask it as
-the final message of the turn, the way the gate stops, and take the answer as that item's
-evidence. The item is never carried forward unverified. The session is not done while any
+reach - ends the turn with a question to the user naming what verifying it needs. Ask every
+such question in one final message, the way the gate stops, resume at this step with the
+answers, and take each answer as that item's evidence. The item is never carried forward
+unverified, with one exception: an item the user rules can only be verified after merge takes
+exactly that as its verdict. The session is not done while any
 collected item lacks a verdict, or, for a finding outside the handoff's scope, lacks the
 user's decision at the gate.
 
@@ -144,13 +147,13 @@ action.
 | a check that fails, or a finding that stands within the handoff's scope | a code fix |
 | a claim that is false | a code fix, or a correction to the body |
 | a check that passes, a claim that holds, or a finding that does not hold | dismissed, with the evidence |
+| a check or claim the user ruled verifiable only after merge | stated among the body's known gaps as exactly that |
 | a finding that stands outside the handoff's scope | none - the verdict alone |
 
 A standing finding outside the handoff's scope is the user's to decide, one finding at a time:
-keep it in the body with the severity and evidence Step 2 settled, file it with
-`baton:file-issue`, or whatever
-else they say. This skill sets no default for it and never decides for them, so its row
-proposes nothing.
+keep it in the body with the severity and evidence Step 2 settled and that it stands outside
+the handoff's scope, file it with `baton:file-issue`, or whatever else they say. This skill
+sets no default for it and never decides for them, so its row proposes nothing.
 
 Which fixes to apply is input only the user can give, so stopping is this step's required
 outcome, not a failure to finish. Applying a fix in the same turn as the findings does not
@@ -176,8 +179,9 @@ Pushing is not pre-authorized here, unlike in `baton:implement-handoff`, because
 present to ask.
 
 On an explicit go-ahead, push. Where Step 0 found no pull request, that is the end of it -
-there is no body to update, and opening one is not this skill's. Where no fix was applied
-there is nothing to push, and the go-ahead covers `pr-update` alone.
+there is no body to update, and opening one is not this skill's. Where no fix was applied and
+the local branch holds nothing the pull request lacks, there is nothing to push, and the
+go-ahead covers `pr-update` alone.
 
 With one open, run `pr-update` when the applied fixes left its body inaccurate, and whenever
 Step 2 collected an item, fix or no fix: closing an item changes the body. Write that
@@ -192,15 +196,19 @@ merge silently stops settling - "whatever the current diff no longer supports" i
 never about these lines.
 
 Step 2 settled every open item, so none of them is carried as open. The rewritten body has no
-`## Not verified here` heading, no `## Unverified claims` heading and no standing finding
-within the handoff's scope. A false claim the user chose to correct in the body is written in
-its corrected form, and a finding the user filed leaves the body. A check that failed and was
-not fixed is no longer unverified: the body states it among its known gaps as a known failure,
-with the evidence Step 2 found, rather than dropping it. A false claim the user neither fixed
-nor chose to correct is never restated as true: the body states it among its known gaps in its
-corrected form. The only findings
-left in the body are those outside the handoff's scope that the user chose to keep, each with
-the severity and evidence Step 2 settled rather than the severity and reason the run wrote.
+`## Not verified here` heading and no `## Unverified claims` heading. A false claim the user
+chose to correct in the body is written in its corrected form, and a finding the user filed
+leaves the body, which gains a `refs` line for the issue it was filed as. A check that failed
+and was not fixed is no longer unverified: the body states it among its known gaps as a known
+failure, with the evidence Step 2 found, rather than dropping it. A false claim the user
+neither fixed nor chose to correct is never restated as true: the body states it among its
+known gaps in its corrected form. A check or claim the user ruled verifiable only after merge
+is stated among the known gaps as exactly that. A standing finding within the handoff's scope
+whose fix the user declined is stated there too, with the severity and evidence Step 2
+settled, and no other in-scope standing finding stays in the body. The only other findings
+left in it are those outside the handoff's scope that the user chose to keep, each with the
+severity and evidence Step 2 settled and that it stands outside the handoff's scope, rather
+than the severity and reason the run wrote.
 
 When the user declines the push, say what that leaves undone rather than moving on.
 
