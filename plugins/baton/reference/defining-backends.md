@@ -141,15 +141,24 @@ whatever they look like. `verify` is run, but takes one literal besides a comman
 | `agent: <type> <prompt>` | dispatch a subagent of that type with that prompt, through the subagent dispatch tool - `Agent` or `Task`, by harness build |
 | `op: <operation> <args>` | run another operation of this backend, with these substitutions |
 | a nested bullet list | each bullet is one entry in any of the forms above, run in order; the first failure stops the rest |
-| `none` | skip the step. Valid for `started`, `stack-link`, `request-reviewer`, `wrap-up` and `list-categories` only - any other operation set to `none` is undefined |
+| `none` | skip the step. Valid for `started`, `stack-link`, `request-reviewer`, `wrap-up`, `close-fixed`, `close-invalid` and `list-categories` only - any other operation set to `none` is undefined |
 | `repo-tests` | run the repo's full test command, as the run finds it. Valid for `verify` only - anywhere else it is a shell command, and no such binary exists |
 
 `none` and undefined are not the same answer. `none` says the project has decided the step
 does not run - that no tracker transition marks the start of implementation, that the forge
 tracks no stack to register a layer in, that the review round does not run, that no step runs
-when a person-attended flow ends, that the tracker carries no labels to check categories
-against; undefined says the backend is incomplete, and every skill treats it as a stop -
-except an undefined `wrap-up`, which the attended skills read as `none`.
+when a person-attended flow ends, that this project closes issues outside baton, that the
+tracker carries no labels to check categories against; undefined says the backend is
+incomplete, and every skill treats it as a stop - except an undefined `wrap-up`, which the
+attended skills read as `none`.
+
+`close-fixed` and `close-invalid` each take `none` on their own, because a tracker can let
+baton resolve an issue as done while a triager owns "not planned", or the reverse. Under `none`
+the project closes that kind of issue by its own means - tracker automation, or a person who
+owns resolutions - so `investigate-issue` reports the outcome with its evidence and proposes no
+close, and `next-issue` reports an answered issue as waiting on that process rather than on a
+close run through baton. An undefined close operation is still a stop: the `wrap-up` exception
+above covers that operation alone.
 
 `repo-tests` is a literal the skills recognise rather than a command they run, because no
 single command is every repo's suite. It is `verify`'s shipped value, and a project that
@@ -219,7 +228,7 @@ same, because what they reference is the issue rather than the pull request.
 | `list-mine` | `next-issue` Step 1 | - |
 | `create` | `file-issue` Step 5 | `<title>` `<category>` `<path>` |
 | `view` | `investigate-issue` Step 1 | `<id>` |
-| `close-fixed` / `close-invalid` | `investigate-issue` Step 2 | `<id>` |
+| `close-fixed` / `close-invalid` | `investigate-issue` Step 2; whether `close-fixed` is `none` is also read by `investigate-issue` Step 1 and `next-issue` Steps 2 and 3 | `<id>` |
 | `comment` | the `## Workflow` defaults of `post-handoff`, `published` and `stopped` | `<id>` `<path>` |
 | `fetch-handoff` | `implement-handoff` Step 1 | `<owner>` `<repo>` `<id>` `<comment-id>` `<locator>` |
 | `reachable` | `implement-handoff` Step 1 | - |

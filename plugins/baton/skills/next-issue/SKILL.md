@@ -82,7 +82,9 @@ nothing here.
 
 An issue whose every handoff and pointer is answered survives this step. Its scope is no longer
 pending work: an implementation run has reported that HEAD already satisfies it, and what it
-waits on is a person to close it - which it will never get while this step keeps hiding it.
+waits on is a person's decision - a close, unless its handoff meant it to stay open - which it
+will never get while this step keeps hiding it. Whether a close is owed, and who performs it, is
+read below, from its `closes` value and the backend's `close-fixed`.
 
 An issue bundled into another issue's handoff carries the handoff marker too, in a pointer
 comment `baton:write-handoff` posts on every issue its header names beyond the first. A pointer
@@ -103,19 +105,24 @@ offered again here. Say so in Step 3 rather than treating every skip as settled 
 it off the handoff that the obsolete report answers, the same output both came out of. `yes`
 leaves an issue waiting on a close that its pull request will never perform, since there is no
 pull request. `no` leaves one its author meant to keep open, and calling that a close candidate
-would shut a ticket on the strength of work it was never scoped for. A pointer carries no
-`closes` value at all - report it unread, as below, and name the primary issue whose handoff
-holds it.
+would shut a ticket on the strength of work it was never scoped for. **`close-fixed` decides who
+performs a `yes` close.** Where the loaded backend sets it to `none`, the project closes issues
+outside baton, so a `closes: yes` issue waits on the tracker's own close process rather than on
+a close a person runs through baton - report it that way, not as a close candidate. This step
+reads the value only for an answered `closes: yes` issue, and never runs the operation; there,
+an undefined `close-fixed` is the stop it is everywhere else. A pointer carries no `closes`
+value at all - report it unread, as below, and name the primary issue whose handoff holds it.
 
 Stop walking at the first candidate that survives carrying no marker at all - `has-handoff`
 costs a call per issue, and the ones below the answer do not need one.
 
-**An answered issue does not stop the walk.** It survives, and it is reported, but what it
-needs is a close rather than a session's work, so keep walking past it and let the first
-unmarked survivor be the answer. Stopping there would return an issue with nothing to build and
-hide every workable issue beneath it, on this call and on every call until a person closes it -
-one skip traded for another. Where the walk reaches the end of the list with only answered
-issues to show, those are the answer, and Step 3 says what they are waiting on.
+**An answered issue does not stop the walk.** It survives, and it is reported, but what it needs
+is a person's decision on the evidence rather than a session's work, so keep walking past it and
+let the first unmarked survivor be the answer. Stopping there would return an issue with nothing
+to build and hide every workable issue beneath it, on this call and on every call until it is
+closed - by a person through baton, or under `close-fixed: none` by the tracker's own close
+process - one skip traded for another. Where the walk reaches the end of the list with only
+answered issues to show, those are the answer, and Step 3 says what they are waiting on.
 
 ## Step 3 - Report
 
@@ -129,9 +136,11 @@ and the `closes` value its handoff carried, above the answer and apart from the 
 issue is not work waiting to start: an implementation run found HEAD already satisfying its
 handoff, and the report holds the evidence a close would rest on. It is listed so a person can
 act on it, and marked so a caller does not take it for fresh work and investigate a change
-already in the tree. Under `closes: yes` what it waits on is that close; under `closes: no` its
-author meant it to stay open, so report it as answered and say the close is not this handoff's
-to ask for; under a pointer, report the value unread beside the primary issue it names.
+already in the tree. Under `closes: yes` what it waits on is that close - and where `close-fixed`
+is `none`, say it waits on the tracker's own close process rather than on a close a person runs
+through baton; under `closes: no` its author meant it to stay open, so report it as answered
+and say the close is not this handoff's to ask for; under a pointer, report the value unread
+beside the primary issue it names.
 
 When only answered issues survive, they are what this step returns, said as what each is
 waiting on rather than as work. When nothing survives at all, say so and name what was skipped.
@@ -147,5 +156,5 @@ person picks from when the answer is none.
 ## Done
 
 One issue number, or none - beside it, the answered issues the walk passed, each waiting on a
-close rather than on work. Starting work on any of them, or closing one, is the caller's
-decision, not this skill's.
+person's decision on the evidence rather than on work. Starting work on any of them, or closing
+one, is the caller's decision, not this skill's.
