@@ -239,15 +239,27 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 
 ## Launcher
 
-- **cloud:** one routine per repository, reused. Load the tool with
-  `ToolSearch select:RemoteTrigger`. `action: "list"` finds the routine named for this
-  repository; `action: "update"` re-points it and `action: "create"` builds it when
-  absent, both taking this body:
+Each entry takes `<skill>` - `implement-handoff` or `review-handoff` - and `<args>`, the
+arguments that skill is started with, and appends `launcher=<entry name>` to them. That last
+argument is how the run knows which entry started it: `implement-handoff` launches its
+reviewer through the same entry.
+
+- **cloud:** two routines per repository, each holding a fixed prompt, reused for every
+  launch. Load the tool with `ToolSearch select:RemoteTrigger`. `<skill>` picks the routine:
+  `implement <owner>/<repo>` for `implement-handoff`, `review <owner>/<repo>` for
+  `review-handoff`. Each launch runs, in order:
+
+  1. `action: "list"`, finding the routine by that name.
+  2. Where it is absent, `action: "create"` with the body below.
+  3. Where it exists, compare its stored prompt - the `message.content` of its event, not the
+     event's `uuid`, which is fresh on every launch - and its `model`, `allowed_tools`,
+     `sources` and `enabled` with the body below. Where any of them differs, `action: "update"`
+     with those fields from the body.
+  4. One `action: "run"` on it, with the body `{"text": "<args> launcher=cloud"}`.
 
 ```json
-{"name": "implement <owner>/<repo>",
- "run_once_at": "<RFC3339 UTC, a few minutes ahead>",
- "enabled": true,
+{"name": "<implement or review> <owner>/<repo>",
+ "enabled": false,
  "job_config": {"ccr": {
    "environment_id": "<from the schedule skill's environment list>",
    "session_context": {
@@ -259,51 +271,77 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
    "events": [{"data": {
      "uuid": "<fresh lowercase v4 uuid>", "session_id": "", "type": "user",
      "parent_tool_use_id": null,
-     "message": {"role": "user", "content": "/baton:implement-handoff <comment url>"}}}]}}}
+     "message": {"role": "user", "content": "This is a cloud run. Invoke the `baton:<skill>` skill with the text of the routine-fire-payload below, verbatim, as its arguments. If there is no routine-fire-payload, or it is empty, end the turn without doing anything."}}}]}}}
 ```
+
+  The stored prompt never changes between launches; the arguments ride in the `run` payload.
+  A `run` carrying `{"text": ...}` delivers the text to the run as a second user turn, wrapped
+  in `<routine-fire-payload>` and marked as data to follow only where the stored prompt says
+  to - which this one does - and a run given a stored prompt naming a skill invokes it with the
+  payload verbatim as its arguments. A run with no payload ends in one turn. A `run` that
+  passes `job_config.ccr.events`, `events` or `prompt` instead gets HTTP 200 and the stored
+  prompt alone. That is why each launch is one call: the entry before baton 0.2.0 re-pointed a
+  single routine with `update` and then fired it with `run`, and two launches interleaving
+  there both ran the second launch's prompt.
+
+  The routines are created disabled and stay disabled. `run` starts a disabled routine and
+  delivers its payload, so no launch toggles `enabled`, and with no schedule there is no
+  pending slot to add a duplicate run. Nothing deletes a routine except
+  claude.ai/code/routines. `action: "list_runs"` returns a run's session URL;
+  `action: "get_run_log"` reads the run, permission denials included.
+
+  Step 3 runs on every launch because a routine keeps what it was last given. A routine
+  created before 0.2.0 still stores the last launch's prompt - for `implement <owner>/<repo>`,
+  `/baton:implement-handoff` with an old locator - and a `run` on it delivers that prompt
+  first and the new arguments after it as inert data: a second implementation run of an old
+  handoff, which cuts `<branch>-<6 hex>` and opens a second pull request. Rewriting the stored
+  prompt by name is what retires it. `model` is reconciled for the reason it is in the body
+  at all: an investigation formed under one model does not hand its plan to a weaker one, and
+  a launch from a session on another model would otherwise run under the routine's old one.
+  `sources` and `enabled` are compared so an old routine ends in the same state a new one
+  starts in. New routine names would skip the comparison, but would leave each old routine on
+  the account, holding a prompt that runs if anything fires it.
+
+  Step 3 is the one place two launches can still interleave. The prompt, `sources`, `enabled`
+  and `allowed_tools` it writes are the same on every launch, so an interleaving there changes
+  nothing; `model` is not, and two launches from sessions on different models at the same
+  moment can each run under the other's.
 
   `sources` is what attaches the repository - the field `claude --cloud` leaves empty,
   which is why a `--cloud` session arrives with an uploaded copy of the checkout and no
-  remote. `model` takes the model this session is running: an investigation formed under
-  one model does not hand its plan to a weaker one. An update carries `"enabled": true`
-  alongside the new prompt, because the previous run left the routine disabled.
+  remote.
 
-  Fire it with `action: "run"` rather than waiting for the slot, then `action: "update"`
-  with `{"enabled": false}` so the pending slot adds no duplicate. Nothing deletes a
-  routine except claude.ai/code/routines. A run already firing holds its own copy of the
-  prompt, so re-pointing the routine cannot disturb it. `action: "list_runs"` returns the
-  run's session URL; `action: "get_run_log"` reads the run, permission denials included.
+  `EnterWorktree` and `ExitWorktree` are on the list because `implement-handoff` and
+  `review-handoff` each create their run's worktree at Step 2 and remove it at their last
+  step. A cloud run has a disposable clone to itself and isolates from nothing, and that cost
+  is accepted rather than made conditional.
 
-  `EnterWorktree` and `ExitWorktree` are on the list because `implement-handoff` Step 2
-  creates the run's worktree and Step 7 removes it. A cloud run has a disposable clone to
-  itself and isolates from nothing, and that cost is accepted rather than made conditional.
+  `Agent` and `Task` are on the list because each skill's claim audit dispatches a subagent
+  whose context did not write the claims, and a `code-review` entry may itself be an `agent:`
+  one. The list names both so the run has the dispatch tool under either name. Routine
+  creation keeps a name the build does not carry, and the session ignores it: a cloud run
+  whose list held `Agent`, `Task` and a made-up name started, carried only `Agent`, and
+  dispatched through it. Both names were added in baton 0.1.7, so a `## Launcher` entry copied
+  from this file before then, into a project's `.claude/baton.md` or a personal
+  `~/.claude/baton.md`, names neither. Add both: that run also carried tools its list did not
+  name, such as `ToolSearch`, so whether a list naming neither still gets `Agent` is untested,
+  and `implement-handoff` Step 2 and `review-handoff` Step 1 stop a run that lacks it.
 
-  `Agent` and `Task` are on the list because Step 4's claim audit dispatches a subagent whose
-  context did not write the code, and a `code-review` entry may itself be an `agent:` one. The
-  list names both so the run has the dispatch tool under either name. Routine creation keeps a
-  name the build does not carry, and the session ignores it: a cloud run whose list held
-  `Agent`, `Task` and a made-up name started, carried only `Agent`, and dispatched through it.
-  Both names were added in baton 0.1.7, so a `## Launcher` entry copied from this file before
-  then, into a project's `.claude/baton.md` or a personal `~/.claude/baton.md`, names neither.
-  Add both: that run also carried tools its list did not name, such as `ToolSearch`, so
-  whether a list naming neither still gets `Agent` is untested, and Step 2 stops a run that
-  lacks it.
-
-  `RemoteTrigger` is on it because this entry is the one a run launches its own next layer
-  with: a handoff carrying `next: cloud <locator>` sends `implement-handoff` Step 7 back
-  through these very lines, from inside a cloud run. Without the tool on the list that run
-  cannot call it, and the launch fails at the last step of an otherwise finished layer. It
-  was added in baton 0.1.10, so a `## Launcher` section restated in `.claude/baton.md` or
-  `~/.claude/baton.md` before then needs the name adding by hand - the heading replaces this
-  one whole.
+  `RemoteTrigger` is on both routines' lists because both runs launch through these very
+  lines from inside the cloud: every `implement-handoff` run launches its reviewer at Step 7,
+  and a `review-handoff` run launches the layer above where the handoff carries
+  `next: cloud <locator>`. Without the tool that run cannot call it, and the launch fails at
+  the last step of an otherwise finished run. It was added in baton 0.1.10, so a
+  `## Launcher` section restated in `.claude/baton.md` or `~/.claude/baton.md` before then
+  needs the name adding by hand - the heading replaces this one whole.
 
   This entry's `<owner>` and `<repo>` are the handoff's `repo` line rather than
   `verify-checkout`'s answer, in `name` as much as in `sources`. The routine clones the
   repository the work belongs in, and for a handoff an investigation of another repository
   recorded that is not the repository the launching session sits in. `name` takes the same line
-  because it is what keeps one routine per repository: two handoffs of one investigation would
-  otherwise resolve to a single routine, and launching the second would re-point the first. It
-  is also why this entry needs no `## Repositories` row - it clones rather than reading a path
+  because it keeps each repository's routines apart: two handoffs of one investigation, for
+  two repositories, would otherwise share one routine, whose `sources` clone only one of them.
+  It is also why this entry needs no `## Repositories` row - it clones rather than reading a path
   on this machine.
 
   **A handoff carrying an `assets` line stops under this entry.** The run clones the repository
@@ -313,13 +351,13 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
   the asset folder is on the launching machine, not in the clone - so such a handoff goes to
   `local` below. A handoff with no `assets` line is unaffected.
 
-- **local:** `cd <repo root> && claude --bg "/baton:implement-handoff <comment url>"`
+- **local:** `cd <repo root> && claude --bg "/baton:<skill> <args> launcher=local"`
 
-  No `--worktree <branch>`: `implement-handoff` Step 2 creates the run's worktree itself,
-  and inside a session started with that flag `EnterWorktree` refuses with "Already in a
-  worktree session." Check the repo ignores `.claude/worktrees/` first all the same, since
-  Step 2's worktree lands there and an unignored path leaves it in `git status`, where an
-  autonomous `git add -A` commits it:
+  No `--worktree <branch>`: `implement-handoff` and `review-handoff` Step 2 each create the
+  run's worktree themselves, and inside a session started with that flag `EnterWorktree`
+  refuses with "Already in a worktree session." Check the repo ignores `.claude/worktrees/`
+  first all the same, since Step 2's worktree lands there and an unignored path leaves it in
+  `git status`, where an autonomous `git add -A` commits it:
   `git -C <repo root> check-ignore -q .claude/worktrees/ || echo "add .claude/worktrees/ to <repo root>/.gitignore first"`.
   A `.gitignore` that keeps a tracked `.claude/settings.json` visible ignores the contents
   rather than the directory - `.claude/*` with `!.claude/settings.json` - so `.claude/`
@@ -360,6 +398,7 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 - **request-reviewer:** none
 - **review-wait:**      10
 - **published:**        op: comment <id> <path>
+- **reviewed:**         op: comment <id> <path>
 - **stopped:**          op: comment <id> <path>
 - **wrap-up:**          none
 
@@ -382,6 +421,13 @@ question itself.
 `started` is `none`: a GitHub issue has no in-progress state to move into, so nothing runs
 when the implementation run cuts its branch. A tracker that has one defines the transition
 here, and the operation takes `<id>` alone.
+
+`reviewed` posts the Run report `review-handoff` writes when its review of an
+`implement-handoff` pull request finishes, once per issue the handoff names, taking `<id>`,
+`<path>` and `<pr-url>`. It is not `published` because both run on every pull request: a tracker
+whose `published` moves the issue's status would move it a second time when the review
+finished. On GitHub both are a comment, and a project whose tracker moves tickets keeps the
+transition in `published` and leaves `reviewed` a comment.
 
 `wrap-up` is `none` as well: nothing on GitHub needs writing when `investigate-issue`,
 `review-pr`, `address-review` or `self-review` finishes, each having already posted what it

@@ -83,7 +83,8 @@ as well.
 The marker is the first line and there is **no fenced header anywhere in it**. With one the
 pointer would read as a second handoff, and a launcher handed its locator would start a second
 run on the branch the primary handoff already names - two runs on one branch, which is the
-race `implement-handoff` Step 7 exists to prevent.
+race the once-only launches in `implement-handoff` Step 7 and `review-handoff` Step 6 exist to
+prevent.
 
 What the pointer buys is the marker on that issue, so a bundled issue is skipped by
 `next-issue` exactly as its primary is, and `investigate-issue` reads the primary handoff by
@@ -188,8 +189,9 @@ That branch is not checked here, unlike `base`. A stack is written top layer fir
 yet, and a check here would fail on every layer but the bottom one. `implement-handoff`
 Step 2 checks it instead, at the one moment it has to hold: when the run cuts its branch.
 
-`next` names the layer above, and it is the authorization to start that layer: the run that
-finishes this one launches it at `implement-handoff` Step 7, once and with no retry. Write
+`next` names the layer above, and it is the authorization to start that layer: the
+`review-handoff` run that reviews this layer's pull request launches it at its Step 6, after
+its own push, once and with no retry - so the layer above branches from the reviewed tip. Write
 two values separated by a space - the name of a `## Launcher` entry the backend defines,
 `local` or `cloud` on the shipped one, and the locator `post-handoff` returned for that
 layer's handoff. Omit the line on the top layer, and on any handoff that is not part of a
@@ -214,8 +216,8 @@ the `next` lines are written on the way down and a layer's own header is fixed o
 posted.
 
 **Both lines are single-repository.** `pr-base` names a branch in the repository `repo` gives,
-and `next` fires at `implement-handoff` Step 7, the moment the layer below opens its pull
-request. Neither chains repositories. What a handoff for a repository downstream of another
+and `next` fires at `review-handoff` Step 6, once the layer below's pull request is open and
+reviewed. Neither chains repositories. What a handoff for a repository downstream of another
 waits on is that upstream repository's next *published* version, which no run produces and no
 branch stands for, so such a handoff carries neither line: it is posted with the rest and
 launched by hand, in the order `investigate-issue` Step 6 reports.
@@ -369,4 +371,4 @@ branch nothing has pushed yet, and it is why the branch is checked in the run ra
 here.
 
 Starting that work is the caller's decision, not this skill's. For a stack it is one
-decision: launch the bottom layer, whose `next` carries the rest up.
+decision: launch the bottom layer, whose reviewer launches its `next`, carrying the rest up.
