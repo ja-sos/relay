@@ -171,7 +171,8 @@ run's worktree name all come from it, and every other entry gets the pointer Ste
 issue is not marked done while work on it remains. `no` is the safe value whenever the
 split is unsettled. It is judged per entry, not per handoff: a bundle that finishes one issue
 and leaves another open writes `yes` for the first and `no` for the second, and the run writes
-each issue's reference line from that issue's own value.
+each issue's reference line from that issue's own value. Where the backend sets the entry that
+value selects to `none`, the issue gets no line, and the value decides nothing on merge.
 
 `category` is the label the pull request will carry. Read the primary issue's own labels -
 one pull request carries one label, so a bundle takes the primary's - keep the one matching
