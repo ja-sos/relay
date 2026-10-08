@@ -1,25 +1,16 @@
 # Defining a document type
 
-A **contract** binds one document type: it fills three of the five Step 2 brief lines, and
-gives Step 2 its must-include and must-not-include lists. Write one when a type recurs often
-enough that deriving it each time yields different sections. For a one-off document, use the
-Step 2 derive path instead.
+A **contract** binds one document type; `SKILL.md` Steps 1 and 2 say what it supplies. Write
+one when a type recurs often enough that deriving it each time yields different sections. For
+a one-off document, use the Step 2 derive path instead.
 
 ## Where contracts live
 
-Step 1 reads three files, in this order:
-
-```
-${CLAUDE_PLUGIN_ROOT}/skills/write-deliverables/reference/doc-types.md   shipped defaults
-.claude/doc-types.md     project types; committed, so an unattended run sees it
-~/.claude/doc-types.md   personal types across all projects
-```
+Put a project type in `.claude/doc-types.md`, committed so an unattended run sees it, or a
+personal one in `~/.claude/doc-types.md`; `SKILL.md` Step 1 sets the load order.
 
 A `##` heading is the key. A heading matching one already loaded replaces it wholesale; a
-new heading is added. The personal file therefore overrides the project file.
-
-A cloud or CI session clones the repo and never sees your home directory. A contract that
-an unattended run must honor goes in `.claude/doc-types.md`.
+new heading is added.
 
 ## Format
 
@@ -42,21 +33,11 @@ Sections are separated by `---`.
 `<Type name>` is matched against the document type named at Step 1. Call it what you would
 call the document out loud.
 
-## What each field feeds
-
-| Field | Consumed by |
-|---|---|
-| `READER` | Step 2 brief; gate G8 front-loading |
-| `GOAL` | Step 2 brief; gate G10 missing non-obvious |
-| `ALREADY HAS` | Step 2 brief; gate G2 derivable |
-| `Must include` / `Must not include` | Step 1; gate G7 structure |
-
 All three fields and both lists are required. Omit `ALREADY HAS` and G2 has no source to
 test a sentence against - an omission that is never reported, so the check passes vacuously
 and the document ships unchecked.
 
-`COST` and `ONLY YOU` are absent by design: both vary per document rather than per type, so
-Step 2 writes them every time.
+`COST` and `ONLY YOU` are not contract fields: they vary per document.
 
 ## Example
 

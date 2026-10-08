@@ -18,24 +18,21 @@ Nobody is watching. Ask no questions - `AskUserQuestion` has no one to answer it
 session waiting on input makes no progress. Nothing reaches the user except the push, the
 pull request body, and the Run report `reviewed` or `stopped` posts.
 
-Every operation named below comes from the backend. Load it, later files overriding
-earlier by `##` heading:
+Every operation named below comes from the backend, its files loaded in the order
+`${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md` "Where overrides live" sets. Load the
+shipped file and run the route check at its top:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ```
 
-That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
-opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
-file next, so it replaces those three sections:
+Load `backend-github-gh.md` only where that check selects it:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Where neither route is available, `backend-github.md` says what that means. Either way, the
-project's own files load last:
+Then the project's own files:
 
 ```
 cat .claude/baton.md 2>/dev/null
@@ -76,8 +73,7 @@ where its two thread sections apply. Where it speaks of what a person says in th
 nobody here says anything: the diff and the code around it are the only evidence this run
 has.
 
-That file is read, never `baton:self-review` invoked. `self-review` Step 3 ends the turn on its
-findings for a person to rule on, and nobody here will.
+That file is read, never `baton:self-review` invoked.
 
 ## What this run may do unasked
 
@@ -109,8 +105,7 @@ the ask that would authorize it:
 - Pushing to any branch but the pull request's head branch.
 - Merging the pull request, marking a draft ready, closing it, requesting a reviewer, or
   writing to a review thread or a pull request comment.
-- `started` or `published` on any issue: `implement-handoff` already ran them, and a tracker
-  whose `published` moves a ticket would move it twice.
+- `started` or `published` on any issue.
 - Writing, moving or deleting anything under the `## Assets` `root`, and copying an asset into
   the worktree or a commit.
 
@@ -123,19 +118,14 @@ prompts for it.
 ## Step 1 - Load
 
 Run `fetch-handoff` on the locator, deriving `<id>` and `<comment-id>` as the backend's notes on
-`fetch-handoff` say. The header gives `repo`, `base`, `issue`, `closes` and `branch`, and
-optionally `category`, `pr-base`, `next` and `assets`; an absent optional line is not a stop.
-`issue` and `closes` are space-separated lists paired positionally, the first `issue` entry is
-the **primary** issue, and two lists that differ in length are a stop - all exactly as
-`implement-handoff` Step 1 reads them.
+`fetch-handoff` say. Read the header as `implement-handoff` Step 1 does, including its stop on
+`issue` and `closes` lists of different lengths.
 
 A fetched comment carrying the handoff marker but **no fenced header** is a pointer, not a
 handoff, and is a stop naming the issue and locator the pointer carries.
 
-What an operation addresses decides which repository it names, as in `implement-handoff`
-Step 1: `fetch-handoff`, `view`, `comment`, `reviewed` and `stopped` take `<owner>` and
-`<repo>` from the locator; `pr-view`, `pr-update`, `review-threads` and `code-review` take them
-from `verify-checkout`'s answer.
+Each operation's `<owner>` and `<repo>` follow what it addresses, per the placeholder table in
+`defining-backends.md` `## Operations`.
 
 Run `verify-checkout`; its answer must equal the header's `repo`, or the run stops.
 
@@ -150,16 +140,14 @@ Three answers are stops: a pull request that is not open, one whose head reposit
 `origin`'s - its owner differing from `<head-owner>`, ignoring case - since this run pushes to
 `origin` alone, and a URL naming a repository other than `verify-checkout`'s answer.
 
-Note whether the head ref equals the header's `branch`. It differs where `implement-handoff`
-Step 2 found `branch` taken and cut `<branch>-<6 hex>` instead, and Step 6 holds `next` back
-on it.
+Note whether the head ref equals the header's `branch`; Step 6 holds `next` back where it
+differs.
 
 Then resolve, against the loaded backend files and before `EnterWorktree`, every operation this
 run calls: `review-threads`, `code-review`, `verify`, `pr-update`, `reviewed` and `stopped`.
 Find the subagent dispatch tool - `Agent` in some harness builds, `Task` in others - in this
-session's tools. Any of these missing is a stop here, for the reason `implement-handoff`
-Steps 1 and 2 resolve theirs early: the same stop reached after `EnterWorktree` leaves a
-worktree standing.
+session's tools. Any of these missing is a stop here: the same stop reached after
+`EnterWorktree` leaves a worktree standing.
 
 Where the header carries `next`, resolve the `## Launcher` entry its first value names as well,
 and stop where no loaded file defines it.
@@ -269,12 +257,10 @@ to run `baton:claim-audit` - naming the **resolved absolute path** of
 `${CLAUDE_PLUGIN_ROOT}/skills/claim-audit/SKILL.md`, expanded here, since the dispatched agent's
 shell does not carry this session's environment - and every claim Step 5's body will add or
 change: what the fixes do, what the checks returned, each finding left standing and why.
-Naming the skill in the prompt is what keeps the plugin's `PreToolUse` hook from appending its
-own audit instruction. Carry the provenance rule into the prompt as well.
+Carry the provenance rule into the prompt as well.
 
-The audit's verdict decides what the body may say, as in `implement-handoff` Step 4: ACCEPTED
-stated as it stands, CORRECTED rewritten, RETRACTED left out, LABELLED unverified listed under
-`## Unverified claims`. A dispatch that fails is a stop.
+The audit's verdict decides what the body may say, by the verdict table in `implement-handoff`
+Step 4, "The claim audit". A dispatch that fails is a stop.
 
 ## Step 5 - Push and update the pull request
 
@@ -308,18 +294,9 @@ final diff were the only version that ever existed: delete what the diff no long
 state each claim Step 4's audit ruled on in the form its verdict gave, and never narrate the
 review.
 
-`pr-update` replaces the body whole, so three things cross unchanged:
-
-- **Every issue reference line** - each `closes` or `refs` line, one per issue the header
-  names, in the form it had. A line dropped here is an issue the merge silently stops
-  settling; "what the diff no longer supports" is about claims, never about these lines.
-- **`## Not verified here`**, the handoff's checks on a running application.
-- **`## Unverified claims`**, with any claim Step 4's audit labelled added to it - the heading
-  is written where it was absent and this audit labelled one.
-
-Entries under those two headings are checks and claims the diff cannot support by definition,
-so the deletion rule never reaches them. An entry leaves only where this run verified it, and a
-heading leaves with its last entry.
+Carry every issue reference line across unchanged (`defining-backends.md`, `pr-update`): "what
+the diff no longer supports" is about claims, never about these lines. Add each claim Step 4's
+audit labelled under `## Unverified claims`, writing the heading where it is absent.
 
 The findings this run left standing - deferred or unresolved, with severity and reason - go in
 the body too, and a standing finding the body already listed leaves it only where a fix here
@@ -346,9 +323,8 @@ and nothing further is asked: that worktree is the launcher's to remove.
 Then launch the layer above, where the header carries `next` and nothing holds it back. Split
 the line at its space: the first value is the `## Launcher` entry Step 1 resolved, run with
 `implement-handoff` as its `<skill>` and the second value as its `<args>`. Run it **once, with
-no retry**, whatever it returns: two runs on one branch race, the second takes a suffix at
-`implement-handoff` Step 2, and the stack gains a layer nobody asked for. A launch that fails is
-reported rather than repeated.
+no retry**, whatever it returns: two runs on one branch race. A launch that fails is reported
+rather than repeated.
 
 Two things hold it back, and neither is a stop:
 
@@ -379,15 +355,11 @@ as `<id>`, the pull request URL as `<pr-url>`, and the same one file as `<path>`
 
 Where the header named more than one issue, the file names them all.
 
-**A Run report from this run never carries `<!-- claude-handoff -->`, not even quoted,**
-**and never carries `<!-- claude-handoff-obsolete -->` either.** `next-issue` and
-`investigate-issue` read both markers off an issue's comments, so either one makes a review
-report read as a handoff waiting on a run, or as the answer to one.
+**A Run report from this run never carries `<!-- claude-handoff -->`, not even quoted.**
 
 The findings, their dispositions, the thread dispositions and what became of `next` are
-required content whatever contract **Run report** resolves to. An override replaces a
-contract's must-include list wholesale, so the shipped contract is not what holds them in -
-this step is. A report missing an unresolved finding reads as a clean review under any contract.
+required content whatever contract **Run report** resolves to. A report missing an unresolved
+finding reads as a clean review under any contract.
 
 A `reviewed` that fails part-way through the list is a stop: the report names the operation,
 the issue it failed on, and every issue after it as not reached.
@@ -396,7 +368,7 @@ the issue it failed on, and every issue after it as not reached.
 
 Every stop takes one of two shapes, set by whether Step 5 has changed the pull request - by
 its push, or by a `pr-update` where nothing was pushed. Both write one file
-under `baton:write-deliverables` as a **Run report**, carrying neither marker, and run
+under `baton:write-deliverables` as a **Run report**, carrying no handoff marker, and run
 `stopped` with it **once per issue the header names**, in header order, each with that issue's
 id - never `reviewed`.
 

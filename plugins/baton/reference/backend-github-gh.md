@@ -1,12 +1,9 @@
 # GitHub backend over gh
 
 The shipped `## Tracker`, `## Forge` and `## Review` sections as `gh` commands, replacing
-the GitHub MCP entries in `backend-github.md`. A skill reads this file only when that
-file's route check selects it: the MCP route fails that check and `gh api user` succeeds.
-
-This file loads second, ahead of `.claude/baton.md` and `~/.claude/baton.md`. It defines
-those three sections and nothing else - `## Categories`, `## Launcher` and `## Workflow`
-stay as `backend-github.md` gives them.
+the GitHub MCP entries in `backend-github.md`. Read only where `backend-github.md`'s route
+check selects it. It defines those three sections and nothing else - `## Categories`,
+`## Launcher` and `## Workflow` stay as `backend-github.md` gives them.
 
 ## Tracker
 
@@ -21,29 +18,21 @@ stay as `backend-github.md` gives them.
 - **fetch-handoff:**   gh api repos/<owner>/<repo>/issues/comments/<comment-id> --jq .body
 - **reachable:**       gh api user
 
-`view`, `comment`, `close-fixed` and `close-invalid` name the repository with `-R` because a
-run addressing an issue in another repository - `implement-handoff` fills `<owner>` and
-`<repo>` from the handoff locator - otherwise acts on the issue with that number in whichever
-checkout the command runs in.
+`view`, `comment`, `close-fixed` and `close-invalid` pass `-R` because they address the
+issue's repository, which may not be the checkout's (`defining-backends.md`).
 
 `comment` prints the created comment's URL on stdout, and that is the locator
 `post-handoff` reports. Do not re-derive it by listing an issue's comments: the listing is
 paginated, so the newest comment is not the last entry of the first page.
 
-`list-open` caps the dedupe `file-issue` runs against, so it is set well above the
-open-issue count of any repo these skills are pointed at. `gh label list` defaults to 30,
-which is low enough for a repo's own labels to hide a category from `file-issue` Step 1, so
-it carries a limit too.
+`list-open` is capped at 500. `gh label list` defaults to 30, so `list-categories` carries a
+limit, and returns every label.
 
-`list-categories` returns every label here, rather than answering for one `<category>` at a
-time as it does over the MCP tools. Step 1 reads both forms the same way.
-
-`create` drops `--label "<category>"` where `<category>` is empty, as `file-issue` passes it
-under a `list-categories` of `none`, and runs the rest of the command as written.
+`create` drops `--label "<category>"` where `<category>` is empty, and runs the rest of the
+command as written.
 
 `list-mine` carries `--search "sort:created-asc"` because `gh issue list` defaults to
-newest first, and the first issue it returns is the one `next-issue` picks up: oldest
-assigned issue first, matching the MCP route's `"direction": "ASC"`.
+newest first, and `list-mine` returns pick order, oldest first.
 
 `gh auth status` reports failure in every cloud session: it validates the literal
 `GH_TOKEN`, which the proxy leaves as the sentinel `proxy-injected` while substituting
@@ -63,30 +52,18 @@ real credentials on outbound requests. `reachable` is the check that works.
 
 `pr-create` returns its first command's stdout, the pull request's URL, and the second command
 takes that URL as `<pr-url>`. Skip the second command where `<category>` is empty.
-`--base "<pr-base>"` is always passed, since `<pr-base>` falls back to `<default-branch>` and
-is never empty.
+`--base "<pr-base>"` is always passed: `<pr-base>` is never empty (`defining-backends.md`).
 
 The label is a separate command so the URL is in hand before anything can fail on the label.
-A failed `gh pr edit` leaves the pull request open and unlabelled - a stop after
-`implement-handoff` Step 5, whose `stopped` file carries that URL.
+A failed `gh pr edit` leaves the pull request open and unlabelled.
 
-`--draft` is unconditional, matching the MCP route - every pull request these skills open
-starts as a draft, and `implement-handoff` Step 5 says why.
+`--draft` is unconditional; `implement-handoff` Step 5 says why.
 
-`stack-link` is `none` here as it is on the MCP route, and the note there says why. No
-`gh stack link` ships: the `github/gh-stack` extension that would supply it was not installed
-where this was written, so its syntax is unverified.
+`stack-link` is `none` here as it is on the MCP route, and the note there says why.
 
 `pr-view` takes an empty `<id>` to mean the pull request for the current branch.
 
-`closes` and `refs` name the issue's repository as well as its number, matching the MCP route,
-and the note there says why: the pull request may open in a repository other than the issue's
-once one investigation records a handoff per repository a change spans. `implement-handoff`
-Step 5 fills all three values from the locator rather than from `verify-checkout`.
-
-A 403 naming `add_repo` means the session holds no grant for the repo, not that the
-credentials are wrong. Attach the repo at `access: push`; the read default covers neither
-the API calls nor the push.
+`closes` and `refs` match the MCP route; the note there says why.
 
 ## Review
 
@@ -98,11 +75,8 @@ the API calls nor the push.
 - **thread-reply:**    gh api -X POST repos/<owner>/<repo>/pulls/<id>/comments/<comment-id>/replies --input <path>
 - **pr-comment:**      gh pr comment <id> --body-file <path>
 
-Feedback lands on three surfaces and two are invisible to the inline-comment endpoint.
-`review-bodies` and `pr-comments` carry only what people wrote: a bot delivers its findings as
-inline threads, and its summary body is boilerplate. `pr-comments` uses the `issues` path because
-every pull request is also an issue - it is the only endpoint returning top-level notes that
-belong to no review.
+`pr-comments` uses the `issues` path because every pull request is also an issue - it is the
+only endpoint returning top-level notes that belong to no review.
 
 `review-threads` needs GraphQL, since `isResolved` has no REST equivalent, and `databaseId` is the
 id `thread-reply` takes while GraphQL's own `id` is not. `<owner>` and `<repo>` are not substituted
@@ -121,7 +95,7 @@ inline comment in one call, and a second call adds a second summary rather than 
 first; a reply payload is `{"body": "<text>"}`:
 
 ```json
-{"commit_id": "<headRefOid, re-read immediately before posting>",
+{"commit_id": "<headRefOid>",
  "event": "COMMENT",
  "body": "<summary>",
  "comments": [{"path": "<file>", "line": 42, "side": "RIGHT", "body": "<finding>"}]}
@@ -130,6 +104,3 @@ first; a reply payload is `{"body": "<text>"}`:
 `commit_id` is required and a push invalidates every anchor built against an older one. Omitting
 `event` leaves the review PENDING and invisible. A multi-line comment adds `start_line` beside
 `line`.
-
-Both `review-list` and `pr-comments` are single shell commands here, so
-`implement-handoff` Step 6 waits with its `sh` loop rather than a background sleep.

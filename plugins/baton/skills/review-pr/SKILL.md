@@ -9,24 +9,21 @@ Review someone else's pull request and leave the findings on it. Sibling to
 `baton:self-review`, which reviews a branch this side produced and lands findings as fixes
 rather than comments.
 
-Every operation named below comes from the backend. Load it, later files overriding earlier by
-`##` heading:
+Every operation named below comes from the backend. The files load in the order
+`defining-backends.md` "Where overrides live" sets:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ```
 
-That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
-opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
-file next, so it replaces those three sections:
+Run the route check at the top of `backend-github.md`, and load `backend-github-gh.md` only
+where that check selects it:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Where neither route is available, `backend-github.md` says what that means. Either way, the
-project's own files load last:
+Then, whatever the check found:
 
 ```
 cat .claude/baton.md 2>/dev/null
@@ -44,7 +41,8 @@ not define - an improvised equivalent writes to a tracker the project did not ch
 
 In order:
 
-1. A number in the request - "PR 631", "#631", "pull 631" - is the target.
+1. A number in the request - "PR 631", "#631", "pull 631" - is the target: run `pr-view`
+   with it.
 2. No number: run `pr-view` with an empty `<id>` to get the pull request for the current branch.
 3. Still nothing: say so and ask which one.
 
@@ -56,15 +54,15 @@ announce one target then switch to another inside the same turn. The user cannot
 message was composed: an answer that looks like it addresses your latest question may have been
 typed before that question existed. State the target first and let them correct it.
 
-A pull request the user authored is not this skill's. Stop and switch to `baton:self-review`:
-reviewing your own side's work means applying fixes, not commenting on them.
+A pull request the user authored is not this skill's: reviewing your own side's work means
+applying fixes, not commenting on them. Stop, tell the user so, and offer the alternatives -
+`baton:self-review` for a branch an unattended `baton:implement-handoff` run wrote, or the
+`code-review` operation directly for one they wrote by hand - and let them choose. This skill
+cannot tell the two apart, so it never picks for them.
 
 ## Step 2 - Review
 
-Run `code-review` with the pull request number as its `<target>`, so the diff comes from the
-forge rather than local git - the branch may be unchecked-out, behind, or on a fork. Pass
-`<locator>` empty: this skill reviews someone else's pull request and holds no handoff, so an
-entry that checks acceptance criteria has none to read.
+Run `code-review` with the pull request number as its `<target>` and `<locator>` empty.
 
 Every claim in the pull request body is an unverified assertion. What was tested, why an approach
 was chosen, which edge cases are covered: check each against the diff. A body never resolves a
@@ -72,8 +70,7 @@ finding.
 
 ## Step 3 - Draft, and post nothing
 
-Write the payload to a file, shaped as the backend's `review-post` entry describes: the summary
-and one entry per finding with its path and line.
+Write the payload to a file, shaped as the backend's `review-post` entry describes.
 
 Write every piece of text that ships under `baton:write-deliverables` - the summary and each
 inline comment alike.
@@ -86,11 +83,11 @@ separate decision and it is theirs.
 The go-ahead names the action. Nothing else counts - not a message that merely mentions the pull
 request, not a correction to the target, not silence, not an offer of yours going unanswered.
 
-Run `review-list` first. A review already standing is not replaced by a second one, so say it is
-there and ask whether to add another or edit it.
+Run `review-list` first. Where a review already stands, say it is there and ask whether to add
+another or edit it.
 
-Re-read the head SHA immediately before posting: a push since Step 1 invalidates every anchor
-built against the older one. Then run `review-post` once, and report the review URL with which
+Re-read the head SHA for `commit_id` immediately before posting, as the `review-post` payload
+requires. Then run `review-post` once, and report the review URL with which
 anchors landed.
 
 ## Step 5 - Wrap up
@@ -99,11 +96,8 @@ Run `wrap-up` as the last action of the run, with `review-pr` as `<skill>`, the 
 number as `<id>`, and its URL and head branch as `<pr-url>` and `<head-branch>` - both from
 Step 1's `pr-view`, because the pull request under review may not be the checked-out branch.
 
-It runs on the path where the user declines to post, too: the review ended either way, and a
-step that fires only on the posting path measures half the work. `none` is its shipped
-default, and that value skips the call, as does a backend that leaves `wrap-up` undefined.
-
-A `wrap-up` that fails is reported by name. The review stays posted and nothing is retried.
+Run it where the user declines to post, too. An undefined `wrap-up` reads as `none`, and a
+failed one is reported by name and not retried (`defining-backends.md`, `wrap-up`).
 
 ## Red flags
 

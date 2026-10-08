@@ -9,24 +9,21 @@ Review a branch an unattended run produced, before it reaches another person. Ap
 `baton:implement-handoff` wrote the branch. A branch a person wrote goes to the review
 engine directly - the premise here is that every artifact on the branch is agent output.
 
-Every operation named below comes from the backend. Load it, later files overriding earlier by
-`##` heading:
+Every operation named below comes from the backend. The files load in the order
+`defining-backends.md` "Where overrides live" sets:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ```
 
-That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
-opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
-file next, so it replaces those three sections:
+Run the route check at the top of `backend-github.md`, and load `backend-github-gh.md` only
+where that check selects it:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Where neither route is available, `backend-github.md` says what that means. Either way, the
-project's own files load last:
+Then, whatever the check found:
 
 ```
 cat .claude/baton.md 2>/dev/null
@@ -81,20 +78,19 @@ says.
 
 ## Step 2 - Close the run's open items
 
-The pull request body is where the run left what it did not finish: checks nobody ran, claims
-its own audit could not settle, and findings it left standing. Each is an open item, and this
-step closes every one before the gate rather than carrying it to the next reader.
-
-With a pull request open, read its body from Step 0's `pr-view` output and collect:
+With a pull request open, read its body from Step 0's `pr-view` output and collect each open
+item:
 
 - each entry under `## Not verified here` - a check;
 - each entry under `## Unverified claims` - a claim;
 - each standing finding - a finding.
 
-Standing findings sit under no fixed heading. `baton:implement-handoff` writes each one with
-its severity and the reason it stands, so collect them by that content wherever in the body
-they appear. A standing finding that Step 1's `code-review` also returned - the same failure,
-at the same file and an overlapping line range at the reviewed head - is one item, not two: it
+This step closes every one before the gate rather than carrying it to the next reader.
+
+Standing findings sit under no fixed heading: collect them by content - a severity and the
+reason it stands (`implement-handoff` Step 5) - wherever in the body they appear. A standing
+finding that Step 1's `code-review` also returned - the same failure, at the same file and an
+overlapping line range at the reviewed head - is one item, not two: it
 is ruled on here and listed only in this step's group at the gate. Where either differs, they
 are two items. A thread Step 0 collected keeps its own disposition row even where it raises a
 standing finding, and that finding's row here names the thread. With no pull request there
@@ -129,14 +125,11 @@ or, for a finding outside the handoff's scope, lacks the user's decision at the 
 Present the findings with severity, a verdict on each, and the proposed fix, as the **final
 message of the turn**. End the turn there, with no tool call after it.
 
-Alongside them, and kept apart from them, list one disposition per thread Step 0 collected:
-stands, fixed as claimed, the rejection holds, or the finding does not hold - each with the
-evidence that settled it. Every check in Step 1 ends in one of those four, so every
-collected thread gets a row, whether it was resolved or answered or neither.
-
-A thread whose finding stands carries a proposed fix like any `code-review` finding does.
-Separating the dispositions from the findings is a matter of presentation, not of standing:
-a re-opened finding the user approves is applied in Step 4 the same way.
+Alongside them, and kept apart from them, list one disposition per thread Step 0 collected,
+with its evidence, as the reference's "Checking the threads" sets them; a thread that stands
+carries a proposed fix. Separating the dispositions from the findings is a matter of
+presentation, not of standing: a re-opened finding the user approves is applied in Step 4 the
+same way.
 
 In a third group, kept apart from both, list one row per item Step 2 collected: its kind, its
 verdict - with its severity, for a finding - the evidence that settled it, and the proposed
@@ -175,8 +168,6 @@ undecided inverts the order.
 ## Step 5 - Publish
 
 Nothing leaves the machine until the user approves it, and a passing suite is not that approval.
-Pushing is not pre-authorized here, unlike in `baton:implement-handoff`, because someone is
-present to ask.
 
 On an explicit go-ahead, push. Where Step 0 found no pull request, that is the end of it -
 there is no body to update, and opening one is not this skill's. Where no fix was applied and
@@ -190,10 +181,8 @@ what the code does now and why it is shaped that way, as though the final diff w
 version that ever existed. Delete whatever the current diff no longer supports, and never narrate
 the review rounds.
 
-`pr-update` replaces the body whole, so carry every issue reference line across unchanged. A
-handoff may name several issues, and each `closes` or `refs` line dropped here is an issue the
-merge silently stops settling - "whatever the current diff no longer supports" is about claims,
-never about these lines.
+Carry every issue reference line across unchanged (`defining-backends.md`, `pr-update`):
+"whatever the current diff no longer supports" is about claims, never about these lines.
 
 Step 2 settled every open item, so none of them is carried as open. The rewritten body has no
 `## Not verified here` heading and no `## Unverified claims` heading. A false claim the user
@@ -215,9 +204,5 @@ When the user declines the push, say what that leaves undone rather than moving 
 Either way, run `wrap-up` as the last action of the run, with `self-review` as `<skill>`. With
 a pull request open, `<id>` is its number and `<pr-url>` and `<head-branch>` its URL and head
 branch, from Step 0's `pr-view`; where Step 0 found none, `<id>` and `<pr-url>` are empty and
-`<head-branch>` is the current branch. The decline path runs it too: the review ended either
-way. `none` is its shipped default, and that value skips the call, as does a backend that
-leaves `wrap-up` undefined.
-
-A `wrap-up` that fails is reported by name. Whatever was already pushed stays pushed, and
-nothing is retried.
+`<head-branch>` is the current branch. An undefined `wrap-up` reads as `none`, and a failed
+one is reported by name and not retried (`defining-backends.md`, `wrap-up`).

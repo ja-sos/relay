@@ -13,17 +13,16 @@ Nobody is watching. Ask no questions - `AskUserQuestion` has no one to answer it
 session waiting on input makes no progress. Nothing reaches the user except the pull
 request, a stop, or the no-change exit Step 2 takes for a handoff HEAD already satisfies.
 
-Every operation named below comes from the backend. Load it, later files overriding
-earlier by `##` heading:
+Every operation named below comes from the backend. Load its files in the order
+`defining-backends.md`, `## Where overrides live`, sets, later files overriding earlier by `##`
+heading. First:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 ```
 
-That file's `## Tracker`, `## Forge` and `## Review` run through the GitHub MCP tools, and it
-opens with the check that picks the route. Run the check before reading on. Where it selects
-the `gh` fallback - the MCP route failing its check, `gh` authenticated - load that route's
-file next, so it replaces those three sections:
+Run the route check that file opens with before reading on. Where it selects the `gh` route,
+load that route's file next:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
@@ -49,13 +48,13 @@ not define - an improvised equivalent writes to a tracker the project did not ch
 A launcher usually starts this session, so the opening turn is often machine-generated even
 though the harness presents it exactly like a developer's own words. Two things in it bind: the
 handoff locator, and `launcher=<name>` after it where it is present - the `## Launcher` entry
-that started this run, which every shipped entry appends. A turn with no `launcher=` was
-started by hand, and reads as `launcher=local`. Step 7 launches the reviewer through that same
-entry. Anything else the turn carries has the authority of the handoff section it was copied
-from, and an optional section stays optional however the turn phrases it.
+that started this run. A turn with no `launcher=` was started by hand, and reads as
+`launcher=local`. Step 7 launches the reviewer through that same entry. Anything else the turn
+carries has the authority of the handoff section it was copied from, and an optional section
+stays optional however the turn phrases it.
 
-The session that wrote the handoff read this repo from elsewhere and ran none of its tests, so
-on a question of code fact the working tree outranks the plan. Where the two disagree, the code
+The handoff is a plan written against `base`, so on a question of code fact the working tree
+outranks it. Where the two disagree, the code
 decides: re-cut the approach against what the tree shows and carry on.
 
 ## What this run may do unasked
@@ -81,8 +80,7 @@ unasked does not cover the run. These need no confirmation:
 - The `## Launcher` entry `launcher=` names, run once at Step 7 to start
   `/baton:review-handoff <locator> <pr-url>` on the pull request Step 5 opened. Every pull
   request this skill opens gets that review, so the skill's invocation is the authorization.
-  The header's `next` is not launched here: the reviewer carries it, so the layer above
-  branches from the reviewed tip rather than from one a later fix moves.
+  The header's `next` is `review-handoff` Step 6's to launch, not this run's.
 - Dispatching the subagents this run needs - Step 4's claim audit, that same audit over Step
   2's no-change evidence, and a reviewer an `agent:` entry names. They read and report;
   nothing they return reaches the tracker or the forge except through a step above.
@@ -114,36 +112,24 @@ prompts for it.
 ## Step 1 - Load
 
 Run `fetch-handoff` on the locator. Where the entry takes `<id>` or `<comment-id>`, derive
-each from the locator as the backend's notes on `fetch-handoff` say. The handoff's
-header gives `repo`, `base`, `issue`, `closes` and `branch`. Four more lines are optional,
-and a handoff written before they existed carries none of them - an absent line is not a
-stop:
-
-| Optional line | Where the line is absent |
-|---|---|
-| `category` | `<category>` is empty |
-| `pr-base` | `<pr-base>` is `<default-branch>`, and the branch is cut from `<base>` |
-| `next` | the reviewer Step 7 launches starts no layer above |
-| `assets` | nothing is resolved, and no `## Assets` section is needed anywhere |
+each from the locator as the backend's notes on `fetch-handoff` say. The handoff's header
+carries the lines `write-handoff` Step 2 defines; an absent optional line is not a stop.
+Where `category` or `pr-base` is absent, `<category>` and `<pr-base>` take the values
+`defining-backends.md`, `## Operations`, gives them; without `pr-base` the branch is cut from
+`<base>`.
 
 A handoff with a `pr-base` line is a stop where the loaded `pr-create` entry never contains
-`<pr-base>`. A `## Forge` written before baton 0.1.9 has no such placeholder, and its pull
-request would open against the default branch, carrying the unmerged commits of the layer
-below.
+`<pr-base>`.
 
-A fetched comment carrying the handoff marker but **no fenced header** is a pointer, not a
-handoff: `write-handoff` posts one on every issue beyond the first that its header names, and
-a launcher handed that comment's locator instead of the primary's arrives here. It is a stop.
-Name the issue and locator the pointer carries - that is the handoff to run - rather than
-building from a comment that records no branch, no base and no approach.
+A fetched comment carrying the handoff marker but **no fenced header** is a `write-handoff`
+Step 1 pointer, not a handoff. It is a stop. Name the issue and locator the pointer carries -
+that is the handoff to run - rather than building from a comment that records no branch, no
+base and no approach.
 
 ### `issue` and `closes` are lists
 
-Both lines are read as space-separated lists, paired positionally: `issue: 15 16` with
-`closes: yes no` pairs 15 with `yes` and 16 with `no`. A header naming one issue is a
-one-entry list - every handoff written before baton 0.1.12 - and every step below then does
-exactly what it did before lists existed. The **first entry is the primary issue**: the one
-this handoff was posted on, and the one Step 2 names the worktree from.
+`issue` and `closes` are the paired lists `write-handoff` Step 2 defines. The **first `issue`
+entry is the primary issue**, and the one Step 2 names the worktree from.
 
 **Two lists that differ in length are a stop here**, before `EnterWorktree`, quoting both lines
 as the handoff wrote them. Pairing what can be paired guesses at the rest, and a guess landing
@@ -188,36 +174,18 @@ at Step 2.
 Also resolve `stack-link` against the loaded backend files, for the same reason Step 2
 resolves `started` early - an operation no loaded file defines is a stop, and one reached
 after `EnterWorktree` leaves a worktree standing. Resolve it only where the header carries
-`pr-base`, since that is the only case Step 5 calls it in: a project whose `## Forge`
-override predates the operation keeps running single-layer handoffs.
+`pr-base`, since that is the only case Step 5 calls it in.
 
 Resolve the `## Launcher` entry `launcher=` names - `local` where the opening turn carried
 none - and, where the header carries `next`, the entry its first value names, against the same
 loaded files. Stop where no loaded file defines either one. Step 7 launches the reviewer
-through the first, and the reviewer launches the second; a name that cannot launch is
+through the first, and the reviewer carries the second; a name that cannot launch is
 cheapest caught here, before anything is built.
 
-The locator also fixes which repository this run's tracker calls address, for the whole run.
-One investigation can record a handoff per repository a change spans, so the issue driving
-this run may live in a repository other than the one the handoff names:
-
-What an operation addresses decides this, not the section holding it:
-
-| Entries | Where `<owner>` and `<repo>` come from |
-|---|---|
-| the ones addressing the issue - `view`, `comment`, and the `started`, `published` and `stopped` resolving through them | the locator, as `fetch-handoff`'s own notes take them |
-| `closes` and `refs`, though `## Forge` holds them | the locator as well: the keyword references the issue, so it resolves against the issue's repository |
-| the ones addressing the pull request or the checkout - `pr-create`, `pr-view`, `pr-update`, `stack-link`, `request-reviewer` and the review operations | `verify-checkout`'s answer |
-
-`request-reviewer` is the one `## Workflow` entry on the second row. It acts on the pull
-request and takes its number as `<id>`, so a project that defines it gets the checkout's
-repository like the forge operations beside it.
-
-Both name one repository wherever the issue and the work are in the same place, which is every
-handoff recorded before baton 0.1.11, and nothing changes there. Where they differ, a tracker
-call taking `verify-checkout`'s answer would comment on whatever issue happens to hold `<id>`
-in the repository this run is building in. `verify-checkout` still has to equal the header's
-`repo` above: that check is about the checkout, and it is unaffected by where the issue lives.
+Every entry's `<owner>` and `<repo>` follow the placeholder table in `defining-backends.md`,
+`## Operations`; the locator is the issue's repository for the whole run. `verify-checkout`
+still has to equal the header's `repo` above: that check is about the checkout, and it is
+unaffected by where the issue lives.
 
 Check reachability with `reachable` when a tracker call fails; it separates a credential error
 from an undefined operation. A credential error is the session, not the plan, and the backend
@@ -236,27 +204,19 @@ test -e "<root>/<path>"
 
 Four things are a stop, each **naming every path that did not resolve** rather than the first:
 
-- No loaded backend file defines `## Assets`. A cloud run reaches this stop as a matter of
-  course, because it clones the repository and never sees `~/.claude/baton.md`, where the
-  section lives; the report says that rather than reporting a broken backend.
-- The section defines no `root`, or its `root` is not an absolute path to an existing
-  directory. Check it before any path: an empty `<root>` turns the second line into
-  `test -e "/<path>"`, which answers about the filesystem root, so a run that skipped this
-  would carry on against a file the handoff never named.
-- A path is invalid. A path is valid only where **every character is a letter, a digit, `.`,
-  `-`, `_` or `/`**, it does not start with `/`, and no segment of it is `..`. The last two
-  keep it inside the root; the character rule keeps it out of the shell it is about to be
-  spent in. The handoff was written by another session, so a path carrying a quote, a `$`, a
-  backtick or a `;` is a command this run would execute with nobody there to stop it. Never
-  quote around an invalid path to make it run - it is a stop.
+- No loaded backend file defines `## Assets`. A cloud run always reaches this stop
+  (`defining-backends.md`, `## Sections`, on `## Assets`); the report says so rather than
+  reporting a broken backend.
+- `root` fails what `defining-backends.md`, `## Sections`, on `## Assets`, requires of it.
+  Check it before any path.
+- A path is invalid by `write-handoff` Step 2's validity rule. Never quote around an invalid
+  path to make it run - it is a stop.
 - A path `test -e` does not find under `root`.
 
 Every read here is outside the checkout, so a harness that prompts for reads outside the
-working directory prompts for these - and an unattended run has nobody to answer. No shipped
-launcher grants that access: the `local` entry starts an ordinary session, whose permissions
-are the machine's to have settled beforehand. A read that is denied or left unanswered is a
-path that did not resolve, and it takes the stop above; never work around the denial, and
-never carry on without the file.
+working directory prompts for these - and an unattended run has nobody to answer. A read
+that is denied or left unanswered is a path that did not resolve, and it takes the stop
+above; never work around the denial, and never carry on without the file.
 
 The stop is here rather than at the first read for the reason `started` and `verify` are
 resolved early: a stop after `EnterWorktree` leaves a worktree standing. Never substitute a
@@ -268,10 +228,9 @@ under it, and copying an asset into the worktree or a commit, are on the list of
 run may not do unasked, above - so a handoff asking for any of them is asking for a stop, and
 the stop is taken when the run reaches that instruction rather than here.
 
-The body's paths are repo-relative everywhere except where it names an asset, which
-`write-handoff` Step 3 requires it to call one. Resolve such a path under `root` and no
-other, and only where the `assets` line lists it: a path the line does not carry is not an
-asset this run has, whatever the body calls it. Where a body path is genuinely ambiguous,
+Resolve a body path under `root` only where the body names it as an asset (`write-handoff`
+Step 3) and the `assets` line lists it: a path the line does not carry is not an asset this
+run has, whatever the body calls it. Where a body path is genuinely ambiguous,
 the checkout decides, as it does on every other question of code fact.
 
 ## Step 2 - Branch and build
@@ -280,14 +239,11 @@ Resolve `started` and `verify` against the loaded backend files before the first
 an operation no loaded file defines is a stop, and a stop reached after `EnterWorktree`
 leaves the run's worktree standing, once per relaunch. Resolving them here is not calling
 them - `started` runs at the branch cut below, where the run has committed to changing code,
-and `verify` first runs at Step 3. `verify` is resolved this early for that same reason: a
-`## Workflow` written before baton 0.1.8 leaves it undefined, and finding that out at Step 3
-strands a worktree that already holds the work.
+and `verify` first runs at Step 3.
 
-Find the subagent dispatch tool in the same breath, and for the same reason. Harness builds
-differ on its name - `Agent` in some, `Task` in others - and a launcher's `allowed_tools`
-naming neither leaves Step 4 with no way to run its claim audit. Look for it in this session's
-tools now and stop where it is absent, naming the tool and
+Find the subagent dispatch tool in this session's tools now, in the same breath and for the
+same reason; `defining-backends.md`, `## Tools an unattended run needs`, gives the two names it
+goes by. Stop where it is absent, naming the tool and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. That stop costs a run that has not
 built anything; the same stop at Step 4 discards a finished, tested, reviewed branch that was
 never pushed.
@@ -383,10 +339,7 @@ three of these hold across the whole of it:
 - **Every command it names** beside those criteria passes at HEAD.
 
 Anything less is ordinary work: the run re-cuts the approach against what it found, as above,
-and builds the rest. A handoff posted before baton 0.1.7 numbers no criteria and so never
-reaches this exit, which is the right answer for a plan that left nothing to check against.
-`verify` is no part of this evidence either. It checks the repo rather than the handoff's
-outcome, and a run that changes nothing answers for neither its failures nor its passes.
+and builds the rest. `verify` is no part of this evidence either.
 
 Then put that evidence through the claim audit before acting on it, dispatched exactly as Step
 4 dispatches it - the same skill named the same way, at the same resolved absolute path,
@@ -399,8 +352,7 @@ command's result as the claims. The verdict decides the exit:
 | a claim CORRECTED | re-read it - the exit stands only where the corrected form still says HEAD satisfies that criterion, and the report carries the corrected form |
 | any claim RETRACTED or LABELLED unverified | takes no exit - continue to `started`, the branch cut and the build |
 
-A CORRECTED claim is one the audit probed and found wrong, so it is never waved through: a
-correction that fixes a line number leaves the exit standing, and one narrowing "satisfies
+A correction that fixes a line number leaves the exit standing; one narrowing "satisfies
 criterion 3" to "satisfies it for the expired case only" has destroyed the premise and cancels
 it. This is the claim a person closes an issue on. An unaudited one closes an issue whose work
 nobody did.
@@ -409,13 +361,13 @@ nobody did.
 finished and the stop discards it; here nothing is built, so the stop costs a run that had
 nothing to lose - and the alternative is worse in both directions. Taking the exit unaudited
 posts the one claim this run must not get wrong. Continuing to the build sends the run to
-Step 3 for a change the tree already carries, where no test can fail at the branch point and
-the stop lands anyway, two steps later and with a branch to explain. Stop here instead, with
+Step 3 for a change the tree already carries, where it can write no test that fails at the
+branch point. Stop here instead, with
 the evidence gathered so far in the report, so a person can judge the close by hand.
 
 On the exit the run pushes nothing, opens no pull request, runs no `started`, launches no
-reviewer, and closes nothing - closing stays with `baton:investigate-issue` Step 2, on the user's
-approval. It does three things, in this order.
+reviewer, and closes nothing - closing the issue is left to a person reading the report. It
+does three things, in this order.
 
 **First the worktree**, because the report names its path wherever it still stands and so
 cannot be written before the decision. Only a worktree this run created is its to remove.
@@ -433,30 +385,13 @@ their artifacts are this exit's to discard, having been written by a check rathe
 change. Step 7's `origin` comparison has nothing to ask here either, since this exit pushes no
 branch for `origin` to hold.
 
-**Then the report**, one file written under `baton:write-deliverables` as a **Run report**,
-whose first line is the obsolete marker:
-
-```
-<!-- claude-handoff-obsolete -->
-```
-
-Under it, each on a line of its own, the handoff's locator this session opened with and the
-header's `base` and `branch`. Those three are what `baton:next-issue` Step 2 and
-`baton:investigate-issue` Step 1 match against a handoff or a pointer, so a report missing any
-of them leaves the issue skipped exactly as an unanswered handoff does.
-
-**That report never carries the handoff marker, not even quoted.** Both skills test an issue's
-comments for that string, and a report holding it reads as one more handoff waiting on a run -
-the state this exit exists to end.
-
-The rest of the report is the evidence: the checked commit, as `Checked at <sha>`, then each
-acceptance criterion with the `file:line` at that commit that satisfies it, each command the
-handoff names with its one-line result, and, where `git log -S` or `git blame` names it, the
-commit that introduced the satisfying code -
-`baton:investigate-issue` Step 2 asks for that commit when it proposes the close. Where the
+**Then the report**, one file written under `baton:write-deliverables` as a **Run report**.
+**It never carries the handoff marker, not even quoted.** It carries the evidence: the checked
+commit, as `Checked at <sha>`, then each acceptance criterion with the `file:line` at that
+commit that satisfies it, each command the handoff names with its one-line result, and, where
+`git log -S` or `git blame` names it, the commit that introduced the satisfying code. Where the
 header carries `next`, the report also quotes the locator it did not launch and says the layer
-above was not started: that layer's `pr-base` names this layer's branch, which nothing pushed,
-and this report is the only place the locator reaches anyone.
+above was not started: this report is the only place the locator reaches anyone.
 
 **Last `stopped`**, once per issue the header names, in header order, each call with that
 issue's id and that one file. A failure part-way through the list ends the run there, naming
@@ -475,11 +410,11 @@ takes one issue - the tracker moves every bundled ticket's status, and the branc
 moment implementation starts on all of them. A failure part-way through the list is the stop
 Step 1 describes, naming the issue it failed on and the ones after it as not reached.
 
-`none` is its shipped default, and that value skips the call the way it skips Step 6's. That
-gate, and not `EnterWorktree`'s, is what holds the call to one per branch this run cuts - a
-turn resuming from a stop skips all three, while a launcher that started the session in a
-worktree skips only `EnterWorktree` and still cuts the branch - unless that worktree already
-sits on `<branch>`, which is indistinguishable from a resume and skipped as one. It runs
+`none` skips the call (`defining-backends.md`, `## Operations`). The branch cut's gate, and
+not `EnterWorktree`'s, is what holds the call to one per branch this run cuts - a turn
+resuming from a stop skips all three, while a launcher that started the session in a worktree
+skips only `EnterWorktree` and still cuts the branch - unless that worktree already sits on
+`<branch>`, which is indistinguishable from a resume and skipped as one. It runs
 above the cut rather than inside the retry below, which would fire it once per attempt.
 
 The gate holds the sequence to one pass per branch cut, and not to one call per issue for
@@ -515,21 +450,14 @@ there updates `FETCH_HEAD` and creates no `origin/<pr-base>` for the next two li
 The explicit destination creates it in a narrowed clone and in a wildcard one alike.
 
 Either of the first two exiting non-zero is a stop. A failed fetch means the layer below has
-not pushed `<pr-base>` yet, so this run was started out of order - the `next` launch of the
-layer below's reviewer, `baton:review-handoff`, is what starts this one. A failed ancestor check means `<pr-base>` is not the
-branch the plan was formed on top of, whatever its name says, and the `file:line` citations in
-the handoff resolve against a history that branch does not carry.
-
-This is the check `write-handoff` Step 2 does not run. A stack is posted top layer first, so
-at posting time `<pr-base>` usually names a branch nothing has pushed; here it has to exist,
-and that is why the check sits in the run.
+not pushed `<pr-base>` yet, so this run was started out of order. A failed ancestor check
+means `<pr-base>` is not the branch the plan was formed on top of, whatever its name says, and
+the `file:line` citations in the handoff resolve against a history that branch does not carry.
 
 The third exiting non-zero because `<branch>` already exists is neither a stop nor a reuse:
 run it again with `<branch>-<6 hex>`, six fresh characters from the command above, until one
-succeeds. From there `<branch>` means the name that succeeded - Step 5 pushes it, Step 7
-fetches it, and Step 5's body and Step 7's report both name it beside the name the handoff
-asked for. The reviewer Step 7 launches holds `next` back when that happens, because the
-layer above names `<branch>` as its `pr-base`.
+succeeds. From there `<branch>` means the name that succeeded: Step 5 pushes it and Step 7
+fetches it.
 
 Build on the existing branch only where the handoff says to.
 
@@ -557,31 +485,21 @@ this run wrote.
 
 Then run two checks, in this order:
 
-1. The commands the handoff names beside its acceptance criteria. These prove the outcome
-   this change was asked for; `verify` checks the repo, not that outcome.
-2. `verify`, the project's own sequence over the whole repo. Its shipped value is the
-   literal `repo-tests`, meaning the repo's whole suite as the run finds it; any other
-   value runs in the form `defining-backends.md` gives it.
+1. The commands the handoff names beside its acceptance criteria.
+2. `verify`, in the form `defining-backends.md`, `## Operations`, gives its value.
 
 A failure of either is a stop.
 
 Nothing is committed until both pass - here, and again at each later point this pair runs.
-A `verify` sequence that rewrites files - a formatter pass - does so before any of its
-checks, the order `defining-backends.md` gives, so the tree its checks last passed on is the
-tree Step 5 pushes. A sequence whose rewrite runs after its checks pushes a tree no check ran
-against.
 
-A handoff naming neither is run with `verify` alone. A handoff posted before baton 0.1.7
-names neither, and one posted under 0.1.7 names criteria without commands; stopping on
-either would strand them. A handoff naming one
-and not the other runs what it names; Step 5's body records which of the two the run had.
+A handoff naming neither is run with `verify` alone. A handoff naming one and not the other
+runs what it names; Step 5's body records which of the two the run had.
 
 ## Step 4 - Review loop and claim audit
 
 Run `code-review` with an empty `<target>`, so it reviews the working tree this run wrote,
 and with `<locator>` set to the handoff locator this session opened with. An entry that
-checks acceptance criteria reads them from the handoff there; the shipped entry names
-neither placeholder in its prompt and ignores both.
+checks acceptance criteria reads them from the handoff there.
 
 ### Severity
 
@@ -609,13 +527,10 @@ of those three, so item 3 fires at most twice. Neither exit is a stop.
 
 The cap ends the reviewing, not the fixing. Every round's findings go through items 1 and 2,
 the third round's included: apply what it found, run both checks, then end without a fourth
-`code-review`. What the cap costs is a review of those last fixes, and the Step 5 body says so
-wherever the loop ended that way - a reviewer reading it then knows which hunks nothing looked
-at twice.
+`code-review`. What the cap costs is a review of those last fixes.
 
-A finding the run cannot fix is one whose fix falls outside the handoff's scope, contradicts
-a decision the handoff recorded, or needs an answer nobody here can give. Say which: "could
-not fix" on its own tells a reviewer nothing.
+Give a finding the run cannot fix the disposition the reference's "Dispositions" section maps
+its reason to, and say which reason: "could not fix" on its own tells a reviewer nothing.
 
 Every finding still standing when the loop ends goes in the Step 5 body - the Critical and
 Important ones the run could not fix, and each Minor one it left - with its severity and the
@@ -645,10 +560,7 @@ context did not write this code - and give it:
   commands and `verify` with their results, what the change covers and what it leaves alone, each deviation and its
   evidence, and each finding the loop left standing.
 
-Name the skill in that prompt. The plugin's `PreToolUse` hook on the dispatch tool appends its
-own audit instruction to a dispatch that does not mention `claim-audit`, and stands down for
-one that does (`hooks/gate-subagent-claim-audit.sh`), so naming it is what keeps the wording
-this step asks for rather than the hook's.
+Name `claim-audit` in that prompt, so `hooks/gate-subagent-claim-audit.sh` stands down.
 
 The audit's verdict on each claim decides what the body may say:
 
@@ -671,28 +583,26 @@ git push -u origin <branch>
 ```
 
 Write the body under `baton:write-deliverables`, as a **PR description**, to a file in
-the scratchpad directory. Beside the issue references and standing findings below, three
+the scratchpad directory. Beside the issue references and standing findings below, four
 things the run knows and a reviewer cannot recover go in it:
 
 - The handoff's "Not verified here" list where it carries one, copied as it stands under
-  the body's `## Not verified here` heading.
-  Each entry names a screen, a control and an expected result, and Step 3 covered none of
-  them - the list is what tells a reviewer which of them to open. That heading holds the
-  handoff's list alone.
+  the body's `## Not verified here` heading. That heading holds the handoff's list alone.
 - Every claim Step 4's audit labelled unverified, placed as its verdict table sets. They are
   statements the run made and could not probe, kept apart from the handoff's checks on a
   running application.
 - What Step 3 had to check against: the handoff's acceptance criteria and the commands
   that prove them, with each criterion no test covers named as such, or - where it named
   neither - a sentence saying so, and that `verify` alone checked the change.
+- Where Step 4's loop ended on its cap: that it did, and which fixes the last round applied,
+  since no `code-review` ran over them.
 
 That body carries the issue reference lines this step's table below chooses, written into it
 before `pr-create` runs: the operation sends a file, so a line added after the call reaches
 nothing, and `pr-update` at Step 6 is the only way back to a body already posted.
 
 Run `pr-create` with that file, with `<category>` and `<pr-base>` as Step 1 resolved them.
-Where `<category>` is empty, the backend's notes on its own `pr-create` say what that drops -
-a label, or the call that would have set one.
+Where `<category>` is empty, the backend's notes on its own `pr-create` say what that drops.
 
 The body states each audited claim in the form Step 4's verdict table gives it, a labelled
 one listed rather than dropped so a reviewer knows which claims to probe. Neither heading is
@@ -702,18 +612,16 @@ written without its source: `## Not verified here` only where the handoff carrie
 The findings the loop left standing go in the body as well, each with its severity and the
 reason it stands.
 
-`pr-create` opens a draft, on both shipped routes and whether or not this handoff is part of
-a stack. An unattended run's branch has been reviewed by nobody but itself, and a draft says
-so to everyone looking at the pull request list. Marking it ready is a stop, above - the
+`pr-create` opens a draft, as the backend's notes on it say. An unattended run's branch has
+been reviewed by nobody but itself, and a draft says so to everyone looking at the pull
+request list. Marking it ready is a stop, above - the
 person who reads the branch does that.
 
 Then, **only where the header carries `pr-base`**, run `stack-link` with the pull request
 `pr-create` returned and that branch below it. It registers this layer in the stack its base
-belongs to. `none` is its shipped default, which skips the call the way it skips `started`'s
-and Step 6's: a forge with no stack of its own to register in loses nothing, since the base
-`pr-create` already passed is what makes the layer a layer. A `stack-link` failure after
-`pr-create` succeeded is a stop of the second shape below - the pull request is open, and the
-report says the layer went unregistered.
+belongs to. `none` skips the call (`defining-backends.md`, `## Operations`). A `stack-link`
+failure after `pr-create` succeeded is a stop of the second shape below - the pull request is
+open, and the report says the layer went unregistered.
 
 The issue references come from the header, because a merged `closes` shuts an issue whatever
 else is outstanding. The body carries **one line per issue the header names**, in header order,
@@ -727,22 +635,18 @@ each issue's line chosen by that issue's own `closes` value:
 Where the backend's `closes` or `refs` entry is `none`, an issue whose value selects that entry
 gets no line, and the project links it to the pull request by its own means.
 
-A header naming one issue writes one line, as every header did before baton 0.1.12, unless
-the entry its value selects is `none`. `closes` is judged per entry, so a bundle that finishes
-one issue and leaves another open writes a `closes` line for the first and a `refs` line for
-the second: a `closes` line on the second would shut it on merge whatever remains open on it,
-and the run has no way to reopen it.
+A header naming one issue writes one line, unless the entry its value selects is `none`.
+`closes` is judged per entry, so a bundle that finishes one issue and leaves another open
+writes a `closes` line for the first and a `refs` line for the second: a `closes` line on the
+second would shut it on merge whatever remains open on it, and the run has no way to reopen it.
 
 An issue whose line goes missing from the body is unlinked on merge. Nothing errors - the pull
 request is valid without it, and the ticket never moves.
 
-Fill each line's `<owner>`, `<repo>` and `<id>` from the locator, per Step 1's table. The
-reference names the issue's repository, which is not this pull request's wherever the handoff
-was recorded for a repository other than the issue's; there, a bare `#<id>` would reference
-whatever issue holds that number here. Where the two are one repository the lines read as they
-always did. Every issue the header names resolves against that one repository - the locator's,
-per the table above - because `write-handoff` posts the handoff and each of its pointers into
-the same tracker.
+Fill each line's `<owner>`, `<repo>` and `<id>` from the locator, per the placeholder table
+Step 1 points to. The reference names the issue's repository, which is not this pull
+request's wherever the handoff was recorded for a repository other than the issue's. Every
+issue the header names resolves against that one repository, the locator's.
 
 Keep what `pr-create` returns. Step 6 addresses the pull request by it and Step 7 reports
 it, and nothing else in the run recovers it.
@@ -753,14 +657,15 @@ taken for a stop before Step 5, it leaves an open pull request the issue never h
 
 ## Step 6 - Review round
 
-Skip this step when `request-reviewer` is `none`, which is the shipped default. That is the
-only thing that skips it: the round runs on whatever entry form `## Review` uses.
+Skip this step when `request-reviewer` is `none`. That is the only thing that skips it: the
+round runs on whatever entry form `## Review` uses.
 
 1. Run `review-list` and `pr-comments`, and keep their combined output.
 2. Run `request-reviewer` on the pull request, and record `date +%s` as the wait's start.
 3. Wait until a successful run of both returns output different from the kept copy, or
-   until `review-wait` minutes have passed, capped at 60. The wait takes one of two forms,
-   picked by how this backend defines `review-list` and `pr-comments`:
+   until `review-wait` minutes have passed, capped at 60 (`defining-backends.md`,
+   `## Operations`). The wait takes one of two forms, picked by how this backend defines
+   `review-list` and `pr-comments`:
    - **Both a single shell command.** Run a POSIX `sh` loop through Bash with
      `run_in_background`: it runs both every 30 seconds and exits when the output differs
      or when the wait runs out, counted in iterations so it needs no `timeout` binary. The
@@ -783,19 +688,15 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    requested and no review arrived, and - because a timeout cuts short what this round found,
    not what the run has to report - Step 4's findings and their dispositions alongside it. A
    reviewer that answers later is `baton:address-review`'s to handle, not this run's.
-6. Otherwise collect the round as `baton:address-review` Step 2 does - `review-bodies`,
-   `pr-comments` and `review-threads`, with the author filters the backend defines - and
-   keep the findings its Step 3 admits to the inventory. Read those two steps rather than
-   invoking the skill, which would run its own Step 1 and stop at its Step 3:
+6. Otherwise collect the round and build its inventory as `baton:address-review` Steps 2
+   and 3 do. Read those two steps rather than invoking the skill:
 
    ```
    awk '/^## Step 2 /{f=1} /^## Step 4 /{f=0} f' \
      ${CLAUDE_PLUGIN_ROOT}/skills/address-review/SKILL.md
    ```
 
-   The range ends before that skill's Step 4, so its pre-publish question for a human and
-   its push gated on approval never reach this run. Empty output means a renamed heading,
-   and that is a stop rather than an empty inventory.
+   Empty output means a renamed heading, and that is a stop rather than an empty inventory.
 
    Step 3's end-of-turn stop is not this run's: judge each finding here, and give it a
    severity from Step 4's table whether or not it holds. Apply the findings
@@ -806,12 +707,10 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
 
    Then commit those fixes and run Step 4 over them with `<target>` set to `<branch>` rather
    than empty, committing each loop round's fixes before the `code-review` that follows them.
-   After Step 5's push an empty `<target>` shows only uncommitted fixes, and the compliance
-   entry `defining-backends.md` pairs with `code-review` marks UNMET every criterion no hunk
-   in front of it satisfies - which is every criterion the pushed commits already meet. Step 4 runs here with a fresh
-   cap of three `code-review` rounds - a failure at any of its checks is a stop too - and
-   its claim audit over the claims these fixes add or change, which is a second dispatch and
-   not a re-reading of the first audit's table.
+   After Step 5's push an empty `<target>` shows only uncommitted fixes. Step 4 runs here with
+   a fresh cap of three `code-review` rounds - a failure at any of its checks is a stop too -
+   and its claim audit over the claims these fixes add or change, which is a second dispatch
+   and not a re-reading of the first audit's table.
 
    Then, in this order: push once, run `pr-update` with a rewritten body, and answer each
    thread with `thread-reply` and anything that arrived outside a thread with `pr-comment`.
@@ -827,10 +726,9 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    The body also carries - the lines easiest to lose - **every** issue reference Step 5's
    table chose, one per issue the header names and each keeping the form that table gave it.
    An issue Step 5 wrote no line for, under a `none` entry, gets none here either.
-   `pr-update` replaces the body whole rather than appending to it, so a rewrite that drops a
-   `closes` line leaves a pull request that no longer shuts its issue on merge, and one that
-   keeps only the first line of a bundle leaves every issue after it unlinked - silently,
-   since a body missing a reference is as valid as one carrying it. The body describes the
+   `pr-update` posts the body as `defining-backends.md`, `pr-update`, describes, so a
+   reference line the rewrite drops is gone from the pull request - silently, since a body
+   missing a reference is as valid as one carrying it. The body describes the
    branch as it is now, and never narrates the round that changed it.
 
 One round, with no re-request. A finding that holds is yours to judge on the diff, the
@@ -873,12 +771,12 @@ push to the same branch, and a launch that fails is reported rather than repeate
 Either check above failing holds it back, and is not a stop: `origin` does not hold this
 branch's work, so the reviewer would review a tree other than the one in that directory.
 
-The header's `next` is not launched here. `baton:review-handoff` launches it after its own
-push, so the layer above branches from the reviewed tip.
+The header's `next` is not launched here: the reviewer carries it.
 
 Then run `published` once per issue the header names, in header order, each with that issue's
 id, the pull request URL from Step 5, and the same one file written under
-`baton:write-deliverables` as a **Run report**, saying what shipped: the URL, the branch, how
+`baton:write-deliverables` as a **Run report**, saying what shipped: the URL, the branch -
+beside the name the handoff asked for, where Step 2 cut `<branch>-<6 hex>` instead - how
 the handoff's commands and `verify` came out, any deviation Step 2 recorded, and whether Step 6
 ran, timed out, or was skipped - skipped meaning only that `request-reviewer` is `none`, and
 said so that a reader takes it as no external review having run rather than as nothing worth
@@ -891,13 +789,11 @@ request settles. A `published` that fails part-way through the list is the stop 
 describes: the report names the issue it failed on and the ones after it as not reached, and
 the pull request stays open and unaffected.
 
-Where the header carried `pr-base`, that file names the branch the pull request opens
-against and whether `stack-link` ran or is `none`. It records the reviewer launch: the entry
-run and what it returned, or which of the two checks above held it back. Where the header carried
-`next`, it says the reviewer carries that launch - naming both branch names on a rename,
-where the reviewer will hold it back - and, where the reviewer launch was held back or failed,
-quotes the `next` locator as unlaunched. That locator is how a person resumes the stack by
-hand.
+Where the header carried `pr-base`, that file names the branch the pull request opens against
+and whether `stack-link` ran or is `none`. It records the reviewer launch: the entry run and
+what it returned, or which of the two checks above held it back. Where the header carried
+`next`, it says the reviewer carries that launch and, where the reviewer launch was held back
+or failed, quotes the `next` locator as unlaunched. That locator is how a person resumes the stack by hand.
 
 That file also carries every review finding the run collected: every round of Step 4's loop,
 both the loop before Step 5's push and the one Step 6 item 6 runs over the reviewer's fixes,
@@ -912,14 +808,11 @@ heading, this step requires nothing here, and whether the report says that nothi
 a person is for the contract **Run report** resolves to.
 
 The findings, their dispositions, Step 6's outcome and the pointer to each of those headings
-the body carries are required content whatever contract **Run report** resolves to. An
-override replaces a contract's must-include list wholesale
-(`skills/write-deliverables/reference/defining-doc-types.md`), so the shipped contract is not
-what holds them in - this step is, and a must-not-include that would cut them does not reach
-a file this step mandates. The type governs who the report is written for and the
-order, emphasis and wording it gets; this step governs what is present. A report missing an
-unresolved finding, or silent about a round that never ran, reads as a clean review under any
-contract.
+the body carries are required content whatever contract **Run report** resolves to: this step
+holds them in, and a must-not-include that would cut them does not reach a file this step
+mandates. The type governs who the report is written for and the order, emphasis and wording it
+gets; this step governs what is present. A report missing an unresolved finding, or silent
+about a round that never ran, reads as a clean review under any contract.
 
 ## Stopping
 
@@ -938,8 +831,8 @@ uses:
 header's issues exactly as the before-Step-5 shape does - one Run report, the same per-issue
 walk, the same failure shape part-way through that list, the same `next` locator quoted as
 unlaunched.
-Two things differ. Its file opens with the obsolete marker rather than with a step and a
-blocker; and it settles its own worktree on the two checks Step 2 gives it, rather than leaving
+Two things differ. Its file carries Step 2's evidence rather than a step and a blocker; and
+it settles its own worktree on the two checks Step 2 gives it, rather than leaving
 it standing as every stop below does - a stop is where work sits unpushed, and that exit wrote
 none. Nothing went wrong on it, so it ends at `## Done` rather than here.
 

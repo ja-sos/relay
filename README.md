@@ -19,7 +19,7 @@ claude plugin marketplace add /path/to/relay
 
 | Plugin | What it does |
 |---|---|
-| [`baton`](plugins/baton) | Carries one unit of work from a tracker issue to a reviewed pull request, across sessions sharing no context. Twelve skills; GitHub by default, any tracker by `/baton:setup`. |
+| [`baton`](plugins/baton) | Carries one unit of work from a tracker issue to a reviewed pull request. |
 
 Install one with `claude plugin install <plugin>@relay`. Each plugin's own README covers what
 it holds and how to configure it.

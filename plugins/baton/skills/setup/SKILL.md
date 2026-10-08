@@ -26,7 +26,7 @@ routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 | The request is for `## Repositories` alone, whether or not a backend file exists | Add or replace that one section in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Repositories` checks and Step 4's `## Repositories` checks, then stop: the full Step 3 counts and the Step 4 check table test a backend's operations, which this request neither writes nor changes. It overrides no shipped operation, so it is not the duplicate the no-backend-file rows refuse. |
 | The request is for `## Assets` alone, whether or not a backend file exists | The same, for that section: add or replace it in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Assets` checks, then stop - the section defines no operation, so Step 4 has nothing of it to run. |
 | The request is for `## Repositories` and `## Assets` together, whether or not a backend file exists | Both rows above, in one pass over `~/.claude/baton.md`: write each section and run each one's checks. They are the two optional per-machine sections and neither overrides a shipped operation, so a request for both is still not the duplicate the no-backend-file rows refuse. |
-| No backend file; route 1 or 2 selected | Stop. The shipped defaults run as they are - through the GitHub MCP tools, or through `reference/backend-github-gh.md` - and a copy of them is a second file to keep in sync. |
+| No backend file; route 1 or 2 selected | Stop: a copy of the shipped defaults is a second file to keep in sync. |
 | No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
 
@@ -38,11 +38,9 @@ cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-The first fixes the operation table and the placeholder spellings; the other two are the
-structure to copy - `backend-github.md` for a tracker reached through an MCP connector,
-`backend-github-gh.md` for one reached through a CLI, whose shell entries a retarget to
-another CLI tracker starts from. Ask which tracker and forge the project uses when the
-request names neither.
+Copy the structure from the file the "Example" section of `defining-backends.md` names for how
+the tracker is reached. Ask which tracker and forge the project uses when the request names
+neither.
 
 ## Step 3 - Write the file
 
@@ -50,8 +48,7 @@ Target `.claude/baton.md`. Write `~/.claude/baton.md` only on request: a cloud o
 clones the repo and never sees a home directory.
 
 Restate all five sections - `## Tracker`, `## Categories`, `## Forge`, `## Review`,
-`## Launcher` - and every operation each one owns. A section left out is not overridden at all,
-so its shipped GitHub heading stays loaded and those operations keep running against GitHub.
+`## Launcher` - and every operation each one owns.
 
 ```
 grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
@@ -61,8 +58,7 @@ grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
 - FAIL: fewer. Add the missing sections before Step 4.
 
 `## Forge` gets the same count of its own operations that `## Workflow` gets below, and for
-the same reason: `stack-link` writes to the forge, so Step 4 never runs it, and a section
-missing it stops `implement-handoff` at Step 1 on any handoff carrying `pr-base`.
+the same reason: `stack-link` writes to the forge, so Step 4 never runs it.
 
 ```
 grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-update\|closes\|refs\):\*\*' .claude/baton.md
@@ -72,36 +68,28 @@ grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-update\|cl
 - FAIL: fewer. Add the missing operations before Step 4.
 
 A tracker that carries no labels gets `- **list-categories:** none` rather than an entry that
-prints the `## Categories` labels back. Under it, `file-issue` runs `create` with `<category>`
-empty, so a `create` that substitutes it carries a note saying what an empty value drops, as
-both shipped routes' notes do.
+prints the `## Categories` labels back. A `create` that substitutes `<category>` carries the
+empty-value note `defining-backends.md` requires under `list-categories: none`.
 
 `## Workflow` is the sixth section and stays out of the file unless the user asks for a step
 its defaults do not give - a ticket moved to in-progress when implementation starts, a
 pre-push sequence of the project's own rather than its test command alone, a reviewer
 requested on every pull request, a worklog after publishing, something logged when an
-attended flow ends, handoffs kept somewhere other than the tracker. Its defaults resolve
-through whatever `## Tracker` this file defines, so a Jira backend posts handoffs to Jira
-without restating them. Written, the section restates all eleven of its operations, because
-a `##` heading replaces its section whole.
+attended flow ends, handoffs kept somewhere other than the tracker. Written, the section
+restates all eleven of its operations.
 
 ```
 grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|verify\|code-review\|request-reviewer\|review-wait\|published\|reviewed\|stopped\|wrap-up\):\*\*' .claude/baton.md
 ```
 
 - PASS: 11, or 0 where the file has no `## Workflow`.
-- FAIL: anything between. Add the missing operations before Step 4. An operation left out is
-  undefined rather than defaulted, and the skill that calls it stops - `implement-handoff` at
-  Step 2 in an unattended run, `review-handoff` at Step 1. Step 4 cannot catch it, because it
-  never runs the writing operations. `wrap-up` alone is the exception: the four attended
-  skills skip it when it is undefined, but the file restates it all the same.
+- FAIL: anything between. Add the missing operations, `wrap-up` included, before Step 4:
+  Step 4 never runs the writing operations, so it cannot catch one left out.
 
 `## Repositories` is the seventh section and the second optional one. It stays out of
-`.claude/baton.md` altogether: it maps `owner/repo` to an absolute local path, paths differ per
-machine, and the committed file is read by cloud runs that have none of them. Write it in
+`.claude/baton.md` altogether: it maps `owner/repo` to an absolute local path. Write it in
 `~/.claude/baton.md`, and only on request - a change spanning repositories that depend on each
-other is what needs it. A backend without the section runs every single-repository handoff
-exactly as one did before baton 0.1.11, so no count above requires it.
+other is what needs it. No count above requires it.
 
 ```
 grep -c '^## Repositories$' ~/.claude/baton.md 2>/dev/null
@@ -121,20 +109,9 @@ grep -c '^| `[^/`]*/[^`]*` | `/' ~/.claude/baton.md 2>/dev/null
 - FAIL: fewer. A relative path resolves against whatever directory a launcher happens to start
   in, so a row that is not absolute is a row to rewrite.
 
-`## Assets` is the eighth section and the third optional one, added in baton 0.1.15. It stays
-out of `.claude/baton.md` for the reason `## Repositories` does and one more: a cloud run reads
-the committed file and has neither the folder nor a home directory to find it in, so a root
-written there resolves to nothing while looking configured. Write it in `~/.claude/baton.md`,
-and only on request. It holds a single entry:
-
-```
-## Assets
-
-- **root:** /home/you/baton-assets
-```
-
-A handoff with no `assets` line needs no such section, so no count above requires it and a
-backend without it runs every such handoff as one did before 0.1.15.
+`## Assets` is the eighth section and the third optional one. It stays out of
+`.claude/baton.md`: write it in `~/.claude/baton.md`, and only on request. Its one entry is
+`root`, in the form the "Sections" part of `defining-backends.md` gives for `## Assets`.
 
 ```
 grep -c '^## Assets$' ~/.claude/baton.md 2>/dev/null
@@ -142,17 +119,14 @@ grep -c '^## Assets$' ~/.claude/baton.md 2>/dev/null
 
 - PASS: `1` where the user asked for the section; `0`, or no output at all, where they did not.
   `grep` prints nothing and exits 2 when the file does not exist, which is the usual case.
-- FAIL: more than 1. A second heading replaces the first wholesale, so the root the skills read
-  is whichever came last - keep one. The extraction below takes the last `root` entry in the
-  file for the same reason; with one heading, as this check requires, there is only one.
+- FAIL: more than 1. Keep one heading.
 
 This next check runs only where the check above found the section. Skip it where the user did
 not ask for `## Assets`: the file carries no `root`, and running it there prints a failure
 about an entry nobody meant to write.
 
 Written, its `root` must be an absolute path to a directory that exists. A relative path
-resolves against whatever directory the run happens to start in, and a root that is missing
-sends every handoff naming an asset to a stop at `implement-handoff` Step 1:
+resolves against whatever directory the run happens to start in:
 
 ```
 root=$(sed -n 's/^- \*\*root:\*\* *//p' ~/.claude/baton.md 2>/dev/null | tr -d '`' | tail -1)
@@ -162,13 +136,12 @@ case "$root" in /*) test -d "$root" && echo "ok $root" || echo "FAIL not a direc
 
 - PASS: `ok` and the path.
 - FAIL: either message. `FAIL not absolute:` with nothing after the colon is the section
-  carrying no `root` entry at all, which reads as configured and resolves to nothing. Fix the
-  entry before stopping.
+  carrying no `root` entry at all. Fix the entry before stopping.
 
 ## Step 4 - Verify by running
 
-Run the check table at the end of `reference/defining-backends.md` against the file. Run the
-read-only operations and report each by name:
+Run the check table under `## Checks` in `reference/defining-backends.md` against the file.
+Run the read-only operations and report each by name:
 
 ```
 reachable
@@ -214,8 +187,7 @@ user's checkout.
 
 ## Step 5 - Offer document types
 
-Offer this once, as optional: `baton:write-deliverables` ships four contracts and derives any
-type not listed, so a project needs none. Name
+Offer this once, as optional. Name
 `${CLAUDE_PLUGIN_ROOT}/skills/write-deliverables/reference/defining-doc-types.md`, and write a
 contract only for a type the user names.
 

@@ -18,8 +18,8 @@ Then pick the route, in this order:
 1. Every tool named comes back, `mcp__github__get_me` succeeds, and
    `mcp__github__list_issues {"owner": "<owner>", "repo": "<repo>", "perPage": 1}` returns,
    with `<owner>` and `<repo>` from `verify-checkout` below: this file's sections stand as
-   they are. `get_me` is this route's `reachable`, as `gh api user` is the other's. It takes
-   no repository, so only `list_issues` shows the MCP account can read this one.
+   they are. `get_me` takes no repository, so only `list_issues` shows the MCP account can
+   read this one.
 2. Otherwise, where `command -v gh >/dev/null && gh api user >/dev/null 2>&1` succeeds,
    load `backend-github-gh.md`. It replaces `## Tracker`, `## Forge` and `## Review`; the
    other three sections here stay in force.
@@ -28,10 +28,6 @@ Then pick the route, in this order:
    load or cannot read this repository. Name the part of route 1 that failed - a tool not
    loaded, `get_me`, or `list_issues` - and `gh` as absent or unauthenticated. When
    `stopped` resolves to a failing entry too, report the stop in the session only.
-
-`backend-github-gh.md` loads second, ahead of `.claude/baton.md` and `~/.claude/baton.md`.
-Later files replace earlier ones by `##` heading, so loaded last it would overwrite a
-project's own `## Tracker` with `gh` commands.
 
 ## Tracker
 
@@ -53,29 +49,23 @@ project's own `## Tracker` with `gh` commands.
 `mcp__github__list_label` enumerates a repository's labels, but it belongs to the server's
 `labels` toolset, which a connection sending no `X-MCP-Toolsets` header does not enable.
 `get_label` is in the default `issues` toolset, so `list-categories` uses it and answers
-for one category at a time: run it once per row of `## Categories`, substituting
-that row's label as `<category>`. That is the only question `file-issue` Step 1 puts to it,
-and taking the rows as they come means this entry needs no restating when a project renames
-its categories.
+for one `<category>` at a time.
 
-A `<category>` the repository does not carry comes back not-found. That is this operation's
-answer - the missing category Step 1 stops and asks about - and not a backend failure: the
-tool loaded and replied. Reserve the stop rule for a tool that never loaded or could not
+A `<category>` the repository does not carry comes back not-found: that is this operation's
+answer, not a backend failure - the tool loaded and replied. Reserve the stop rule for a tool that never loaded or could not
 authorize.
 
 `list_issues` returns at most 100 issues a call, so `list-open` and `list-mine` both page:
 pass the response's `pageInfo.endCursor` as `after` while `pageInfo.hasNextPage` is true.
 `list-open` stops at 500, well above the open-issue count of any repo these skills are
-pointed at, since it caps the dedupe `file-issue` runs against; `list-mine` reads every
-page, because the assignee filter below runs on each page's issues. `issue_read` with
+pointed at; `list-mine` reads every page, because the assignee filter below runs on each page's issues. `issue_read` with
 `get_comments` pages with `page` instead: read on while a page comes back with 100 comments.
 
 `list_issues` has no assignee filter. For `list-mine`, keep the issues whose `assignees`
-include the `login` that `get_me` returned. Its `ASC` order is the pick order `next-issue`
-reads off the top: oldest assigned issue first.
+include the `login` that `get_me` returned. `ASC` gives the pick order `defining-backends.md`
+asks of `list-mine`: oldest first.
 
-`create` leaves `labels` out of the call where `<category>` is empty, as `file-issue` passes it
-under a `list-categories` of `none`. An issue meant to carry no label must not be sent `[""]`.
+`create` leaves `labels` out of the call where `<category>` is empty. An issue meant to carry no label must not be sent `[""]`.
 
 `comment` returns `{"id", "url"}`, and `url` is the comment's URL - the locator
 `post-handoff` reports.
@@ -110,41 +100,30 @@ raise `page` by one until it appears.
 
 `verify-checkout` prints `<owner>/<repo>` from the `upstream` remote's URL, or from
 `origin`'s where there is no `upstream`, in HTTPS, SSH and proxied forms alike, with no
-GitHub call. `pr-create` and `pr-view` name the branch by `<head-owner>` instead, the owner
-in `origin`'s URL: in a fork clone `<owner>` is the upstream repository's owner, which does
-not hold the branch.
+GitHub call. `pr-create` and `pr-view` name the branch by `<head-owner>`
+(`defining-backends.md`).
 
 `pr-create` returns its **first** call's `{"id", "url"}`, and `url` is the pull request's
 URL; the second call returns nothing the caller keeps. The pull request exists from the
-first call on, so a failed label call leaves it open and unlabelled - a stop after
-`implement-handoff` Step 5, whose `stopped` file carries that URL.
+first call on, so a failed label call leaves it open and unlabelled.
 
 The label needs that second call because `create_pull_request` has no `labels` parameter -
 its parameters are `owner`, `repo`, `title`, `head`, `base`, `body`, `draft`,
 `maintainer_can_modify` and `reviewers`. Every pull request is also an issue, so
 `issue_write` sets the label on it.
 
-`<pr-number>` is spelled apart from `<id>` on purpose, and the caller passes neither: at
-`implement-handoff` Step 5 `<id>` is the *issue's* number, which `closes` and `refs` take,
-and a label sent to that number lands on the issue while the pull request ships unlabelled.
-The second entry fills `<pr-number>` from the first entry's own result - the last path
-segment of the `url` it returned.
+`<pr-number>` is not `<id>`, which names the issue: fill it from the last path segment of
+the first entry's `url`.
 
 Skip the second call entirely where `<category>` is empty - a pull request meant to carry no
 label must not be sent `[""]`.
 
-`"draft": true` is unconditional: every pull request these skills open starts as a draft,
-stacked or not. `implement-handoff` Step 5 says why, and marking one ready stays outside what
-an unattended run may do.
+`"draft": true` is unconditional; `implement-handoff` Step 5 says why.
 
-`stack-link` is `none`. GitHub has no stack of its own for a pull request to join - a pull
-request opened against another pull request's branch already shows as stacked, and
-`<pr-base>` is what `pr-create` passes to do that. A project whose forge does track stacks
-defines the operation here, taking `<id>`, `<pr-url>` and `<pr-base>`; `implement-handoff`
-Step 5 runs it after `pr-create`, and only where the handoff's header carries `pr-base`.
-The `gh` route ships `none` for the same reason and one more: the `github/gh-stack` extension
-that would supply a command was not installed where this was written, so its syntax is
-unverified and no guess at it ships.
+`stack-link` is `none`: `pr-create` opens each layer against the branch below it through
+`<pr-base>`, and registers no GitHub Stack. The `gh stack` extension creates Stacks
+([github/gh-stack](https://github.com/github/gh-stack)); a project that uses it defines
+`stack-link` to `defining-backends.md`'s contract.
 
 `pr-view` with an `<id>` runs only its second entry. With `<id>` empty, the first lists the
 open pull requests and the caller picks out the current branch's in two passes:
@@ -176,14 +155,9 @@ The entry passes no `head` filter because, over REST, that filter returns `[]` i
 whose owner also owns the parent, which reads as "no open pull request" for a branch that
 has one.
 
-`closes` and `refs` name the issue's repository as well as its number. One investigation can
-record a handoff per repository a change spans, so the pull request may open in a repository
-other than the issue's, and a bare `#<id>` there resolves against whatever issue holds that
-number in the pull request's own repository. `implement-handoff` Step 5 fills `<owner>`,
-`<repo>` and `<id>` from the locator, not from `verify-checkout` - the one place a `## Forge`
-entry follows the tracker's placeholder rule, which `defining-backends.md` states. Where the
-issue and the work are in one repository, which is every handoff recorded before baton 0.1.11,
-the reference reads as `Closes owner/repo#12` and resolves to the same issue `Closes #12` did.
+`closes` and `refs` name the issue's repository as well as its number, since the pull request
+may open in another repository, where a bare `#<id>` resolves against that repository's issue of
+the same number. `defining-backends.md` says where `<owner>` and `<repo>` come from.
 
 GitHub documents that cross-repository form for closing keywords.
 
@@ -204,16 +178,14 @@ the API calls nor the push.
 - **thread-reply:**    tool: mcp__github__add_reply_to_pull_request_comment {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "commentId": <comment-id>, "body": "<body>"}
 - **pr-comment:**      tool: mcp__github__add_issue_comment {"owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "body": "<body>"}
 
-Feedback lands on three surfaces and two are invisible to the inline-comment call.
-`review-bodies` and `pr-comments` carry only what people wrote: a bot delivers its findings
-as inline threads, and its summary body is boilerplate. `pr-comments` reads the top-level
-notes that belong to no review - the surface neither of the other two returns.
+`review-bodies` and `pr-comments` drop bots: a bot delivers its findings as inline threads,
+and its summary body is boilerplate.
 
 `review-post` reads the payload file at `<path>` and spreads it over three calls. The
 payload carries the summary and every inline comment:
 
 ```json
-{"commit_id": "<the pull request's head SHA, re-read immediately before posting>",
+{"commit_id": "<the pull request's head SHA>",
  "event": "COMMENT",
  "body": "<summary>",
  "comments": [{"path": "<file>", "line": 42, "side": "RIGHT", "body": "<finding>"}]}
@@ -237,10 +209,8 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 
 ## Launcher
 
-Each entry takes `<skill>` - `implement-handoff` or `review-handoff` - and `<args>`, the
-arguments that skill is started with, and appends `launcher=<entry name>` to them. That last
-argument is how the run knows which entry started it: `implement-handoff` launches its
-reviewer through the same entry.
+Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
+`defining-backends.md`, `## Sections`.
 
 - **cloud:** two routines per repository, each holding a fixed prompt, reused for every
   launch. Load the tool with `ToolSearch select:RemoteTrigger`. `<skill>` picks the routine:
@@ -294,53 +264,29 @@ reviewer through the same entry.
   which is why a `--cloud` session arrives with an uploaded copy of the checkout and no
   remote.
 
-  `EnterWorktree` and `ExitWorktree` are on the list because `implement-handoff` and
-  `review-handoff` each create their run's worktree at Step 2 and remove it at their last
-  step. A cloud run has a disposable clone to itself and isolates from nothing, and that cost
-  is accepted rather than made conditional.
+  `EnterWorktree` and `ExitWorktree` are on the list per `defining-backends.md`,
+  `## Tools an unattended run needs`. A cloud run has a disposable clone to itself and
+  isolates from nothing, and that cost is accepted rather than made conditional.
 
-  `Agent` and `Task` are on the list because each skill's claim audit dispatches a subagent
-  whose context did not write the claims, and a `code-review` entry may itself be an `agent:`
-  one. The list names both so the run has the dispatch tool under either name. Routine
-  creation keeps a name the build does not carry, and the session ignores it: a cloud run
-  whose list held `Agent`, `Task` and a made-up name started, carried only `Agent`, and
-  dispatched through it. Both names were added in baton 0.1.7, so a `## Launcher` entry copied
-  from this file before then, into a project's `.claude/baton.md` or a personal
-  `~/.claude/baton.md`, names neither. Add both: that run also carried tools its list did not
-  name, such as `ToolSearch`, so whether a list naming neither still gets `Agent` is untested,
-  and `implement-handoff` Step 2 and `review-handoff` Step 1 stop a run that lacks it.
+  `Agent` and `Task` are on the list per the same section. Routine creation keeps a name the
+  build does not carry, and the session ignores it: a cloud run whose list held `Agent`, `Task`
+  and a made-up name started, carried only `Agent`, and dispatched through it. That run also
+  carried tools its list did not name, such as `ToolSearch`, so whether a list naming neither
+  still gets `Agent` is untested.
 
-  `RemoteTrigger` is on both routines' lists because both runs launch through these very
-  lines from inside the cloud: every `implement-handoff` run launches its reviewer at Step 7,
-  and a `review-handoff` run launches the layer above where the handoff carries
-  `next: cloud <locator>`. Without the tool that run cannot call it, and the launch fails at
-  the last step of an otherwise finished run. It was added in baton 0.1.10, so a
-  `## Launcher` section restated in `.claude/baton.md` or `~/.claude/baton.md` before then
-  needs the name adding by hand - the heading replaces this one whole.
+  `RemoteTrigger` is on both routines' lists per the same section.
 
-  This entry's `<owner>` and `<repo>` are the handoff's `repo` line rather than
-  `verify-checkout`'s answer, in `name` as much as in `sources`. The routine clones the
-  repository the work belongs in, and for a handoff an investigation of another repository
-  recorded that is not the repository the launching session sits in. `name` takes the same line
-  because it keeps each repository's routines apart: two handoffs of one investigation, for
-  two repositories, would otherwise share one routine, whose `sources` clone only one of them.
-  It is also why this entry needs no `## Repositories` row - it clones rather than reading a path
-  on this machine.
+  `<owner>` and `<repo>` are the handoff's `repo` line (`defining-backends.md`); `name` takes
+  it too, keeping each repository's routines apart.
 
-  **A handoff carrying an `assets` line stops under this entry.** The run clones the repository
-  and never sees `~/.claude/baton.md`, where `## Assets` lives, so the section is undefined in
-  it and every listed path is unresolved: the routine fires, the session starts, and
-  `implement-handoff` Step 1 stops before creating its worktree. Nothing here can fix that -
-  the asset folder is on the launching machine, not in the clone - so such a handoff goes to
-  `local` below. A handoff with no `assets` line is unaffected.
+  **A handoff with an `assets` line stops under this entry** (`implement-handoff` Step 1);
+  launch it with `local`.
 
 - **local:** `cd <repo root> && claude --bg "/baton:<skill> <args> launcher=local"`
 
-  No `--worktree <branch>`: `implement-handoff` and `review-handoff` Step 2 each create the
-  run's worktree themselves, and inside a session started with that flag `EnterWorktree`
-  refuses with "Already in a worktree session." Check the repo ignores `.claude/worktrees/`
-  first all the same, since Step 2's worktree lands there and an unignored path leaves it in
-  `git status`, where an autonomous `git add -A` commits it:
+  The skills create the run's worktree under `.claude/worktrees/`, and an unignored path
+  leaves it in `git status`, where an autonomous `git add -A` commits it. Check the repo
+  ignores it first:
   `git -C <repo root> check-ignore -q .claude/worktrees/ || echo "add .claude/worktrees/ to <repo root>/.gitignore first"`.
   A `.gitignore` that keeps a tracked `.claude/settings.json` visible ignores the contents
   rather than the directory - `.claude/*` with `!.claude/settings.json` - so `.claude/`
@@ -348,11 +294,10 @@ reviewer through the same entry.
 
   `<repo root>` is the root of the checkout of the repository the handoff's `repo` line names.
   Where that is the repository this session is in, it is the current checkout's root,
-  `git rev-parse --show-toplevel`. Where it is another repository, it is that repository's path
-  in `## Repositories`, and a repository with no row there is a stop for this launch alone -
-  the other handoffs of the same investigation still launch. The map applies to the
-  placeholder, so a `## Launcher` restated in `.claude/baton.md` or `~/.claude/baton.md` before
-  baton 0.1.11 picks it up unchanged: its `local` entry still reads `cd <repo root>`, and only
+  `git rev-parse --show-toplevel`. Where it is another repository, it is that repository's
+  `## Repositories` path; a missing row stops this launch (`defining-backends.md`). The map
+  applies to the placeholder, so a `## Launcher` restated in `.claude/baton.md` or
+  `~/.claude/baton.md` before baton 0.1.11 picks it up unchanged: its `local` entry still reads `cd <repo root>`, and only
   what fills the placeholder has moved. The ignore check above takes the same root, since the
   worktree Step 2 creates lands in the repository being launched rather than this one.
   `--bg` and `--print` conflict, because `--print` leaves no session for
@@ -360,16 +305,14 @@ reviewer through the same entry.
   `claude agents --json`, `claude logs <id>` and `claude stop <id>`.
 
   This is the shipped entry that can resolve a handoff's `assets` line: the run is a local
-  session, so it reads `~/.claude/baton.md` and with it the `## Assets` root, and Step 1
-  resolves each listed path against the folder on this machine. That holds only where the
-  machine running the command is the one whose `~/.claude/baton.md` defines the root and holds
-  the files - `<repo root>` moves the run between checkouts, never between machines.
+  session, so it reads `~/.claude/baton.md` and with it the `## Assets` root. That holds only
+  where the machine running the command is the one whose `~/.claude/baton.md` defines the root
+  and holds the files - `<repo root>` moves the run between checkouts, never between machines.
 
   The command grants no access of its own. It starts an ordinary session, so the asset root is
   read under whatever permissions that machine already gives a session for paths outside the
-  checkout; where the harness prompts for them, an unattended run has nobody to answer and
-  stops at `implement-handoff` Step 1 naming the paths. Settle that access on the machine
-  before pointing a handoff's `assets` line at it.
+  checkout; where the harness prompts for them, an unattended run has nobody to answer.
+  Settle that access on the machine before pointing a handoff's `assets` line at it.
 
 ## Workflow
 
@@ -385,37 +328,23 @@ reviewer through the same entry.
 - **stopped:**          op: comment <id> <path>
 - **wrap-up:**          none
 
-Every entry here resolves through `## Tracker`, so a project that has retargeted the
-tracker moves these with it and restates none of them.
+`post-handoff`, `has-handoff`, `published`, `reviewed` and `stopped` resolve through
+`## Tracker` and move with it.
 
 `post-handoff` returns the locator `fetch-handoff` is later given. On this backend that is
-the comment's URL - `comment`'s `url` field, or its stdout under the `gh` route.
-`<owner>` and `<repo>` are the URL's two path segments after the host, replacing the
-derived ones; `<comment-id>` is the digits of the trailing `#issuecomment-<n>`, and `<id>`
+the comment's URL - `comment`'s `url` field. `<owner>` and `<repo>` are the URL's two path
+segments after the host, replacing the derived ones; `<comment-id>` is the digits of the trailing `#issuecomment-<n>`, and `<id>`
 the number after `/issues/`.
 
-`has-handoff` prints the issue with its comments, and the caller scopes the answer out of that
-output: the `<!-- claude-handoff -->` marker in it, and, since baton 0.1.16, each handoff's
-`base` and `branch`,
-each pointer's locator, and the obsolete reports that answer them. The comment text is what
-carries all of that, which is why this entry prints the comments rather than answering the
-question itself.
+`has-handoff` prints the issue with its comments; callers test the comment text for the
+handoff marker (`defining-backends.md`).
 
-`started` is `none`: a GitHub issue has no in-progress state to move into, so nothing runs
-when the implementation run cuts its branch. A tracker that has one defines the transition
-here, and the operation takes `<id>` alone.
+`started` is `none`: a GitHub issue has no in-progress state.
 
-`reviewed` posts the Run report `review-handoff` writes when its review of an
-`implement-handoff` pull request finishes, once per issue the handoff names, taking `<id>`,
-`<path>` and `<pr-url>`. It is not `published` because both run on every pull request: a tracker
-whose `published` moves the issue's status would move it a second time when the review
-finished. On GitHub both are a comment, and a project whose tracker moves tickets keeps the
-transition in `published` and leaves `reviewed` a comment.
+On GitHub `reviewed` is a comment like `published`; `defining-backends.md` says why they are
+separate.
 
-`wrap-up` is `none` as well: nothing on GitHub needs writing when `investigate-issue`,
-`review-pr`, `address-review` or `self-review` finishes, each having already posted what it
-produced. A project that logs time, notifies a channel or closes out a ticket when an
-attended flow ends defines that here.
+`wrap-up` is `none`: each attended skill has already posted what it produced.
 
 `code-review` reviews the working tree where `<target>` is empty, and otherwise the pull
 request number or branch `<target>` names. It ignores `<locator>`: `/code-review` checks
@@ -423,17 +352,13 @@ correctness, not a handoff's acceptance criteria. A project that wants those che
 this entry and pairs it with an `agent:` one in a nested list - `defining-backends.md` carries
 the example.
 
-`verify` is `repo-tests`, the literal standing for the repo's full test command as the run
-finds it - GitHub says nothing about how a project is built, so there is no better default
-to ship. A project that mandates a pre-push sequence writes it here, and that sequence then
-runs at every point `implement-handoff` checks its work.
+`verify` is `repo-tests` (`defining-backends.md`): GitHub says nothing about how a project is
+built.
 
-`request-reviewer` is `none`, so the review round does not run. Either form turns it on:
+`request-reviewer` is `none`. Either form below turns on `implement-handoff` Step 6; both
+routes read this `## Workflow`, so pick the form your sessions can run:
 
 - `tool: mcp__github__request_copilot_review {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}`
 - `gh pr edit <id> --add-reviewer @copilot`
 
-`review-wait` is then how long the round waits for that reviewer, in minutes. Copilot's
-reviews carry the login `copilot-pull-request-reviewer[bot]` in `review-list`. The `gh`
-fallback swaps no `## Workflow` entry, so a project that sets `request-reviewer` keeps
-whichever form it wrote on both routes - pick the one its sessions can run.
+Copilot's reviews carry the login `copilot-pull-request-reviewer[bot]` in `review-list`.
