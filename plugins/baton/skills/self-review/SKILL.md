@@ -167,7 +167,12 @@ the review rounds.
 `pr-update` replaces the body whole, so carry every issue reference line across unchanged. A
 handoff may name several issues, and each `closes` or `refs` line dropped here is an issue the
 merge silently stops settling - "whatever the current diff no longer supports" is about claims,
-never about these lines.
+never about these lines. The one line a body may lack is the handoff's primary issue's, and only
+where both hold: the backend's `pr-title` contains `<id>` (a `pr-title` no loaded file defines
+reads as `<title>`), and the pull request's title as it stands names that issue -
+`implement-handoff` Step 5 writes no line for it then. Add none there, and do not read its
+absence as a dropped reference. Where either does not hold, the line is owed: restore it. Every
+other reference line is carried across.
 
 Carry the `## Not verified here` and `## Unverified claims` headings across the same way. Their
 entries are checks and claims the diff cannot support by definition, so the deletion rule above

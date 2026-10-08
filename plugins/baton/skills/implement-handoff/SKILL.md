@@ -199,7 +199,7 @@ What an operation addresses decides this, not the section holding it:
 | Entries | Where `<owner>` and `<repo>` come from |
 |---|---|
 | the ones addressing the issue - `view`, `comment`, and the `started`, `published` and `stopped` resolving through them | the locator, as `fetch-handoff`'s own notes take them |
-| `closes` and `refs`, though `## Forge` holds them | the locator as well: the keyword references the issue, so it resolves against the issue's repository |
+| `closes`, `refs` and `pr-title`, though `## Forge` holds them | the locator as well: the keyword or the title references the issue, so it resolves against the issue's repository |
 | the ones addressing the pull request or the checkout - `pr-create`, `pr-view`, `pr-update`, `stack-link`, `request-reviewer` and the review operations | `verify-checkout`'s answer |
 
 `request-reviewer` is the one `## Workflow` entry on the second row. It acts on the pull
@@ -687,7 +687,21 @@ That body carries the issue reference lines this step's table below chooses, wri
 before `pr-create` runs: the operation sends a file, so a line added after the call reaches
 nothing, and `pr-update` at Step 6 is the only way back to a body already posted.
 
-Run `pr-create` with that file, with `<category>` and `<pr-base>` as Step 1 resolved them.
+Write a title for the change, then build the one `pr-create` takes from the backend's
+`pr-title` entry: substitute that title for its `<title>`, the **primary** issue - the first
+entry of the header's `issue` line - for its `<id>`, and the issue's repository, per Step 1's
+table, for its `<owner>` and `<repo>`. Substitute in one pass over the entry's value as
+written, so a placeholder spelled inside the run's own title stays as the run wrote it. A
+`pr-title` no loaded file defines reads as `<title>`, the shipped value, and is not a stop. The
+text that results is what `pr-create` gets as its own `<title>`.
+
+`pr-title` and `pr-create` both name a `<title>`, and they are not the same value. In
+`pr-title` it is the run's own title; in `pr-create` it is the text built above. Always pass
+`pr-create` the built text: the bare title skips whatever the format adds, such as the issue
+id.
+
+Run `pr-create` with that file and that title, with `<category>` and `<pr-base>` as Step 1
+resolved them.
 Where `<category>` is empty, the backend's notes on its own `pr-create` say what that drops -
 a label, or the call that would have set one.
 
@@ -714,20 +728,30 @@ report says the layer went unregistered.
 
 The issue references come from the header, because a merged `closes` shuts an issue whatever
 else is outstanding. The body carries **one line per issue the header names**, in header order,
-each issue's line chosen by that issue's own `closes` value:
+each issue's line chosen by that issue's own `closes` value - with the one exception for the
+primary issue that follows the table:
 
 | That issue's `closes` value | Line in the body |
 |---|---|
 | `yes` | the backend's `closes` line, with that issue as `<id>` |
 | `no` | the backend's `refs` line, with that issue as `<id>` |
 
-A header naming one issue writes one line, as every header did before baton 0.1.12. `closes`
-is judged per entry, so a bundle that finishes one issue and leaves another open writes a
-`closes` line for the first and a `refs` line for the second: a `closes` line on the second
-would shut it on merge whatever remains open on it, and the run has no way to reopen it.
+**Where the `pr-title` value contains the literal text `<id>`, the body carries no line for
+the primary issue.** The title already names it, and on a forge that links an issue by the
+title a second reference in the body is noise. Every later issue in the header keeps its line,
+chosen by the table above. The test reads the entry's value as written, before any
+substitution, and the primary issue's own `closes` value does not change it. A header naming
+one issue then writes no reference line at all, and the title is the issue's only reference.
+Whether an id in the title closes the issue is the forge's to decide, and
+`defining-backends.md` says where it does not.
 
-An issue the body names in no line is unlinked on merge. Nothing errors - the pull request is
-valid without it, and the ticket simply never moves.
+Otherwise a header naming one issue writes one line, as every header did before baton 0.1.12.
+`closes` is judged per entry, so a bundle that finishes one issue and leaves another open
+writes a `closes` line for the first and a `refs` line for the second: a `closes` line on the
+second would shut it on merge whatever remains open on it, and the run has no way to reopen it.
+
+An issue the body names in no line, and the title does not name, is unlinked on merge.
+Nothing errors - the pull request is valid without it, and the ticket simply never moves.
 
 Fill each line's `<owner>`, `<repo>` and `<id>` from the locator, per Step 1's table. The
 reference names the issue's repository, which is not this pull request's wherever the handoff
@@ -819,6 +843,10 @@ only thing that skips it: the round runs on whatever entry form `## Review` uses
    it, so a claim this round's audit labels gets the heading even where Step 5's body had none.
    The body also carries - the lines easiest to lose - **every** issue reference Step 5's
    table chose, one per issue the header names and each keeping the form that table gave it.
+   Where `pr-title` contains `<id>` - a `pr-title` no loaded file defines reads as `<title>` -
+   Step 5 wrote no line for the primary issue, and the rewrite adds none: the title still names
+   that issue, so the missing line is not a dropped reference. Every other issue's line is still
+   carried across.
    `pr-update` replaces the body whole rather than appending to it, so a rewrite that drops a
    `closes` line leaves a pull request that no longer shuts its issue on merge, and one that
    keeps only the first line of a bundle leaves every issue after it unlinked - silently,
@@ -885,6 +913,9 @@ line each got, so every ticket's participants read the same account of what this
 request settles. A `published` that fails part-way through the list is the stop Step 1
 describes: the report names the issue it failed on and the ones after it as not reached, and
 the pull request stays open and unaffected.
+
+Where `pr-title` contains `<id>`, that file names the pull request's title as what reached the
+primary issue, in place of a reference line, whether the header named one issue or several.
 
 Where the header carried `pr-base`, that file names the branch the pull request opens
 against and whether `stack-link` ran or is `none`. Where it carried `next`, it records the
@@ -1008,8 +1039,9 @@ handoff, the evidence saying so, and that no branch was pushed and no pull reque
 the blocker, the step it stopped at, and the pull request URL when Step 5 opened one.
 
 Name every issue the header carried and what reached it: the reference line it got in the
-body, and whether `started`, `published` or `stopped` ran on it. An issue the report leaves
-out is one nobody knows to check.
+body - or, for the primary issue where `pr-title` contains `<id>`, the title - and whether
+`started`, `published` or `stopped` ran on it. An issue the report leaves out is one nobody
+knows to check.
 
 A handoff carrying `next` reports the launch too, in whichever form Step 7 recorded it. The
 run above is a separate session: this one does not wait for it, watch it, or report anything

@@ -62,13 +62,16 @@ grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
 
 `## Forge` gets the same count of its own operations that `## Workflow` gets below, and for
 the same reason: `stack-link` writes to the forge, so Step 4 never runs it, and a section
-missing it stops `implement-handoff` at Step 1 on any handoff carrying `pr-base`.
+missing it stops `implement-handoff` at Step 1 on any handoff carrying `pr-base`. `pr-title` is
+counted although a section missing it is no stop - `implement-handoff` reads it as `<title>` -
+because a file this skill writes states the title format rather than leaving a reader to know
+the default.
 
 ```
-grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-update\|closes\|refs\):\*\*' .claude/baton.md
+grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-update\|closes\|refs\|pr-title\):\*\*' .claude/baton.md
 ```
 
-- PASS: 7.
+- PASS: 8.
 - FAIL: fewer. Add the missing operations before Step 4.
 
 A tracker that carries no labels gets `- **list-categories:** none` rather than an entry that
