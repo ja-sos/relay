@@ -322,8 +322,8 @@ name `started` at all, which leaves it undefined rather than `none`, and
 `implement-handoff` stops at Step 2 - add `- **started:**          none` to that section,
 or the entry the project's tracker moves its ticket with.
 
-`wrap-up` is the ninth, added in baton 0.1.6. Unlike every other operation, leaving it
-undefined is not a stop: `investigate-issue`, `review-pr`, `address-review` and
+`wrap-up` is the ninth, added in baton 0.1.6. Unlike every other operation but `pr-title`,
+leaving it undefined is not a stop: `investigate-issue`, `review-pr`, `address-review` and
 `self-review` treat a `wrap-up` no loaded file defines as `none`, so a `## Workflow` written
 before 0.1.6 keeps working unchanged. Add the entry the project runs when an attended flow
 ends to use it.
