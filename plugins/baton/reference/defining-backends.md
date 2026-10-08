@@ -141,15 +141,16 @@ whatever they look like. `verify` is run, but takes one literal besides a comman
 | `agent: <type> <prompt>` | dispatch a subagent of that type with that prompt, through the subagent dispatch tool - `Agent` or `Task`, by harness build |
 | `op: <operation> <args>` | run another operation of this backend, with these substitutions |
 | a nested bullet list | each bullet is one entry in any of the forms above, run in order; the first failure stops the rest |
-| `none` | skip the step. Valid for `started`, `stack-link`, `request-reviewer`, `wrap-up`, `close-fixed` and `close-invalid` only - any other operation set to `none` is undefined |
+| `none` | skip the step. Valid for `started`, `stack-link`, `request-reviewer`, `wrap-up`, `close-fixed`, `close-invalid` and `list-categories` only - any other operation set to `none` is undefined |
 | `repo-tests` | run the repo's full test command, as the run finds it. Valid for `verify` only - anywhere else it is a shell command, and no such binary exists |
 
 `none` and undefined are not the same answer. `none` says the project has decided the step
 does not run - that no tracker transition marks the start of implementation, that the forge
 tracks no stack to register a layer in, that the review round does not run, that no step runs
-when a person-attended flow ends, that this project closes issues outside baton; undefined says
-the backend is incomplete, and every skill treats it as a stop - except an undefined `wrap-up`,
-which the attended skills read as `none`.
+when a person-attended flow ends, that this project closes issues outside baton, that the
+tracker carries no labels to check categories against; undefined says the backend is
+incomplete, and every skill treats it as a stop - except an undefined `wrap-up`, which the
+attended skills read as `none`.
 
 `close-fixed` and `close-invalid` each take `none` on their own, because a tracker can let
 baton resolve an issue as done while a triager owns "not planned", or the reverse. Under `none`
@@ -406,6 +407,21 @@ shipped GitHub routes order it oldest first, so the longest-waiting assigned iss
 second. The backend's notes say which, and a caller that gets the second form runs the
 operation once per row of `## Categories`. Either way `file-issue` Step 1 asks the same
 question: is a category from that table missing from the tracker.
+
+The third form, since baton 0.1.19, is `none`, for a tracker that carries no labels at all.
+An earlier baton reads it as undefined and stops. There is no category to find missing, so
+`file-issue` Step 1 runs no category check and `baton:setup` Step 4 reports the operation as
+skipped. An entry that prints the `## Categories` labels back is not a substitute: it passes
+whatever the tracker holds, and records no decision that the tracker has no labels.
+`## Categories` stays required under `none`, because `file-issue` Steps 3 and 4 still pick one
+row per finding and take the body headings from it. The pick is not stored on the tracker, so
+a handoff for such an issue carries no `category` line and its pull request opens unlabelled.
+Only an explicit `none` takes this path - a `list-categories` left undefined is still a stop.
+
+Under `none`, `file-issue` Step 5 runs `create` with `<category>` empty, because the tracker
+has no label to give it. As with `pr-create`, each `create` entry substituting `<category>`
+says in its notes what an empty value drops, and the caller applies the note. Both shipped
+GitHub routes' notes say it, so a `create` copied from either needs no edit under `none`.
 
 `<path>` is always a file. A tracker CLI that takes body text on the command line mangles
 backticks and fenced blocks through the shell, so an operation that cannot read a file
