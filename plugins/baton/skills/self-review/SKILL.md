@@ -50,7 +50,7 @@ cat ${CLAUDE_PLUGIN_ROOT}/reference/reviewing-run-output.md
 ```
 
 Its provenance section, on whose code this is, holds from here on, its "Red flags" are the
-checks to run on every judgement below, and Steps 0 and 1 name where its other two sections
+checks to run on every judgement below, and Steps 0, 1 and 2 name where its other two sections
 apply.
 
 ## Step 0 - Collect the review threads
@@ -93,7 +93,9 @@ With a pull request open, read its body from Step 0's `pr-view` output and colle
 
 Standing findings sit under no fixed heading. `baton:implement-handoff` writes each one with
 its severity and the reason it stands, so collect them by that content wherever in the body
-they appear. With no pull request there is no body, and this step collects nothing.
+they appear. A standing finding Step 1's `code-review` also returned is one item, not two: it
+is ruled on here and listed only in this step's group at the gate. With no pull request there
+is no body, and this step collects nothing.
 
 Rule on each item at the reviewed head, by its kind:
 
@@ -101,7 +103,8 @@ Rule on each item at the reviewed head, by its kind:
   result. It passes or fails.
 - **A claim:** probe it against the code. It holds or is false.
 - **A finding:** rule on its merits, as the reference's "Checking the threads" rules on a
-  thread, giving the run's stated reason no weight. It stands or does not hold. Decide its
+  thread, giving the run's stated reason and severity no weight. It stands or does not hold,
+  and one that stands takes a severity from the reference's "Severity" table. Decide its
   scope the same way, against the pull request's diff and the handoff rather than the reason
   the body gives: a finding in code the diff does not change is outside the handoff's scope.
 
@@ -131,7 +134,8 @@ Separating the dispositions from the findings is a matter of presentation, not o
 a re-opened finding the user approves is applied in Step 4 the same way.
 
 In a third group, kept apart from both, list one row per item Step 2 collected: its kind, its
-verdict, the evidence that settled it, and the proposed action.
+verdict - with its severity, for a finding that stands - the evidence that settled it, and the
+proposed action.
 
 | Item and verdict | Proposed action |
 |---|---|
@@ -187,9 +191,11 @@ never about these lines.
 Step 2 closed every open item, so none of them is carried. The rewritten body has no
 `## Not verified here` heading, no `## Unverified claims` heading and no standing finding
 within the handoff's scope. A false claim the user chose to correct in the body is written in
-its corrected form, and a finding the user filed leaves the body. The only findings left in it
-are those outside the handoff's scope that the user chose to keep, each with its severity and
-reason.
+its corrected form, and a finding the user filed leaves the body. A check that failed and was
+not fixed is no longer unverified: the body states it as a known failure, with the evidence
+Step 2 found, rather than dropping it. The only findings left in the body are those outside
+the handoff's scope that the user chose to keep, each with the severity and reason Step 2
+settled rather than the ones the run wrote.
 
 When the user declines the push, say what that leaves undone rather than moving on.
 
