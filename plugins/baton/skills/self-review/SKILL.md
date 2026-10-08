@@ -50,8 +50,8 @@ cat ${CLAUDE_PLUGIN_ROOT}/reference/reviewing-run-output.md
 ```
 
 Its provenance section, on whose code this is, holds from here on, its "Red flags" are the
-checks to run on every judgement below, and Steps 0, 1 and 2 name where each of its other
-sections applies.
+checks to run on every judgement below, and Steps 0, 1 and 2 name where its thread and severity
+sections apply.
 
 ## Step 0 - Collect the review threads
 
@@ -93,9 +93,10 @@ With a pull request open, read its body from Step 0's `pr-view` output and colle
 
 Standing findings sit under no fixed heading. `baton:implement-handoff` writes each one with
 its severity and the reason it stands, so collect them by that content wherever in the body
-they appear. A standing finding that Step 1's `code-review` also returned, or that a thread
-Step 0 collected also raises - the same defect at the same place - is one item, not two: it is
-ruled on here and listed only in this step's group at the gate. With no pull request there
+they appear. A standing finding that Step 1's `code-review` also returned - the same defect at
+the same place - is one item, not two: it is ruled on here and listed only in this step's group
+at the gate. A thread Step 0 collected keeps its own disposition row even where it raises a
+standing finding, and that finding's row here names the thread. With no pull request there
 is no body, and this step collects nothing.
 
 Rule on each item at the reviewed head, by its kind:
@@ -146,7 +147,8 @@ action.
 | a finding that stands outside the handoff's scope | none - the verdict alone |
 
 A standing finding outside the handoff's scope is the user's to decide, one finding at a time:
-keep it in the body with its severity and reason, file it with `baton:file-issue`, or whatever
+keep it in the body with the severity and evidence Step 2 settled, file it with
+`baton:file-issue`, or whatever
 else they say. This skill sets no default for it and never decides for them, so its row
 proposes nothing.
 
@@ -195,7 +197,8 @@ within the handoff's scope. A false claim the user chose to correct in the body 
 its corrected form, and a finding the user filed leaves the body. A check that failed and was
 not fixed is no longer unverified: the body states it among its known gaps as a known failure,
 with the evidence Step 2 found, rather than dropping it. A false claim the user neither fixed
-nor chose to correct is still never restated as true: it leaves the body. The only findings
+nor chose to correct is never restated as true: the body states it among its known gaps in its
+corrected form. The only findings
 left in the body are those outside the handoff's scope that the user chose to keep, each with
 the severity and evidence Step 2 settled rather than the severity and reason the run wrote.
 
