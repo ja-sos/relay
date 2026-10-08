@@ -408,7 +408,7 @@ second. The backend's notes say which, and a caller that gets the second form ru
 operation once per row of `## Categories`. Either way `file-issue` Step 1 asks the same
 question: is a category from that table missing from the tracker.
 
-The third form, since baton 0.1.18, is `none`, for a tracker that carries no labels at all.
+The third form, since baton 0.1.19, is `none`, for a tracker that carries no labels at all.
 An earlier baton reads it as undefined and stops. There is no category to find missing, so
 `file-issue` Step 1 runs no category check and `baton:setup` Step 4 reports the operation as
 skipped. An entry that prints the `## Categories` labels back is not a substitute: it passes
@@ -418,11 +418,10 @@ row per finding and take the body headings from it. The pick is not stored on th
 a handoff for such an issue carries no `category` line and its pull request opens unlabelled.
 Only an explicit `none` takes this path - a `list-categories` left undefined is still a stop.
 
-Under `none` the backend's `create` must not send a label either: write it without
-`<category>`, which the check table allows, since it requires a placeholder spelled correctly
-rather than used. Both shipped GitHub routes label with `<category>`, so a `create` copied from
-either has to drop it first. `baton:setup` Step 3 and `file-issue` Step 1 each read `create`
-for it, since no read-only operation would surface it before the write.
+Under `none`, `file-issue` Step 5 runs `create` with `<category>` empty, because the tracker
+has no label to give it. As with `pr-create`, each `create` entry substituting `<category>`
+says in its notes what an empty value drops, and the caller applies the note. Both shipped
+GitHub routes' notes say it, so a `create` copied from either needs no edit under `none`.
 
 `<path>` is always a file. A tracker CLI that takes body text on the command line mangles
 backticks and fenced blocks through the shell, so an operation that cannot read a file

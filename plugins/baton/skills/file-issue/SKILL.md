@@ -59,10 +59,8 @@ from what `list-categories` returns, or comes back not-found from its own run. N
 one.
 
 Where `list-categories` is `none`, the tracker carries no labels, so there is no missing
-category to stop on. Read the loaded `create` entry instead - every line of it - and stop
-where it carries `<category>`: it would send a label the tracker does not have, and only after
-the user approved the filing. Only an explicit `none` does this - a `list-categories` the
-backend does not define is a stop, as every undefined operation is.
+category to stop on. Only an explicit `none` does this - a `list-categories` the backend does
+not define is a stop, as every undefined operation is.
 
 ## Step 2 - Split
 
@@ -109,6 +107,8 @@ Issues are public on creation and close rather than disappear.
 
 On approval, run `create` per issue. It takes `<path>`, never body text: an argument
 carrying the body inline mangles backticks, headings and fenced blocks through the shell.
+Where `list-categories` is `none`, pass `<category>` empty - the tracker has no label to give
+it - and apply what the backend's notes on its own `create` say an empty value drops.
 
 ## Done
 

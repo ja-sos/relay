@@ -38,6 +38,9 @@ it carries a limit too.
 `list-categories` returns every label here, rather than answering for one `<category>` at a
 time as it does over the MCP tools. Step 1 reads both forms the same way.
 
+`create` drops `--label "<category>"` where `<category>` is empty, as `file-issue` passes it
+under a `list-categories` of `none`, and runs the rest of the command as written.
+
 `list-mine` carries `--search "sort:created-asc"` because `gh issue list` defaults to
 newest first, and the first issue it returns is the one `next-issue` picks up: oldest
 assigned issue first, matching the MCP route's `"direction": "ASC"`.

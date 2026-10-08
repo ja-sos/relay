@@ -72,13 +72,9 @@ grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-update\|cl
 - FAIL: fewer. Add the missing operations before Step 4.
 
 A tracker that carries no labels gets `- **list-categories:** none` rather than an entry that
-prints the `## Categories` labels back, and a `create` that sends no label. Both shipped
-routes' `create` passes `<category>`, so one copied from either has to drop it, and Step 4
-never runs `create` to find out. Read the `create` entry whole - every line of a fenced block,
-every bullet of a nested list - in whichever file defines it.
-
-- PASS: `list-categories` is not `none`, or `create` carries no `<category>`.
-- FAIL: `list-categories` is `none` and `create` carries `<category>`. Remove it before Step 4.
+prints the `## Categories` labels back. Under it, `file-issue` runs `create` with `<category>`
+empty, so a `create` that substitutes it carries a note saying what an empty value drops, as
+both shipped routes' notes do.
 
 `## Workflow` is the sixth section and stays out of the file unless the user asks for a step
 its defaults do not give - a ticket moved to in-progress when implementation starts, a
