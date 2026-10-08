@@ -47,8 +47,11 @@ not define - an improvised equivalent writes to a tracker the project did not ch
 ## Where the opening turn came from
 
 A launcher usually starts this session, so the opening turn is often machine-generated even
-though the harness presents it exactly like a developer's own words. Only the handoff locator
-in it binds. Anything else it carries has the authority of the handoff section it was copied
+though the harness presents it exactly like a developer's own words. Two things in it bind: the
+handoff locator, and `launcher=<name>` after it where it is present - the `## Launcher` entry
+that started this run, which every shipped entry appends. A turn with no `launcher=` was
+started by hand, and reads as `launcher=local`. Step 7 launches the reviewer through that same
+entry. Anything else the turn carries has the authority of the handoff section it was copied
 from, and an optional section stays optional however the turn phrases it.
 
 The session that wrote the handoff read this repo from elsewhere and ran none of its tests, so
@@ -75,9 +78,11 @@ unasked does not cover the run. These need no confirmation:
   below, which belongs to another handoff, so it is named here rather than covered by
   `pr-create`: the header asking for a stacked base is the authorization to register the
   layer in that stack.
-- The `## Launcher` entry the header's `next` names, run once at Step 7. That line is the
-  authorization to start the layer above, given ahead of the run by whoever wrote the
-  handoff.
+- The `## Launcher` entry `launcher=` names, run once at Step 7 to start
+  `/baton:review-handoff <locator> <pr-url>` on the pull request Step 5 opened. Every pull
+  request this skill opens gets that review, so the skill's invocation is the authorization.
+  The header's `next` is not launched here: the reviewer carries it, so the layer above
+  branches from the reviewed tip rather than from one a later fix moves.
 - Dispatching the subagents this run needs - Step 4's claim audit, that same audit over Step
   2's no-change evidence, and a reviewer an `agent:` entry names. They read and report;
   nothing they return reaches the tracker or the forge except through a step above.
@@ -118,7 +123,7 @@ stop:
 |---|---|
 | `category` | `<category>` is empty |
 | `pr-base` | `<pr-base>` is `<default-branch>`, and the branch is cut from `<base>` |
-| `next` | Step 7 launches nothing |
+| `next` | the reviewer Step 7 launches starts no layer above |
 | `assets` | nothing is resolved, and no `## Assets` section is needed anywhere |
 
 A handoff with a `pr-base` line is a stop where the loaded `pr-create` entry never contains
@@ -186,9 +191,11 @@ after `EnterWorktree` leaves a worktree standing. Resolve it only where the head
 `pr-base`, since that is the only case Step 5 calls it in: a project whose `## Forge`
 override predates the operation keeps running single-layer handoffs.
 
-Where the header carries `next`, resolve the `## Launcher` entry its first value names
-against the same loaded files. A name no loaded file defines is a stop here: Step 7 runs that
-entry only after the pull request is open and the worktree removed.
+Resolve the `## Launcher` entry `launcher=` names - `local` where the opening turn carried
+none - and, where the header carries `next`, the entry its first value names, against the same
+loaded files. Stop where no loaded file defines either one. Step 7 launches the reviewer
+through the first, and the reviewer launches the second; a name that cannot launch is
+cheapest caught here, before anything is built.
 
 The locator also fixes which repository this run's tracker calls address, for the whole run.
 One investigation can record a handoff per repository a change spans, so the issue driving
@@ -407,7 +414,7 @@ the stop lands anyway, two steps later and with a branch to explain. Stop here i
 the evidence gathered so far in the report, so a person can judge the close by hand.
 
 On the exit the run pushes nothing, opens no pull request, runs no `started`, launches no
-`next`, and closes nothing - closing stays with `baton:investigate-issue` Step 2, on the user's
+reviewer, and closes nothing - closing stays with `baton:investigate-issue` Step 2, on the user's
 approval. It does three things, in this order.
 
 **First the worktree**, because the report names its path wherever it still stands and so
@@ -508,8 +515,8 @@ there updates `FETCH_HEAD` and creates no `origin/<pr-base>` for the next two li
 The explicit destination creates it in a narrowed clone and in a wildcard one alike.
 
 Either of the first two exiting non-zero is a stop. A failed fetch means the layer below has
-not pushed `<pr-base>` yet, so this run was started out of order - the launch at Step 7 of the
-layer below is what starts this one. A failed ancestor check means `<pr-base>` is not the
+not pushed `<pr-base>` yet, so this run was started out of order - the `next` launch of the
+layer below's reviewer, `baton:review-handoff`, is what starts this one. A failed ancestor check means `<pr-base>` is not the
 branch the plan was formed on top of, whatever its name says, and the `file:line` citations in
 the handoff resolve against a history that branch does not carry.
 
@@ -521,7 +528,8 @@ The third exiting non-zero because `<branch>` already exists is neither a stop n
 run it again with `<branch>-<6 hex>`, six fresh characters from the command above, until one
 succeeds. From there `<branch>` means the name that succeeded - Step 5 pushes it, Step 7
 fetches it, and Step 5's body and Step 7's report both name it beside the name the handoff
-asked for. Step 7 also stops launching `next` when that happens, for the reason given there.
+asked for. The reviewer Step 7 launches holds `next` back when that happens, because the
+layer above names `<branch>` as its `pr-base`.
 
 Build on the existing branch only where the handoff says to.
 
@@ -577,20 +585,15 @@ neither placeholder in its prompt and ignores both.
 
 ### Severity
 
-The loop needs a severity the stopping rule can read, and `code-review` resolves to whatever
-engine the project named, on whatever scale that engine uses. So the run classifies every
-finding itself, against this table, before deciding anything. Where an engine attaches a
-severity of its own, it is evidence about the finding and not the answer: map it onto a row
-here, and where it maps onto none, class the finding from what it says.
+Load the severity and disposition scales this run shares with its reviewer:
 
-| Severity | The finding says |
-|---|---|
-| Critical | The change is wrong or unsafe as written - a defect this diff introduces, a security hole, data loss, or a contradiction of an acceptance criterion the handoff set. |
-| Important | The change works, and a reviewer would still send it back - a case it fails to handle, a statement in code or docs it leaves false, a missing test for behaviour the handoff names. |
-| Minor | Everything else - style, naming, a cleanup in code this diff did not touch. |
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/reviewing-run-output.md
+```
 
-Severity is about the finding, not about how hard it is to fix. A Critical finding the run
-cannot fix stays Critical and goes in the body as one.
+Classify every finding against its "Severity" section before deciding anything about it. Its
+"Severity" and "Dispositions" sections apply to this run; every other section there governs a
+review of this run's output by another session, and none of it applies here.
 
 ### The loop
 
@@ -858,23 +861,20 @@ exists nowhere but that directory.
 sends it down the `keep` path. That is the right way to be wrong: the same output is also
 how a source file the run wrote but never added looks, and `remove` cannot be undone.
 
-Then launch the layer above, where the header carries `next` and **both checks above
-passed**. Split the line at its space: the first value names a `## Launcher` entry the
-backend defines, and the second is the locator to substitute into it, for the `<locator>` or
-`<comment url>` placeholder that entry carries. A first value naming no entry this backend
-defines is undefined, and undefined is a stop.
+Then launch the reviewer, where **both checks above passed**: run the `## Launcher` entry
+Step 1 resolved from `launcher=`, with `review-handoff` as its `<skill>` and
+`<locator> <pr-url>` as its `<args>` - the handoff locator this session opened with and the
+pull request URL Step 5 returned. The URL is passed rather than derived from the header's
+`branch`, because Step 2 may have cut `<branch>-<6 hex>` instead.
 
-Run it **once, with no retry**, whatever it returns. Two runs on one branch race: both cut
-the same branch name, the second takes a suffix at Step 2, and the stack gains a layer nobody
-asked for. A launch that fails is reported rather than repeated.
+Run it **once, with no retry**, whatever it returns. Two reviewers on one pull request race to
+push to the same branch, and a launch that fails is reported rather than repeated.
 
-Two things hold it back, and neither is a stop:
+Either check above failing holds it back, and is not a stop: `origin` does not hold this
+branch's work, so the reviewer would review a tree other than the one in that directory.
 
-- **Either check above failed.** `origin` does not hold this layer's work, so the run above
-  would branch from a `pr-base` missing the commits it builds on.
-- **Step 2 renamed the branch.** `<branch>` already existed, so this layer sits on
-  `<branch>-<6 hex>` while the next layer's `pr-base` still names `<branch>` - a branch
-  holding somebody else's work. Launching would stack the layer above onto the wrong history.
+The header's `next` is not launched here. `baton:review-handoff` launches it after its own
+push, so the layer above branches from the reviewed tip.
 
 Then run `published` once per issue the header names, in header order, each with that issue's
 id, the pull request URL from Step 5, and the same one file written under
@@ -892,31 +892,17 @@ describes: the report names the issue it failed on and the ones after it as not 
 the pull request stays open and unaffected.
 
 Where the header carried `pr-base`, that file names the branch the pull request opens
-against and whether `stack-link` ran or is `none`. Where it carried `next`, it records the
-launch: the entry run and what it returned, or, when one of the two conditions above held
-it back, which one - naming both branch names on a rename, and the locator that went
-unlaunched either way. That locator is how a person resumes the stack by hand.
+against and whether `stack-link` ran or is `none`. It records the reviewer launch: the entry
+run and what it returned, or which of the two checks above held it back. Where the header carried
+`next`, it says the reviewer carries that launch - naming both branch names on a rename,
+where the reviewer will hold it back - and, where the reviewer launch was held back or failed,
+quotes the `next` locator as unlaunched. That locator is how a person resumes the stack by
+hand.
 
 That file also carries every review finding the run collected: every round of Step 4's loop,
 both the loop before Step 5's push and the one Step 6 item 6 runs over the reviewer's fixes,
 and, where Step 6 ran, every finding its reviewer round collected including the ones judged
-not to hold. Each carries one disposition:
-
-| Disposition | The finding | Carries |
-|---|---|---|
-| applied | is fixed on the branch | nothing further |
-| rejected | does not hold, or contradicts a decision the handoff recorded | which of the two, and why |
-| deferred | holds, and its fix is outside the handoff's scope or costs more than it is worth | what it waits on, or why it was left |
-| unresolved | needs an answer nobody here could give | what blocks the call |
-
-Step 4's three reasons for a finding the run cannot fix map onto these: outside the handoff's
-scope is deferred, contradicts a decision the handoff recorded is rejected, needs an answer
-nobody here can give is unresolved. The two judgements a round makes on its own take the
-remaining shapes - a finding read and found not to hold is rejected, a Minor one the loop
-chose to leave is deferred - so neither reaches the reader as silence. Every disposition but
-applied carries its reason, and every finding carries the severity Step 4 gave it: an
-unresolved Critical and a Minor left alone are different news. A finding the loop applied and
-a later round reopened takes the disposition it ends on.
+not to hold. Each carries one disposition from the reference's "Dispositions" section.
 
 Where the pull request body, as Step 5 or Step 6 last wrote it, carries a `## Not verified
 here` heading, that file also says checks wait there for a person to run; where it carries
@@ -950,7 +936,8 @@ uses:
 
 **Step 2's no-change exit borrows this shape and is not a stop.** It runs `stopped` over the
 header's issues exactly as the before-Step-5 shape does - one Run report, the same per-issue
-walk, the same failure shape part-way through that list, the same locator it did not launch.
+walk, the same failure shape part-way through that list, the same `next` locator quoted as
+unlaunched.
 Two things differ. Its file opens with the obsolete marker rather than with a step and a
 blocker; and it settles its own worktree on the two checks Step 2 gives it, rather than leaving
 it standing as every stop below does - a stop is where work sits unpushed, and that exit wrote
@@ -986,14 +973,14 @@ mark it unresolved, with what stopped the run as what blocks the call. A
 stop before Step 4 has collected no findings and says nothing about them. This is required
 content under any contract loaded for **Run report**, the same as Step 7's.
 
-**A stop before Step 7's launch never launches `next`, and the `stopped` file carries the
-locator it did not launch.** A stop there strands every layer above it, and a stop runs
-`stopped` rather than `published`, so this file is the only place that locator reaches
-anyone. Name it, and say the layer above was not started.
+**A stop before Step 7's launch never launches the reviewer, and the `stopped` file says
+so.** With no reviewer, nothing carries `next` either: where the header has one, the file
+quotes its locator as unlaunched and says the layer above was not started. A stop strands
+every layer above it, and this file is the only place that locator reaches anyone.
 
-**A stop after the launch ran - a failed `published` - says the layer above was started.**
-Name the entry run and what it returned, and do not present the locator as unlaunched: a
-person who starts that layer again puts two runs on one branch, the race Step 7 names.
+**A stop after the launch ran - a failed `published` - says the reviewer was started.** Name
+the entry run and what it returned, and do not present the `next` locator as unlaunched: the
+reviewer carries it, and a person who starts that layer as well puts two runs on one branch.
 
 No stop calls `ExitWorktree`. A stop is where work sits unpushed, and Step 7's two checks
 are the only thing that establishes it does not. The `stopped` file names the worktree path
@@ -1016,6 +1003,6 @@ Name every issue the header carried and what reached it: the reference line it g
 body, or that it got none under a `none` entry, and whether `started`, `published` or
 `stopped` ran on it. An issue the report leaves out is one nobody knows to check.
 
-A handoff carrying `next` reports the launch too, in whichever form Step 7 recorded it. The
-run above is a separate session: this one does not wait for it, watch it, or report anything
-about how it went.
+Report the reviewer launch too, in whichever form Step 7 recorded it, and where the header
+carries `next`, that the reviewer carries it. The reviewer is a separate session: this one does
+not wait for it, watch it, or report anything about how it went.

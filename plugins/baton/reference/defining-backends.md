@@ -31,22 +31,28 @@ unattended run must use goes in `.claude/baton.md`.
 | `## Categories` | the condition-to-label table `file-issue` picks from |
 | `## Forge` | checkout verification, pull requests, stack registration, closing keywords |
 | `## Review` | collecting review feedback on a pull request, and answering it |
-| `## Launcher` | how `investigate-issue` starts an implementation run |
+| `## Launcher` | how an implementation run, and the review of its pull request, are started |
 | `## Workflow` | the steps the skills run around the work: posting and finding handoffs, reviewing, publishing |
 | `## Repositories` | local paths of the repositories one change spans, for the `local` launcher and the `base` check. Optional |
 | `## Assets` | the local root of the one folder outside every repository that a handoff's `assets` line names paths under. Optional |
 
-Every `## Launcher` entry sends one prompt, `/baton:implement-handoff <locator>`. A
-run reads the handoff and nothing the starting session holds, so an entry that passes
-context instead of that locator starts a session with no work to do. Passing context
-*beside* the locator fails the other way: the prompt arrives as a user turn, so a
-suggestion copied into it outranks the handoff section it was copied from.
+Every `## Launcher` entry launches one of two skills, and takes two placeholders: `<skill>`,
+`implement-handoff` or `review-handoff`, and `<args>`, what that skill is started with - the
+handoff locator for `implement-handoff`, and the locator and the pull request URL,
+`<locator> <pr-url>`, for `review-handoff`. Every entry sends `/baton:<skill> <args>` and
+appends `launcher=<its own name>`, so the run knows which entry started it. A run reads the
+handoff and nothing the starting session holds, so an entry that passes context instead of
+those arguments starts a session with no work to do. Passing context *beside* them fails the
+other way: the prompt arrives as a user turn, so a suggestion copied into it outranks the
+handoff section it was copied from.
 
-Two callers reach these entries by name. `investigate-issue` Step 6 asks a person which to
-use; `implement-handoff` Step 7 takes the name from the finishing handoff's `next` line and
-runs it unasked, to start the layer above in a stack. So an entry has to be runnable from
-inside an unattended run of the very skill it launches - which is what the tool list below
-is about.
+Three callers reach these entries by name. `investigate-issue` Step 6 asks a person which to
+use and launches `implement-handoff`. `implement-handoff` Step 7 launches `review-handoff` on
+the pull request it opened, unasked, through the entry its own `launcher=` names - `local`
+where its opening turn carried none. `review-handoff` Step 6 takes the name from the handoff's
+`next` line and launches `implement-handoff` for the layer above in a stack, unasked, after its
+own push. So an entry has to be runnable from inside an unattended run of either skill - which
+is what the tool list below is about.
 
 `## Repositories` is optional, as `## Workflow` is, and was added in baton 0.1.11. It maps
 each repository a change spans to an absolute local path:
@@ -235,31 +241,32 @@ same, because what they reference is the issue rather than the pull request.
 | `create` | `file-issue` Step 5 | `<title>` `<category>` `<path>` |
 | `view` | `investigate-issue` Step 1 | `<id>` |
 | `close-fixed` / `close-invalid` | `investigate-issue` Step 2; whether `close-fixed` is `none` is also read by `investigate-issue` Step 1 and `next-issue` Steps 2 and 3 | `<id>` |
-| `comment` | the `## Workflow` defaults of `post-handoff`, `published` and `stopped` | `<id>` `<path>` |
-| `fetch-handoff` | `implement-handoff` Step 1 | `<owner>` `<repo>` `<id>` `<comment-id>` `<locator>` |
+| `comment` | the `## Workflow` defaults of `post-handoff`, `published`, `reviewed` and `stopped` | `<id>` `<path>` |
+| `fetch-handoff` | `implement-handoff` Step 1, `review-handoff` Step 1 | `<owner>` `<repo>` `<id>` `<comment-id>` `<locator>` |
 | `reachable` | `implement-handoff` Step 1 | - |
-| `verify-checkout` | `implement-handoff` Step 1 | - |
+| `verify-checkout` | `implement-handoff` Step 1, `review-handoff` Step 1 | - |
 | `pr-create` | `implement-handoff` Step 5 | `<title>` `<path>` `<category>` `<pr-base>` |
 | `stack-link` | `implement-handoff` Step 5 | `<id>` `<pr-url>` `<pr-base>` |
-| `pr-view` | `self-review` Step 0, `review-pr` Step 1, `address-review` Step 1 | `<id>` |
-| `pr-update` | `self-review` Step 4, `address-review` Step 5, `implement-handoff` Step 6 | `<id>` `<path>` |
+| `pr-view` | `self-review` Step 0, `review-pr` Step 1, `address-review` Step 1, `review-handoff` Step 1 | `<id>` |
+| `pr-update` | `self-review` Step 4, `address-review` Step 5, `implement-handoff` Step 6, `review-handoff` Step 5 | `<id>` `<path>` |
 | `review-list` | `review-pr` Step 4, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
 | `review-post` | `review-pr` Step 4 | `<owner>` `<repo>` `<id>` `<path>` |
 | `review-bodies` | `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
 | `pr-comments` | `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
-| `review-threads` | `self-review` Step 0, `address-review` Step 2, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` |
+| `review-threads` | `self-review` Step 0, `address-review` Step 2, `implement-handoff` Step 6, `review-handoff` Step 3 | `<owner>` `<repo>` `<id>` |
 | `thread-reply` | `address-review` Step 5, `implement-handoff` Step 6 | `<owner>` `<repo>` `<id>` `<comment-id>` `<path>` |
 | `pr-comment` | `address-review` Step 5, `implement-handoff` Step 6 | `<id>` `<path>` |
 | `closes` / `refs` | `implement-handoff` Step 5 | `<owner>` `<repo>` `<id>` |
 | `post-handoff` | `write-handoff` Step 1 | `<id>` `<path>` |
 | `has-handoff` | `next-issue` Step 2, `investigate-issue` Step 1 | `<id>` |
 | `started` | `implement-handoff` Step 2 | `<id>` |
-| `verify` | `implement-handoff` Steps 3, 4 and 6 | - |
-| `code-review` | `implement-handoff` Steps 4 and 6, `review-pr` Step 2, `self-review` Step 1 | `<target>` `<locator>` |
+| `verify` | `implement-handoff` Steps 3, 4 and 6, `review-handoff` Steps 3 and 4 | - |
+| `code-review` | `implement-handoff` Steps 4 and 6, `review-handoff` Step 3, `review-pr` Step 2, `self-review` Step 1 | `<target>` `<locator>` |
 | `request-reviewer` | `implement-handoff` Step 6 | `<id>` |
 | `review-wait` | `implement-handoff` Step 6 | - |
 | `published` | `implement-handoff` Step 7 | `<id>` `<path>` `<pr-url>` |
-| `stopped` | `implement-handoff` stop path and Step 2's no-change exit | `<id>` `<path>` |
+| `reviewed` | `review-handoff` Step 6 | `<id>` `<path>` `<pr-url>` |
+| `stopped` | `implement-handoff` stop path and Step 2's no-change exit, `review-handoff` stop path | `<id>` `<path>` |
 | `wrap-up` | `investigate-issue` Step 2 or 6, `review-pr` Step 5, `address-review` Done, `self-review` Step 4 | `<skill>` `<id>` `<pr-url>` `<head-branch>` |
 
 `pr-create` takes two values beyond the title and the body, both from the handoff's header
@@ -301,13 +308,13 @@ in `.claude/baton.md` or `~/.claude/baton.md` without the operation already stop
 `address-review` and `implement-handoff`, and from 0.1.14 it stops `self-review` as well. Add
 the entry; there is no degraded mode that reviews a branch without its threads.
 
-The last ten are `## Workflow`, and the shipped defaults of `post-handoff`, `published`
-and `stopped` are `op: comment <id> <path>` - so a backend that has overridden `## Tracker`
-for Jira posts all three to Jira without naming them at all.
+The last eleven are `## Workflow`, and the shipped defaults of `post-handoff`, `published`,
+`reviewed` and `stopped` are `op: comment <id> <path>` - so a backend that has overridden
+`## Tracker` for Jira posts all four to Jira without naming them at all.
 
-Four of those operations run **once per issue the handoff's header names**, never once with a
-list: `post-handoff` at `write-handoff` Step 1, and `started`, `published` and `stopped` in
-`implement-handoff`. A handoff's `issue` line became a space-separated list in baton 0.1.12,
+Five of those operations run **once per issue the handoff's header names**, never once with a
+list: `post-handoff` at `write-handoff` Step 1, `started`, `published` and `stopped` in
+`implement-handoff`, and `reviewed` and `stopped` in `review-handoff`. A handoff's `issue` line became a space-separated list in baton 0.1.12,
 paired positionally with `closes`; a header naming one issue calls each of them once, exactly
 as every header did before. So `<id>` is always a single issue whatever the header holds, and
 no entry - a shell command, a `tool:` JSON body, an `op:` - needs anything added to handle a
@@ -352,10 +359,14 @@ leaves everything it already published in place and does not retry.
 before a push. It takes no placeholders: what it checks is the whole repo, not this
 change, which is what the handoff's own commands cover.
 
-`stack-link` is the same shape of addition to `## Forge`, in baton 0.1.10. A section written
-before it leaves the operation undefined, and `implement-handoff` stops at Step 1 - but only
-on a handoff whose header carries `pr-base`, because that is the only case the run resolves
-it in. Add `- **stack-link:**      none`, or the entry the project's forge registers a stack
+`reviewed` is the eleventh. It is kept apart from `published` so that a `published` moving a
+ticket's status does not move it again when the review finishes; an entry that moves a ticket
+belongs in `published`, and `reviewed` says what the review did.
+
+`stack-link` is the same shape of addition as `started` and `verify`, made to `## Forge` in
+baton 0.1.10. A section written before it leaves the operation undefined, and
+`implement-handoff` stops at Step 1 - but only on a handoff whose header carries `pr-base`,
+because that is the only case the run resolves it in. Add `- **stack-link:**      none`, or the entry the project's forge registers a stack
 with. Two more edits belong to the same upgrade and neither errors when skipped, which is why
 they are named here:
 
@@ -392,7 +403,8 @@ close. An entry that cannot return comment text is one to leave at the default `
 
 `code-review` substitutes two placeholders. `<target>` is what to review - a pull request
 number, a branch, or empty for the working tree. `<locator>` is the handoff the work came
-from: `implement-handoff` Step 4 fills it with the locator its run opened with, while
+from: `implement-handoff` Step 4 and `review-handoff` Step 3 fill it with the locator their
+run opened with, while
 `review-pr` Step 2 and `self-review` Step 1 pass it empty, having none. An entry whose prompt
 checks acceptance criteria reads them from the handoff at `<locator>` where one is given;
 where it is empty, that entry has no criteria to read and says so rather than inventing them.
@@ -455,8 +467,8 @@ them. The shipped defaults are the template to copy from:
 `reference/backend-github-gh.md` for one reached through a CLI.
 
 Turning the review round on, and logging time after the pull request is published. All
-ten `## Workflow` operations are restated, because the heading replaces the section
-whole and the seven left at their defaults would otherwise be undefined:
+eleven `## Workflow` operations are restated, because the heading replaces the section
+whole and the eight left at their defaults would otherwise be undefined:
 
 ```markdown
 ## Workflow
@@ -471,6 +483,7 @@ whole and the seven left at their defaults would otherwise be undefined:
 - **published:**
   - op: comment <id> <path>
   - tool: jira_add_worklog {"issueKey": "<id>", "comment": "Shipped <pr-url>"}
+- **reviewed:**         op: comment <id> <path>
 - **stopped:**          op: comment <id> <path>
 - **wrap-up:**          none
 ```
@@ -507,6 +520,7 @@ table:
 - **request-reviewer:** none
 - **review-wait:**      10
 - **published:**        op: comment <id> <path>
+- **reviewed:**         op: comment <id> <path>
 - **stopped:**          op: comment <id> <path>
 - **wrap-up:**          none
 ````
@@ -536,39 +550,51 @@ defaults run through those tools. A cloud run whose `## Launcher` entry's `allow
 held only `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep` and `Skill` loaded `ToolSearch`
 and the GitHub MCP tools it needed, and called them with no permission denial.
 
-`implement-handoff` adds the subagent dispatch tool to that need: Step 4's claim audit
-dispatches a subagent whose context did not write the code, and an `agent:` entry in
-`code-review` dispatches one too. Harness builds differ on that tool's name - `Agent` in some,
+`implement-handoff` and `review-handoff` add the subagent dispatch tool to that need: each
+one's claim audit dispatches a subagent whose context did not write the claims, and an
+`agent:` entry in `code-review` dispatches one too. Harness builds differ on that tool's name - `Agent` in some,
 `Task` in others - so a `## Launcher` entry that names `allowed_tools` at all names both and
 lets a build ignore the name it does not carry. An entry written before baton 0.1.7 names
-neither - add them, or its runs stop at Step 2, which looks for the tool before the build
-rather than leaving Step 4 to discard one. A personal `~/.claude/baton.md` restating
+neither - add them, or `implement-handoff` runs stop at Step 2, which looks for the tool
+before the build rather than leaving Step 4 to discard one, and `review-handoff` runs at
+Step 1. A personal `~/.claude/baton.md` restating
 `## Launcher` carries its own `allowed_tools` and needs the same edit by hand: it lives
 outside every repo, so no update to this plugin reaches it.
 
-`implement-handoff` adds `EnterWorktree` and `ExitWorktree` to that need: Step 2 creates the
-run's worktree and Step 7 removes it. A `## Launcher` entry that names `allowed_tools` at all
+`implement-handoff` and `review-handoff` add `EnterWorktree` and `ExitWorktree` to that need:
+each one's Step 2 creates the run's worktree and its last step - `implement-handoff` Step 7,
+`review-handoff` Step 6 - removes it. A `## Launcher` entry that names `allowed_tools` at all
 names those two, and an entry written before baton 0.1.3 does not - add them to it, or its
-runs stop on a tool they cannot call, at Step 2 or at Step 7. An entry that starts the
+runs stop on a tool they cannot call, at Step 2 or at that last step. An entry that starts the
 session in a worktree already, `claude --worktree` among them, names both as well: Step 2
-skips `EnterWorktree` there, which refuses a second worktree, and Step 7 calls
-`ExitWorktree`, which removes the worktree the launcher created.
+skips `EnterWorktree` there, which refuses a second worktree, and the last step still calls
+`ExitWorktree` - `implement-handoff` to remove the worktree the launcher created,
+`review-handoff` to keep it.
 
 A `cloud` entry adds whatever tool it itself is written with - `RemoteTrigger` on the shipped
-one, added in baton 0.1.10. `implement-handoff` Step 7 runs the entry the finishing handoff's
-`next` names, so a cloud run launching a cloud layer executes those same lines from inside
-the run, and the tool that creates the routine has to be on the list the routine grants. The
-shipped entry is self-consistent; an entry copied into `.claude/baton.md` or
-`~/.claude/baton.md` before 0.1.10 is not, and the layer above never starts.
+one, added in baton 0.1.10. **Every** cloud `implement-handoff` run needs
+it, not only a stacked one: Step 7 launches the reviewer through the entry the run was started
+by, so a cloud run executes those same lines from inside the run on every pull request it
+opens. A cloud `review-handoff` run needs it too, for the layer above that the handoff's `next`
+names. The tool that creates and fires the routines has to be on the list both routines grant.
+The shipped entry is self-consistent; an entry copied into `.claude/baton.md` or
+`~/.claude/baton.md` before 0.1.10 is not, and neither the reviewer nor the layer above ever
+starts.
 
 A `local` entry needs nothing beyond `Bash`, but it starts a session on the machine the
 launching run is on, and that is the constraint a stack's `next` has to be written around.
-Launched from a developer's own checkout it is the cheaper route; launched by
-`implement-handoff` Step 7 from inside a cloud run it puts the layer above in a container
-that is reclaimed when that run ends, and the launch reports success either way because the
-command returns before the session does. So a stack whose layers run in the cloud names
-`cloud` in every `next` line, `local` only where every run is on one long-lived machine, and
-the two are not mixed down a stack.
+Launched from a developer's own checkout it is the cheaper route; launched from inside a cloud
+run - by `review-handoff` Step 6 for a `next` line naming `local`, or by `implement-handoff`
+Step 7 for the reviewer - it puts the new session in a container that is reclaimed when that
+run ends, and the launch reports success either way because the command returns before the
+session does. So a stack whose layers run in the cloud names `cloud` in every `next` line,
+`local` only where every run is on one long-lived machine, and the two are not mixed down a
+stack.
+
+The reviewer launch follows `launcher=`, so a run the shipped `cloud` entry started launches
+its reviewer through `cloud`. The exception is an `implement-handoff` run a person started by
+hand inside a cloud session: its opening turn carries no `launcher=`, which reads as `local`,
+and its reviewer starts in that same container under the constraint above.
 
 The review round runs on either route. Where `review-list` and `pr-comments` are `tool:`
 entries its wait is a background `sleep 60` and the operations run between sleeps; where

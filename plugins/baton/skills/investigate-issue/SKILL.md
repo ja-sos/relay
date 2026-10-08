@@ -209,8 +209,8 @@ its change needs from the repositories below it:
 
 The dependency is between repositories, not between pull requests, so a stack does not
 express it. `pr-base` and `next` chain layers inside one repository, where the layer below is
-a branch the layer above can open against; `next` fires when that layer opens its pull
-request, which is long before any upstream release exists. `write-handoff` Step 2 says the
+a branch the layer above can open against; `next` fires when the reviewer of that layer's pull
+request has pushed, which is long before any upstream release exists. `write-handoff` Step 2 says the
 same from the other side.
 
 Order the repositories by that dependency: contracts before what is built on them. That order
@@ -305,9 +305,11 @@ each would do and create nothing when the answer is none of them. Where Step 5 p
 stack, that question was already asked and answered there; use that answer and ask again for
 nothing.
 
-The entry carries a `<locator>` or a `<comment url>` placeholder; substitute the locator
-Step 5 returned for either one. A launcher that starts with anything else starts a session
-with no handoff to read.
+The entry takes `<skill>` and `<args>`: launch `implement-handoff`, with the locator Step 5
+returned as `<args>`. A launcher that starts with anything else starts a session with no
+handoff to read. The entry appends `launcher=<its name>` itself, and the run launches the
+review of its own pull request through that same entry, so the answer here chooses where the
+reviewer runs as well.
 
 **A handoff carrying `assets` rules `cloud` out, and the report says so.** A cloud run clones
 the repository and never sees `~/.claude/baton.md`, where `## Assets` lives, so the section is
@@ -327,7 +329,8 @@ version that does not exist, and the report is what the developer relaunching it
 from.
 
 **A stack is launched once, at the bottom.** Start the bottom layer alone and nothing else:
-its run opens its pull request, pushes its branch, and launches the layer above through that
+its run opens its pull request, pushes its branch and launches `review-handoff` on that pull
+request, and the reviewer, after its own push, launches the layer above through the bottom
 layer's `next` line, which carries the rest up. Starting a higher layer here starts a run
 whose `pr-base` branch nothing has pushed, and that run stops at its Step 2.
 

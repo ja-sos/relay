@@ -82,19 +82,19 @@ pre-push sequence of the project's own rather than its test command alone, a rev
 requested on every pull request, a worklog after publishing, something logged when an
 attended flow ends, handoffs kept somewhere other than the tracker. Its defaults resolve
 through whatever `## Tracker` this file defines, so a Jira backend posts handoffs to Jira
-without restating them. Written, the section restates all ten of its operations, because a
-`##` heading replaces its section whole.
+without restating them. Written, the section restates all eleven of its operations, because
+a `##` heading replaces its section whole.
 
 ```
-grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|verify\|code-review\|request-reviewer\|review-wait\|published\|stopped\|wrap-up\):\*\*' .claude/baton.md
+grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|verify\|code-review\|request-reviewer\|review-wait\|published\|reviewed\|stopped\|wrap-up\):\*\*' .claude/baton.md
 ```
 
-- PASS: 10, or 0 where the file has no `## Workflow`.
+- PASS: 11, or 0 where the file has no `## Workflow`.
 - FAIL: anything between. Add the missing operations before Step 4. An operation left out is
   undefined rather than defaulted, and the skill that calls it stops - `implement-handoff` at
-  Step 2 in an unattended run. Step 4 cannot catch it, because it never runs the writing
-  operations. `wrap-up` alone is the exception: the four attended skills skip it when it is
-  undefined, but the file restates it all the same.
+  Step 2 in an unattended run, `review-handoff` at Step 1. Step 4 cannot catch it, because it
+  never runs the writing operations. `wrap-up` alone is the exception: the four attended
+  skills skip it when it is undefined, but the file restates it all the same.
 
 `## Repositories` is the seventh section and the second optional one. It stays out of
 `.claude/baton.md` altogether: it maps `owner/repo` to an absolute local path, paths differ per
@@ -207,9 +207,9 @@ Then run `verify-checkout` in each row's path and compare its answer with that r
 list below.
 
 Never verify by running `create`, `comment`, `pr-create`, `stack-link`, `review-post`,
-`post-handoff`, `started`, `published`, `stopped`, `wrap-up` or `request-reviewer`. Each one
-writes to the tracker or the forge - `stack-link` to a pull request belonging to somebody
-else's handoff. Never run `verify` either: a project's sequence may rewrite files in the
+`post-handoff`, `started`, `published`, `reviewed`, `stopped`, `wrap-up` or
+`request-reviewer`. Each one writes to the tracker or the forge - `stack-link` to a pull
+request belonging to somebody else's handoff. Never run `verify` either: a project's sequence may rewrite files in the
 user's checkout.
 
 ## Step 5 - Offer document types

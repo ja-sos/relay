@@ -1,6 +1,6 @@
 # baton
 
-Eleven Claude Code skills that carry one unit of work from a tracker issue to a reviewed pull
+Twelve Claude Code skills that carry one unit of work from a tracker issue to a reviewed pull
 request, across sessions that share no context. Every document any of them writes passes an
 editing gate before it ships.
 
@@ -34,6 +34,7 @@ Each is invocable as `/baton:<name>`, and each also fires on its own description
 | `investigate-issue` | an issue needs a cause and an approach before code is written |
 | `write-handoff` | work has to continue in a session that starts cold |
 | `implement-handoff` | a handoff is ready to build, unattended, into a pull request |
+| `review-handoff` | that pull request needs its unattended review - launched by `implement-handoff`, not typed |
 | `self-review` | that unattended run's branch needs checking before anyone else sees it |
 | `review-pr` | someone else's pull request needs reviewing |
 | `address-review` | review feedback has arrived on a pull request you own |
@@ -79,7 +80,8 @@ rather than the work itself: where the handoff is posted and found, what runs wh
 implementation starts, the sequence that verifies the repo before a push, which engine
 reviews, who is asked to review a pull request, what runs once one is published, and what
 runs when an attended flow ends - the last as the `wrap-up` operation `investigate-issue`,
-`review-pr`, `address-review` and `self-review` each call as their final action. Its
+`review-pr`, `address-review` and `self-review` each call as their final action, and what
+runs when `review-handoff` finishes its review, as `reviewed`. Its
 defaults resolve through `## Tracker`, so retargeting the tracker moves them with it.
 
 `## Repositories` is the seventh, and optional as `## Workflow` is: it maps `owner/repo` to an
@@ -107,12 +109,15 @@ in `.claude/doc-types.md` or `~/.claude/doc-types.md`, per
 
 Overriding `Run report` retargets what the tracker receives: `implement-handoff` writes all
 three of its reports under that type - the one it posts on finishing, the one it posts on
-stopping, and the one it posts when HEAD already satisfies the handoff and it builds nothing - so a
-project whose tracker is read by people without code access gives them a reader, an order and
-an emphasis of its own. An override replaces a contract's
-must-include list whole, so it cannot be what keeps a finding in: `implement-handoff` requires
-every review finding with its disposition, and whether a review round ran, from its own Step 7.
-Write an override for the reader and the shape; those stay in under any of them.
+stopping, and the one it posts when HEAD already satisfies the handoff and it builds nothing -
+and `review-handoff` writes both of its own under it too, the one `reviewed` posts when its
+review finishes and the one `stopped` posts when it stops. So a project whose tracker is read
+by people without code access gives them a reader, an order and an emphasis of its own. An
+override replaces a contract's must-include list whole, so it cannot be what keeps a finding
+in: `implement-handoff` requires every review finding with its disposition, and whether a
+review round ran, from its own Step 7, and `review-handoff` requires every finding with its
+disposition and what became of the handoff's `next`, from its own Step 6. Write an override for
+the reader and the shape; those stay in under any of them.
 
 ## Requires
 
@@ -121,10 +126,11 @@ authenticated, which `reference/backend-github-gh.md` runs the same operations t
 repo with an `origin` remote: `write-handoff` refuses to record a base that has not been
 pushed, since the session that reads the handoff clones rather than shares the disk.
 
-A review engine: `self-review`, `review-pr` and `implement-handoff` all run the `code-review`
-operation, whose default is `/code-review`. A project with its own review skill names it there
-and edits none of the three. That entry may also be a nested list, pairing the review skill
-with an `agent:` compliance reviewer that checks the handoff's acceptance criteria.
+A review engine: `self-review`, `review-pr`, `implement-handoff` and `review-handoff` all run
+the `code-review` operation, whose default is `/code-review`. A project with its own review
+skill names it there and edits none of the four. That entry may also be a nested list, pairing
+the review skill with an `agent:` compliance reviewer that checks the handoff's acceptance
+criteria.
 
 ## License
 
