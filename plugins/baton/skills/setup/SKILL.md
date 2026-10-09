@@ -185,11 +185,13 @@ Never verify by running `create`, `comment`, `pr-create`, `stack-link`, `review-
 request belonging to somebody else's handoff. Never run `verify` either: a project's sequence may rewrite files in the
 user's checkout.
 
-## Step 5 - Offer document types
+## Step 5 - Offer document types and an owner map
 
-Offer this once, as optional. Name
+Offer each once, as optional. For document types, name
 `${CLAUDE_PLUGIN_ROOT}/skills/write-deliverables/reference/defining-doc-types.md`, and write a
-contract only for a type the user names.
+contract only for a type the user names. For an owner map, name
+`${CLAUDE_PLUGIN_ROOT}/skills/write-deliverables/reference/defining-owners.md`, and write a row
+only for a fact the user names.
 
 ## Stop
 
