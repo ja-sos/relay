@@ -45,7 +45,7 @@ real credentials on outbound requests. `reachable` is the check that works.
   - gh pr create --draft --title "<title>" --base "<pr-base>" --body-file <path>
   - gh pr edit <pr-url> --add-label "<category>"
 - **stack-link:**      none
-- **pr-view:**         gh pr view <id> --json number,url,body,author,headRefName,headRefOid,isDraft
+- **pr-view:**         gh pr view <id> --json number,url,title,body,author,headRefName,headRefOid,isDraft
 - **pr-update:**       gh pr edit --body-file <path>
 - **closes:**          Closes <owner>/<repo>#<id>
 - **refs:**            Refs <owner>/<repo>#<id>

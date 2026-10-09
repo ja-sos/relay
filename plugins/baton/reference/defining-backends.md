@@ -169,7 +169,7 @@ come from, not which section holds it:
 
 | Placeholder | Value |
 |---|---|
-| `<owner>` `<repo>` on an entry addressing the **issue** - every `## Tracker` entry, the `## Workflow` entries resolving through one, and `closes` / `refs` | the **issue's** repository: the locator's, where a handoff is in play, and `verify-checkout`'s answer split at the slash otherwise |
+| `<owner>` `<repo>` on an entry addressing the **issue** - every `## Tracker` entry, the `## Workflow` entries resolving through one, and `closes` / `refs` | the **issue's** repository: the locator's, where a handoff is in play; for an issue found through a pull request's `closes` or `refs` line, the `<owner>` and `<repo>` that line names; and `verify-checkout`'s answer split at the slash otherwise |
 | `<owner>` `<repo>` on an entry addressing the **pull request or the checkout** - `## Forge` and `## Review` apart from `closes` / `refs`, and `request-reviewer` | the **checkout's** repository: `verify-checkout`'s answer, split at the slash |
 | `<owner>` `<repo>` on a `## Launcher` entry | the **handoff's** `repo` line, split at the slash: the entry starts a run for that repository, in a session that is not in it yet |
 | `<head-owner>` | the owner in `origin`'s URL, printed by the command below |
@@ -319,6 +319,10 @@ what happened and moves nothing, which is what the shipped entry does.
 `has-handoff` returns the text of an issue's comments: callers test it for the handoff marker
 and read what each marker sits in, so a yes/no is not enough. Its default runs `view`; an entry
 that cannot return comment text is one to leave at that default.
+
+`pr-view` returns the pull request's number, author, title, body and head branch.
+`address-review` Step 1 reads the last three to find the issue and handoff the pull request
+delivers, so an entry that drops one of them leaves that lookup with nothing to read.
 
 `code-review` substitutes two placeholders. `<target>` is what to review - a pull request
 number, a branch, or empty for the working tree. `<locator>` is the handoff the work came from,
