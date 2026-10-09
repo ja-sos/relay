@@ -57,36 +57,38 @@ from, where either exists. A review row asking for behaviour the pull request wa
 replace finds that behaviour still in the code wherever the change has not reached yet, so the
 code argues for the row; the spec is what says it was replaced. In order:
 
-1. **The issue.** Match each line of the pull request's body against the backend's `closes`
-   and `refs` entries, with each of their placeholders - `<owner>`, `<repo>` and `<id>` - as
-   a wildcard. An entry set to `none` matches nothing. An issue found through such a line
-   takes that line's `<owner>` and `<repo>` (`defining-backends.md`, the placeholder table).
-   Only where no line of the body matches either entry, take an id from the title - written
-   `#<n>`, and not the pull request's own number - and from the head branch, where its name
-   opens with `<n>-`. Those keep `verify-checkout`'s repository. Run `view` on each issue
-   found.
-2. **The handoff.** Run `has-handoff` on each issue found. Follow every pointer its output
+1. **The issues.** Run `pr-issues` on the pull request. It returns each issue the pull request
+   names, with its repository, and whether the pull request delivers it or only references
+   it; how a pull request names its issues is the backend's to define (`defining-backends.md`).
+   Under `none` no issue is found. Run `view` on each issue returned, in the repository it
+   came with.
+2. **The handoff.** Run `has-handoff` on each issue found; where it resolves to `op: view`, the
+   `view` output already read answers it. Read no issue twice. Follow every pointer its output
    carries - the marker with no fenced header - by running `fetch-handoff` on the locator the
    pointer carries, and add the issue the pointer names to the issues found, running `view`
    and `has-handoff` on it as on any other. An issue can carry a pointer and a handoff of its
    own; collect both. Of the handoffs collected, the binding one is the handoff whose header
    `branch` line equals the pull request's head branch, or, failing that, the head branch
    with a trailing `-<6 hex>` removed - the name `implement-handoff` substitutes where the
-   handoff's branch already existed. Where several match, the one posted last binds: rework
-   is posted as a second handoff rather than an edit to the first. Where none matches, bind
-   none and name every handoff collected in the statement below.
+   handoff's branch already existed. Where several match on one issue, the one appearing last
+   in `has-handoff`'s output binds: rework is posted as a second handoff rather than an edit
+   to the first. Where the matches sit on different issues, bind none: no order across issues
+   is defined. Where none matches and exactly one handoff was collected, it binds, unless it
+   was reached only through an issue the pull request references rather than delivers.
+   Otherwise bind none, and name every handoff collected in the statement below.
 3. **What counts.** Where a handoff binds, the spec is that handoff and the issues its header
    `issue` line names; run `view` on any of those not yet read, in the repository the handoff
    was posted in. Any other issue found is context, named in the statement as not spec: a
-   follow-up `baton:self-review` filed from a finding reaches the body as a `refs` line too.
-   Where none binds, the spec is the issues found through `closes` lines, the title or the
-   branch, and the issues found through `refs` lines only where nothing else was found.
+   follow-up `baton:self-review` filed from a finding is one the pull request references too.
+   Where none binds, the spec is the issues the pull request delivers, or the ones it only
+   references where it delivers none.
 
-A `view` or `fetch-handoff` answering not-found - an id the title or branch suggested that
-names no issue, a pointer to a deleted comment - is that candidate's answer, not a backend
-failure: drop the candidate, name it in the statement, and go on. Any other failure, an access
-denial included, falls under the stop rule above. `has-handoff` can miss a handoff that has
-been delivered; an issue is a spec on its own.
+A `view` or `fetch-handoff` answering not-found - an issue that does not exist, a handoff since
+deleted - is that candidate's answer, not a backend failure: drop the candidate, name it in the
+statement, and go on. Any other failure, an access denial included, falls under the stop rule
+above. A backend can answer not-found for an issue the session cannot read, so the statement
+names a dropped issue as not found or not readable with this session's credentials.
+`has-handoff` can miss a handoff that has been delivered; an issue is a spec on its own.
 
 State the resolved spec - each issue id, and the binding handoff's locator, or the issue it
 sits on where the output carries no address - before collecting anything, so the user can
@@ -111,7 +113,8 @@ The inventory holds exactly the actionable candidates: every distinct ask from a
 every unresolved inline finding. Resolved threads are context for judging related rows, never
 rows themselves, and nothing in them is owed an action or a reply.
 
-Rule on each row against the spec first and the code second:
+Rule on each row against the spec - the issue the pull request delivers and the handoff it
+was built from - first, and the code second:
 
 - A row asking to keep or restore behaviour the spec replaces is not valid, and its verdict
   quotes the passage that replaces it.
@@ -122,8 +125,9 @@ Rule on each row against the spec first and the code second:
 
 The code still decides whether a factual claim about current behaviour holds: the spec says
 what the pull request is for, not what the code does. Where the pull request's body records a
-deviation from the spec - a run that found part of the approach unworkable says so there - the
-body's account rules on that point, and the spec's passage on it does not.
+deviation from the spec on a row's point, the spec's passage there no longer settles the row,
+and neither does the body: it is written by the side under review. Name the deviation in the
+verdict and rule the row against the code.
 
 Present the inventory with a verdict on each row - valid or not, and the authority it rests
 on - and the action proposed, as the **final message of the turn**. End the turn there with no
