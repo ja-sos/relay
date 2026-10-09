@@ -29,7 +29,7 @@ unattended run must use goes in `.claude/baton.md`.
 |---|---|
 | `## Tracker` | reading, creating, commenting on and closing issues |
 | `## Categories` | the condition-to-label table `file-issue` picks from |
-| `## Forge` | checkout verification, pull requests, stack registration, closing keywords |
+| `## Forge` | checkout verification, pull requests, stack registration, closing keywords, the issues a pull request names |
 | `## Review` | collecting review feedback on a pull request, and answering it |
 | `## Launcher` | how an implementation run, and the review of its pull request, are started |
 | `## Workflow` | the steps the skills run around the work: posting and finding handoffs, reviewing, publishing |
@@ -108,16 +108,17 @@ whatever they look like. `verify` is run, but takes one literal besides a comman
 | `agent: <type> <prompt>` | dispatch a subagent of that type with that prompt, through the subagent dispatch tool - `Agent` or `Task`, by harness build |
 | `op: <operation> <args>` | run another operation of this backend, with these substitutions |
 | a nested bullet list | each bullet is one entry in any of the forms above, run in order; the first failure stops the rest |
-| `none` | skip the step. Valid for `started`, `stack-link`, `request-reviewer`, `wrap-up`, `close-fixed`, `close-invalid`, `closes`, `refs` and `list-categories` only - any other operation set to `none` is undefined |
+| `none` | skip the step. Valid for `started`, `stack-link`, `request-reviewer`, `wrap-up`, `close-fixed`, `close-invalid`, `closes`, `refs`, `pr-issues` and `list-categories` only - any other operation set to `none` is undefined |
 | `repo-tests` | run the repo's full test command, as the run finds it. Valid for `verify` only - anywhere else it is a shell command, and no such binary exists |
 
 `none` and undefined are not the same answer. `none` says the project has decided the step
 does not run - that no tracker transition marks the start of implementation, that the forge
 tracks no stack to register a layer in, that the review round does not run, that no step runs
 when a person-attended flow ends, that this project closes issues outside baton, that a pull
-request's body carries no `closes` or no `refs` line, that the tracker carries no labels to
-check categories against; undefined says the backend is incomplete, and every skill treats it
-as a stop - except an undefined `wrap-up`, which the attended skills read as `none`.
+request's body carries no `closes` or no `refs` line, that the project's pull requests name no
+issue baton can find, that the tracker carries no labels to check categories against;
+undefined says the backend is incomplete, and every skill treats it as a stop - except an
+undefined `wrap-up`, which the attended skills read as `none`.
 
 `close-fixed` and `close-invalid` each take `none` on their own, because a tracker can let
 baton resolve an issue as done while a triager owns "not planned", or the reverse. Under `none`
@@ -169,7 +170,7 @@ come from, not which section holds it:
 
 | Placeholder | Value |
 |---|---|
-| `<owner>` `<repo>` on an entry addressing the **issue** - every `## Tracker` entry, the `## Workflow` entries resolving through one, and `closes` / `refs` | the **issue's** repository: the locator's, where a handoff is in play, and `verify-checkout`'s answer split at the slash otherwise |
+| `<owner>` `<repo>` on an entry addressing the **issue** - every `## Tracker` entry, the `## Workflow` entries resolving through one, and `closes` / `refs` | the **issue's** repository: the locator's, where a handoff is in play; for an issue `pr-issues` returned, the repository it returned with it; and `verify-checkout`'s answer split at the slash otherwise |
 | `<owner>` `<repo>` on an entry addressing the **pull request or the checkout** - `## Forge` and `## Review` apart from `closes` / `refs`, and `request-reviewer` | the **checkout's** repository: `verify-checkout`'s answer, split at the slash |
 | `<owner>` `<repo>` on a `## Launcher` entry | the **handoff's** `repo` line, split at the slash: the entry starts a run for that repository, in a session that is not in it yet |
 | `<head-owner>` | the owner in `origin`'s URL, printed by the command below |
@@ -201,6 +202,7 @@ they reference is the issue rather than the pull request.
 | `pr-create` | `<title>` `<path>` `<category>` `<pr-base>` |
 | `stack-link` | `<id>` `<pr-url>` `<pr-base>` |
 | `pr-view` | `<id>` |
+| `pr-issues` | `<id>` |
 | `pr-update` | `<id>` `<path>` |
 | `review-list` | `<owner>` `<repo>` `<id>` |
 | `review-post` | `<owner>` `<repo>` `<id>` `<path>` |
@@ -316,9 +318,23 @@ needs a transition that repeats harmlessly: an entry that sends a ticket to Bloc
 it there on a successful run too. Where a tracker cannot express both, `op: comment` alone says
 what happened and moves nothing, which is what the shipped entry does.
 
-`has-handoff` returns the text of an issue's comments: callers test it for the handoff marker
-and read what each marker sits in, so a yes/no is not enough. Its default runs `view`; an entry
-that cannot return comment text is one to leave at that default.
+`has-handoff` returns the text of an issue's comments, in the order they were posted: callers
+test it for the handoff marker and read what each marker sits in, so a yes/no is not enough.
+`address-review` reads that order to bind the last of several matching handoffs on one issue.
+Its default runs `view`; an entry that cannot return comment text is one to leave at that
+default.
+
+`pr-issues` returns the issues a pull request names, each with its `<owner>`, `<repo>` and
+`<id>`, and whether the pull request delivers it or only references it. How a pull request names
+its issues is the project's workflow - closing keywords in the body, a ticket key in the title,
+a prefix on the branch - so the entry decides what counts, and `address-review` Step 1 reads
+only its answer to find the spec it rules review rows against. Under `none` no issue is found,
+and `address-review` rules on the code alone. An entry may be `op: pr-view <id>` with notes
+saying how the caller reads the issues out of it, as the shipped ones are (`backend-github.md`).
+
+`pr-issues` is new in baton 0.2.3. A `## Forge` restated before then leaves it undefined, and
+`address-review` stops at Step 1: add `- **pr-issues:**       none`, or the entry that reads
+the project's own convention.
 
 `code-review` substitutes two placeholders. `<target>` is what to review - a pull request
 number, a branch, or empty for the working tree. `<locator>` is the handoff the work came from,

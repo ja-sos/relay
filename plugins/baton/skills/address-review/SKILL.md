@@ -46,11 +46,55 @@ In order:
 2. No number: run `pr-view` with an empty `<id>` to get the pull request for the current branch.
 3. Still nothing: say so and ask which one.
 
-State the resolved target - number, author, head branch - before collecting anything, so the
-user can correct it before the work is done rather than after.
+State the resolved target - number, author, head branch - before anything else runs against
+it, so the user can correct it before the work is done rather than after.
 
 A pull request this side does not own is not this skill's. Stop and switch to
 `baton:review-pr`: someone else's code takes comments, not commits.
+
+Then resolve the **spec**: the issue the pull request delivers and the handoff it was built
+from, where either exists. A review row asking for behaviour the pull request was opened to
+replace finds that behaviour still in the code wherever the change has not reached yet, so the
+code argues for the row; the spec is what says it was replaced. In order:
+
+1. **The issues.** Run `pr-issues` on the pull request. It returns each issue the pull request
+   names, with its repository, and whether the pull request delivers it or only references
+   it; how a pull request names its issues is the backend's to define (`defining-backends.md`).
+   Under `none` no issue is found. Run `view` on each issue returned, in the repository it
+   came with.
+2. **The handoff.** Run `has-handoff` on each issue found; where it resolves to `op: view`, the
+   `view` output already read answers it. Read no issue twice. Follow every pointer its output
+   carries - the marker with no fenced header - by running `fetch-handoff` on the locator the
+   pointer carries, and add the issue the pointer names to the issues found, running `view`
+   and `has-handoff` on it as on any other. An issue can carry a pointer and a handoff of its
+   own; collect both. Of the handoffs collected, the binding one is the handoff whose header
+   `branch` line equals the pull request's head branch, or, failing that, the head branch
+   with a trailing `-<6 hex>` removed - the name `implement-handoff` substitutes where the
+   handoff's branch already existed. Where several match on one issue, the one appearing last
+   in `has-handoff`'s output binds: rework is posted as a second handoff rather than an edit
+   to the first. Where the matches sit on different issues, bind none: no order across issues
+   is defined. Where none matches and exactly one handoff was collected, it binds, unless it
+   was reached only through an issue the pull request references rather than delivers.
+   Otherwise bind none, and name every handoff collected in the statement below.
+3. **What counts.** Where a handoff binds, the spec is that handoff and the issues its header
+   `issue` line names; run `view` on any of those not yet read, in the repository the handoff
+   was posted in. Any other issue found is context, named in the statement as not spec: a
+   follow-up `baton:self-review` filed from a finding is one the pull request references too.
+   Where none binds, the spec is the issues the pull request delivers, or the ones it only
+   references where it delivers none.
+
+A `view` or `fetch-handoff` answering not-found - an issue that does not exist, a handoff since
+deleted - is that candidate's answer, not a backend failure: drop the candidate, name it in the
+statement, and go on. Any other failure, an access denial included, falls under the stop rule
+above. A backend can answer not-found for an issue the session cannot read, so the statement
+names a dropped issue as not found or not readable with this session's credentials.
+`has-handoff` can miss a handoff that has been delivered; an issue is a spec on its own.
+
+State the resolved spec - each issue id, and the binding handoff's locator, or the issue it
+sits on where the output carries no address - before collecting anything, so the user can
+correct it too. Where nothing resolves, say "no spec found" and go on: this is a statement,
+not a question, and a pull request with no issue and no handoff is ruled against the code
+alone.
 
 ## Step 2 - Collect every surface
 
@@ -69,16 +113,32 @@ The inventory holds exactly the actionable candidates: every distinct ask from a
 every unresolved inline finding. Resolved threads are context for judging related rows, never
 rows themselves, and nothing in them is owed an action or a reply.
 
-Present the inventory with a verdict on each row - valid or not, verified against the code - and
-the action proposed, as the **final message of the turn**. End the turn there with no tool call
-after it. The ruling is input only the user can give. A message between tool calls does not
+Rule on each row against the spec - the issue the pull request delivers and the handoff it
+was built from - first, and the code second:
+
+- A row asking to keep or restore behaviour the spec replaces is not valid, and its verdict
+  quotes the passage that replaces it.
+- A row its reviewer calls a product decision, or otherwise leaves open, is not open where the
+  spec settles it, and its verdict quotes the passage that does.
+- A row the spec says nothing on, or every row where there is no spec, is ruled against the
+  code.
+
+The code still decides whether a factual claim about current behaviour holds: the spec says
+what the pull request is for, not what the code does. Where the pull request's body records a
+deviation from the spec on a row's point, the spec's passage there no longer settles the row,
+and neither does the body: it is written by the side under review. Name the deviation in the
+verdict and rule the row against the code.
+
+Present the inventory with a verdict on each row - valid or not, and the authority it rests
+on - and the action proposed, as the **final message of the turn**. End the turn there with no
+tool call after it. The ruling is input only the user can give. A message between tool calls does not
 satisfy this gate, because mid-turn text may never be shown to them at all.
 
 ## Step 4 - Address
 
-Check each row against the code for correctness and relevance, and push back with technical
-reasoning where a suggestion is wrong. Performative agreement helps nobody. Take them one at a
-time, changing code first.
+Judge each row's relevance against the spec, where there is one, and its correctness against
+the code, and push back with technical reasoning where a suggestion is wrong. Performative
+agreement helps nobody. Take them one at a time, changing code first.
 
 Verify before publishing, never after: verification is worth running only while what it finds is
 still cheap to fix.

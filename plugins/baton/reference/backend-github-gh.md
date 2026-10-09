@@ -45,7 +45,8 @@ real credentials on outbound requests. `reachable` is the check that works.
   - gh pr create --draft --title "<title>" --base "<pr-base>" --body-file <path>
   - gh pr edit <pr-url> --add-label "<category>"
 - **stack-link:**      none
-- **pr-view:**         gh pr view <id> --json number,url,body,author,headRefName,headRefOid,isDraft
+- **pr-view:**         gh pr view <id> --json number,url,title,body,author,headRefName,headRefOid,isDraft
+- **pr-issues:**       op: pr-view <id>
 - **pr-update:**       gh pr edit --body-file <path>
 - **closes:**          Closes <owner>/<repo>#<id>
 - **refs:**            Refs <owner>/<repo>#<id>
@@ -62,6 +63,8 @@ A failed `gh pr edit` leaves the pull request open and unlabelled.
 `stack-link` is `none` here as it is on the MCP route, and the note there says why.
 
 `pr-view` takes an empty `<id>` to mean the pull request for the current branch.
+
+`pr-issues` reads `pr-view`'s answer the way the MCP route's note says.
 
 `closes` and `refs` match the MCP route; the note there says why.
 

@@ -74,7 +74,12 @@ asks of `list-mine`: oldest first.
 after the host, `<id>` is the number after `/issues/` and `<comment-id>` the digits of the
 trailing `#issuecomment-<n>`. The locator's `<owner>` and `<repo>` replace the derived
 ones. The handoff is the `body` of the returned comment whose `id` equals `<comment-id>`;
-raise `page` by one until it appears.
+raise `page` by one until it appears. A page of fewer than 100 comments that does not carry it
+ends the search with not-found, the answer for a deleted comment.
+
+GitHub answers a repository the credentials cannot read with not-found rather than an access
+error ([Troubleshooting the REST API](https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api)),
+so a not-found from `view` or `fetch-handoff` on another repository can mean either.
 
 ## Categories
 
@@ -94,6 +99,7 @@ raise `page` by one until it appears.
 - **pr-view:**
   - tool: mcp__github__list_pull_requests {"owner": "<owner>", "repo": "<repo>", "state": "open", "fields": ["number", "html_url", "head"], "perPage": 100}
   - tool: mcp__github__pull_request_read {"method": "get", "owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}
+- **pr-issues:**       op: pr-view <id>
 - **pr-update:**       tool: mcp__github__update_pull_request {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "body": "<body>"}
 - **closes:**          Closes <owner>/<repo>#<id>
 - **refs:**            Refs <owner>/<repo>#<id>
@@ -154,6 +160,17 @@ both and both carry the branch.
 The entry passes no `head` filter because, over REST, that filter returns `[]` in a fork
 whose owner also owns the parent, which reads as "no open pull request" for a branch that
 has one.
+
+`pr-issues` reads the body, title and head branch out of `pr-view`'s answer. Each place the
+body has a GitHub closing keyword followed by `#<id>` or `<owner>/<repo>#<id>` names an issue
+the pull request delivers. The keywords are GitHub's nine - `close`, `closes`, `closed`, `fix`,
+`fixes`, `fixed`, `resolve`, `resolves`, `resolved` - in upper or lower case, and a colon may
+follow one ([Linking a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)).
+`Refs` in the same position names an issue the pull request only references. A `#<id>` with no
+`<owner>/<repo>` takes `verify-checkout`'s repository. Where the body names no issue, a `#<n>`
+in the title other than the pull request's own number, and a `<n>-` prefix on the head branch,
+each name a delivered issue in `verify-checkout`'s repository. GitHub links neither, so those
+two are this example's convention rather than GitHub's.
 
 `closes` and `refs` name the issue's repository as well as its number, since the pull request
 may open in another repository, where a bare `#<id>` resolves against that repository's issue of

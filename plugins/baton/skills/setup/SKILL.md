@@ -61,10 +61,10 @@ grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
 the same reason: `stack-link` writes to the forge, so Step 4 never runs it.
 
 ```
-grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-update\|closes\|refs\):\*\*' .claude/baton.md
+grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-issues\|pr-update\|closes\|refs\):\*\*' .claude/baton.md
 ```
 
-- PASS: 7.
+- PASS: 8.
 - FAIL: fewer. Add the missing operations before Step 4.
 
 A tracker that carries no labels gets `- **list-categories:** none` rather than an entry that
