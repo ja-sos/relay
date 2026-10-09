@@ -54,12 +54,13 @@ Adding a type: `reference/defining-doc-types.md`.
 Then load the owner map, if one exists:
 
 ```
-cat .claude/owners.md 2>/dev/null
+cat "$(git rev-parse --show-toplevel)/.claude/owners.md" 2>/dev/null
 cat ~/.claude/owners.md 2>/dev/null
 ```
 
-Its format, how the two files combine, and which rows apply in this repository:
-`reference/defining-owners.md`.
+Where either prints rows, read
+`${CLAUDE_PLUGIN_ROOT}/skills/write-deliverables/reference/defining-owners.md` `## Combining`
+before applying them.
 
 ## Step 2 - Name the reader and what they already have
 
@@ -104,12 +105,15 @@ Draft in the file itself - the gate runs on real text, not on intent.
 
 - Owned facts, where a map is loaded: before writing a fact the loaded owner map assigns to
   another file, search that file for it. Where the owner states it, write one pointer naming
-  the file and its section, step or symbol instead of the fact; a `file:line` citation
-  against a commit SHA the document records may stay, per G12. Where the owner states
-  something different, the owner wins: the document carries the pointer, and the difference
-  goes in your reply to the user, not in the document. Where the owner does not state the
-  fact at all, write the fact and say in your reply to the user that the owner lacks it.
-  Content another skill mandates stays, per the opening section.
+  the file and its section, step or symbol instead of the fact, unless a loaded contract's
+  must-include requires the fact; a `file:line` citation against a commit SHA the document
+  records may stay, per G12. Where the owner states something different about the current
+  state, the owner wins: the document carries the pointer, and the difference goes in your
+  reply to the user, not in the document. A document stating a target state or a defect
+  keeps its statement and adds the pointer beside it. Where the owner does not state the
+  fact at all, write the fact and say in your reply to the user that the owner lacks it. In
+  a run with no user present, what this bullet sends to your reply goes in the report that
+  run posts. Content another skill mandates stays, per the opening section.
 - Answer first: the opening paragraph answers the reader's first question.
 - Current state, not history: what *is*, not what it *was* or how it got there. Prior state
   earns a place in three cases only - the reader still holds the old thing, the old shape
@@ -167,7 +171,7 @@ fires on it is fixed by rewording, or passes with the content as it stands.
 | G9 | **Length** | The document is as short as its claims allow. A passage you could delete without losing a claim READER needs for GOAL is FAIL - delete it. |
 | G10 | **Missing non-obvious** | Anything READER cannot derive but needs for GOAL - a trap, constraint, manual step, known gap, risk - must be present. Absent is FAIL. The one check that fails for writing too little. |
 | G11 | **Cited** | Every sentence stating something **is** the case has evidence you could paste: the command and the line of its output, or `file:line`. Uncitable is FAIL - **delete it**, never soften it to "appears to". Hedging keeps a claim you cannot support and spends a word doing it. |
-| G12 | **Owned** | Per sentence: does it state a fact the loaded owner map assigns to another file, and that file states it? FAIL unless the sentence is a single pointer naming that file and a section, step or symbol in it. A line number is not such a pointer. A `file:line` citation against a commit SHA the document records passes. With no owner map loaded, every sentence passes. |
+| G12 | **Owned** | Per sentence: does it state a fact the loaded owner map assigns to another file, and that file states it? FAIL unless the sentence is a single pointer naming that file and a section, step or symbol in it. A line number is not such a pointer. A sentence stating the fact with a `file:line` citation against a commit SHA the document records passes. A fact a loaded contract's must-include requires passes. With no owner map loaded, every sentence passes. |
 
 G4 grep:
 

@@ -26,18 +26,20 @@ One two-column Markdown table per file, headed `Fact` and `Owner`:
 
 `Fact` names a kind of fact, not one sentence: `version number`, `backend operation
 semantics`, `release steps`. `Owner` names a file relative to the repository root, and
-optionally the section, step or symbol inside it that states the fact.
+optionally the section, step or symbol inside it that states the fact. The path runs to the
+first comma.
 
 ## Combining
 
-Rows combine across the two files. A personal row whose `Fact` cell matches a project row's
-`Fact` cell exactly - case counts, the cell's surrounding spaces do not - replaces that row;
-every other personal row is added. A personal map therefore adds rows without restating the
-project's, and overrides only the rows it names.
+Drop inactive rows first. A row whose `Owner` file does not exist in the current repository
+is inactive there: it replaces no project row, Step 4 searches nothing for it, and G12 does
+not fire on it. A personal map loads in every repository, so most of its rows are inactive in
+most of them.
 
-A row whose `Owner` file does not exist in the current repository is inactive there: Step 4
-searches nothing for it and G12 does not fire on it. A personal map loads in every
-repository, so most of its rows are inactive in most of them.
+The remaining rows combine across the two files. A personal row whose `Fact` cell matches a
+project row's `Fact` cell exactly - case counts, the cell's surrounding spaces do not -
+replaces that row; every other personal row is added. A personal map therefore adds rows
+without restating the project's, and overrides only the rows it names.
 
 ## Example
 
@@ -45,7 +47,7 @@ repository, so most of its rows are inactive in most of them.
 | Fact | Owner |
 |---|---|
 | document type contract format | plugins/baton/skills/write-deliverables/reference/defining-doc-types.md, `## Format` |
-| backend operation semantics | plugins/baton/reference/backend-github.md, the operation's own section |
+| backend operation semantics | plugins/baton/reference/defining-backends.md, `## Operations` |
 | pull request draft policy | plugins/baton/skills/implement-handoff/SKILL.md, Step 5 |
 ```
 
