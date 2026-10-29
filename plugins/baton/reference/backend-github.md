@@ -288,9 +288,8 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
   Step 3 is the one place two launches can still interleave: two launches
   from sessions on different models at the same moment can each run under the other's.
 
-  `sources` is what attaches the repository - the field `claude --cloud` leaves empty,
-  which is why a `--cloud` session arrives with an uploaded copy of the checkout and no
-  remote.
+  `sources` names the repository the routine's sessions start with. Whether a routine
+  without it still gets a clone is untested.
 
   `EnterWorktree` and `ExitWorktree` are on the list per `defining-backends.md`,
   `## Tools an unattended run needs`.
