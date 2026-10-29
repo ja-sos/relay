@@ -20,7 +20,7 @@ A `##` heading is the key, and a matching heading replaces the shipped section
 **wholesale** - not operation by operation. Overriding one entry of `## Tracker` means
 restating all of them; an omitted entry is undefined, not inherited.
 
-A cloud or CI session clones the repo and never sees your home directory. A backend an
+A backend an
 unattended run must use goes in `.claude/baton.md`.
 
 ## Sections
@@ -46,10 +46,12 @@ those arguments starts a session with no work to do. Passing context *beside* th
 other way: the prompt arrives as a user turn, so a suggestion copied into it outranks the
 handoff section it was copied from.
 
-Entries also run unasked inside unattended runs (`implement-handoff` Step 7, `review-handoff`
-Step 6), so each must be runnable there - see **Tools an unattended run needs**.
+Entries also run unasked inside unattended runs (`implement-handoff` Step 6, `review-handoff`
+Step 6), so each must be runnable there - see **Tools an unattended run needs**. An entry's
+notes say what a session needs to launch through it, and how to check that without launching;
+the skills run that check at Step 1.
 
-`## Repositories` is optional, as `## Workflow` is, and was added in baton 0.1.11. It maps
+`## Repositories` is optional, as `## Workflow` is. It maps
 each repository a change spans to an absolute local path:
 
 | Repository | Path |
@@ -58,11 +60,11 @@ each repository a change spans to an absolute local path:
 | `owner/service` | `/home/you/src/service` |
 
 Skills resolve a repository other than the checkout through `## Repositories`; each says what
-a missing row does. The checkout's own repository needs no row. Paths differ per machine, so the
+a missing row does. The checkout's own repository needs no row. The
 section belongs in `~/.claude/baton.md` rather than the committed `.claude/baton.md`. The
 shipped `cloud` launcher clones and never reads it (`backend-github.md`).
 
-`## Assets` is optional as well, and was added in baton 0.1.15. It holds a single entry, the
+`## Assets` is optional as well. It holds a single entry, the
 absolute path of the one folder outside every repository that a handoff may name files in:
 
 - **root:** `/home/you/baton-assets`
@@ -78,17 +80,14 @@ under `root` resolves wherever it points, for `test -e` and for the read alike. 
 therefore trusted as far as its contents are - it is one folder on one machine, filled by the
 person who configured it.
 
-The root differs per machine, so the section belongs in `~/.claude/baton.md` rather than the
-committed `.claude/baton.md`, for the reason `## Repositories` does. A backend with no
-`## Assets` at all behaves exactly as one did before 0.1.15 for every handoff carrying no
-`assets` line - which is every handoff written before it: nothing is resolved and no check
-runs.
+The section belongs in `~/.claude/baton.md` rather than the
+committed `.claude/baton.md`. A backend with no
+`## Assets` resolves nothing and runs no check for a handoff carrying no `assets` line.
 
-The `cloud` launcher cannot resolve the section: it clones the repository and never sees a
-home directory. A handoff carrying `assets` belongs to `local`, or to a launcher of the
+The `cloud` launcher cannot resolve the section. A handoff carrying `assets` belongs to `local`, or to a launcher of the
 project's own that starts the run on the machine whose `~/.claude/baton.md` defines the root.
 
-Runs treat the folder as read-only (`implement-handoff`, `## What this run may do unasked`).
+Runs treat the folder as read-only (`handoff-assets.md`, `## May not do`).
 
 ## Operations
 
@@ -113,40 +112,33 @@ whatever they look like. `verify` is run, but takes one literal besides a comman
 
 `none` and undefined are not the same answer. `none` says the project has decided the step
 does not run - that no tracker transition marks the start of implementation, that the forge
-tracks no stack to register a layer in, that the review round does not run, that no step runs
+tracks no stack to register a layer in, that no external reviewer is requested, that no step runs
 when a person-attended flow ends, that this project closes issues outside baton, that a pull
 request's body carries no `closes` or no `refs` line, that the project's pull requests name no
 issue baton can find, that the tracker carries no labels to check categories against;
 undefined says the backend is incomplete, and every skill treats it as a stop - except an
 undefined `wrap-up`, which the attended skills read as `none`.
 
-`close-fixed` and `close-invalid` each take `none` on their own, because a tracker can let
-baton resolve an issue as done while a triager owns "not planned", or the reverse. Under `none`
+`close-fixed` and `close-invalid` each take `none` on their own. Under `none`
 the project closes that kind of issue by its own means - tracker automation, or a person who
 owns resolutions. Each caller says what it does under `none`. An undefined close operation
 is still a stop: the `wrap-up` exception above covers that operation alone.
 
-`closes` and `refs` each take `none` on their own, since baton 0.1.22. Under `none` baton
+`closes` and `refs` each take `none` on their own. Under `none` baton
 writes no reference line for that kind of issue, and the project links pull requests to it
 itself. What merging does to the issue is that linking's to decide, not the handoff's `closes`
 value. An undefined `closes` or `refs` is still a stop.
 
-`repo-tests` is a literal the skills recognise rather than a command they run, because no
-single command is every repo's suite. It is `verify`'s shipped value, and a project that
+`repo-tests` is a literal the skills recognise rather than a command they run. It is `verify`'s shipped value, and a project that
 mandates a sequence of its own - a formatter pass, then a test-and-lint target - writes that
-sequence here instead. A sequence that rewrites files does so before any of its checks:
-`implement-handoff` commits the tree `verify` leaves (`implement-handoff` Step 3), so a
-rewrite after the checks commits a tree none of them ran against. In a repo with no test
+sequence here instead. A sequence that rewrites files does so before any of its checks. In a repo with no test
 command it passes with nothing run, and the handoff's own commands are the only thing checking
 the change.
 
-`none` is not among `verify`'s values. A project that wants nothing repo-wide already has
-`repo-tests`, which runs nothing where there is nothing to run, and a project that has a
-sequence should not be able to turn the check off from the same field it configures it in.
+`none` is not among `verify`'s values.
 
-`tool:` exists so that a tracker reachable only through an MCP connector needs no CLI and
-no second set of credentials. Inside its JSON, `<body>` is the text of the file at
-`<path>`, JSON-escaped: a tool call has no shell to redirect a file into, so an operation
+Inside a `tool:` entry's JSON, `<body>` is the text of the file at
+`<path>`, JSON-escaped: an operation
 taking `<path>` sends `<body>` instead.
 
 `agent:` exists for the operation that is a judgement rather than a call - a reviewer that
@@ -184,8 +176,7 @@ git remote get-url origin | sed -E 's#\.git$##; s#.*[/:]([^/:]+)/[^/]+$#\1#'
 `<head-owner>` differs from `<owner>` in a fork clone: `verify-checkout` answers with the
 upstream repository, and the branch is pushed to `origin`.
 
-`closes` and `refs` sit in `## Forge` and follow the tracker's rule all the same, because what
-they reference is the issue rather than the pull request.
+`closes` and `refs` sit in `## Forge` and follow the tracker's rule all the same.
 
 | Operation | Substitutes |
 |---|---|
@@ -232,13 +223,7 @@ applies the note instead. `<pr-base>` is the handoff's `pr-base` line, or `<defa
 where that line is absent - it is never empty. It does not replace the derived
 `<default-branch>` above, which every other entry keeps using.
 
-Both placeholders were added in baton 0.1.9. A `## Forge` written before then substitutes
-neither, so its pull requests carry no label and open against the default branch. Add
-`<category>` and `<pr-base>` to that section's `pr-create`: until then a `category` line is
-dropped without an error, and a `pr-base` line stops the run (`implement-handoff` Step 1).
-
-Open a draft in an overriding `pr-create`, as both shipped routes do: no run marks one ready
-(`implement-handoff`, `## What this run may do unasked`).
+Open a draft in an overriding `pr-create`, as both shipped routes do.
 
 `stack-link` registers a pull request as one layer of a stack, and is called only for a
 handoff carrying `pr-base`. `<pr-url>` is what `pr-create` returned and `<pr-base>` the branch
@@ -246,12 +231,11 @@ below. It runs once per pull request, so `<id>` is the **primary** issue - the f
 the header's `issue` line.
 
 `pr-update` replaces the pull request body whole. A caller writes the complete body and carries
-every issue reference line - `closes`, `refs` - across unchanged: each one dropped is an issue
-the merge stops settling.
+every issue reference line - `closes`, `refs` - across unchanged.
 
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
-author filtering belongs inside the command, since it is part of what the operation collects.
+author filtering belongs inside the command.
 A `tool:` entry cannot filter its output, so the backend's notes name the filter and the
 caller applies it.
 
@@ -268,49 +252,18 @@ the handoff's header names, so `<id>` is always one issue and no entry - a shell
 read once per issue as well: the body carries a reference line for each issue whose entry is
 not `none`.
 
-`started` is the eighth, added in baton 0.1.5. A `## Workflow` written before it does not
-name `started` at all, which leaves it undefined rather than `none`, and
-`implement-handoff` stops at Step 2 - add `- **started:**          none` to that section,
-or the entry the project's tracker moves its ticket with.
-
-`wrap-up` is the ninth, added in baton 0.1.6. Unlike every other operation, leaving it
-undefined is not a stop: `investigate-issue`, `review-pr`, `address-review` and
-`self-review` treat a `wrap-up` no loaded file defines as `none`, so a `## Workflow` written
-before 0.1.6 keeps working unchanged. Add the entry the project runs when an attended flow
-ends to use it.
+Unlike every other operation, leaving `wrap-up` undefined is not a stop:
+`investigate-issue`, `review-pr`, `address-review` and `self-review` treat a `wrap-up` no loaded
+file defines as `none`. Add the entry the project runs when an attended flow ends to use it.
 
 `wrap-up`'s callers pass `<skill>`, `<id>`, `<pr-url>` and `<head-branch>`, any of which may
 be empty.
-Quote each in a shell entry - `log-flow "<skill>" "<id>" "<pr-url>" "<head-branch>"` - so an
-empty value still arrives as its own argument instead of shifting the ones after it.
+Quote each in a shell entry - `log-flow "<skill>" "<id>" "<pr-url>" "<head-branch>"`.
 
-`verify` is the tenth, added in baton 0.1.8. A `## Workflow` written before it leaves
-`verify` undefined the same way, and runs stop on it before creating a worktree - add
-`- **verify:**           repo-tests` to that section, or the sequence the project runs
-before a push. It takes no placeholders: what it checks is the whole repo, not this
-change, which is what the handoff's own commands cover.
+`verify` takes no placeholders.
 
-`reviewed` is the eleventh. It is kept apart from `published` so that a `published` moving a
-ticket's status does not move it again when the review finishes; an entry that moves a ticket
+An entry that moves a ticket
 belongs in `published`, and `reviewed` says what the review did.
-
-`stack-link` is the same shape of addition as `started` and `verify`, made to `## Forge` in
-baton 0.1.10. A section written before it leaves the operation undefined, which stops a
-handoff carrying `pr-base` (`implement-handoff` Step 1). Add `- **stack-link:**      none`, or
-the entry the project's forge registers a stack with. Two more edits belong to the same upgrade
-and neither errors when skipped, which is why they are named here:
-
-- An overridden `pr-create` opens a ready pull request until its entry adds the shipped
-  routes' `--draft` or `"draft": true`.
-- A `cloud` entry in an overridden `## Launcher` copied before 0.1.10 lacks `RemoteTrigger`;
-  see **Tools an unattended run needs**.
-
-`closes` and `refs` gained `<owner>` and `<repo>` in baton 0.1.11. A `## Forge` restated
-before then still carries the bare, unqualified form, and nothing errors: it resolves against
-the pull request's own repository, which is the right issue for every single-repository handoff
-and the wrong one for a handoff recorded for a repository other than the issue's. Add both
-placeholders to that section's `closes` and `refs` before recording a handoff that spans
-repositories.
 
 `stopped` also carries the no-change exit (`implement-handoff` Step 2), which is no failure.
 **A `stopped` that moves a ticket's state needs to account for that**, the way `started` above
@@ -332,19 +285,14 @@ only its answer to find the spec it rules review rows against. Under `none` no i
 and `address-review` rules on the code alone. An entry may be `op: pr-view <id>` with notes
 saying how the caller reads the issues out of it, as the shipped ones are (`backend-github.md`).
 
-`pr-issues` is new in baton 0.2.3. A `## Forge` restated before then leaves it undefined, and
-`address-review` stops at Step 1: add `- **pr-issues:**       none`, or the entry that reads
-the project's own convention.
-
 `code-review` substitutes two placeholders. `<target>` is what to review - a pull request
 number, a branch, or empty for the working tree. `<locator>` is the handoff the work came from,
 and may be empty; an entry whose prompt checks acceptance criteria then says so rather than
 inventing them. The shipped entry uses neither placeholder beyond `<target>`.
 
-`review-wait` is a number of minutes, not a command. The cap is 60: an unattended run that
-waits longer than that is holding a finished branch for a reviewer who is not coming, and
-the cap also keeps the wait inside `Monitor`'s `timeout_ms` maximum of 3600000 ms, for a
-backend that allows that tool.
+`review-wait` is a number of minutes, not a command: how long `review-handoff` Step 3 waits for
+the reviewer `request-reviewer` asked for, counted from the request. The cap is 60. `review-handoff` is the only
+skill that runs `request-reviewer` or reads `review-wait`.
 
 `list-mine` returns the issues assigned to the user in the order they should be picked up;
 the tracker's own ranking belongs in that command, not in the skill reading its output.
@@ -354,18 +302,15 @@ the tracker's own ranking belongs in that command, not in the skill reading its 
 second. The backend's notes say which, and a caller that gets the second form runs the
 operation once per row of `## Categories`.
 
-The third form, since baton 0.1.19, is `none`, for a tracker that carries no labels at all.
-An earlier baton reads it as undefined and stops. An entry that prints the `## Categories`
-labels back is not a substitute: it passes whatever the tracker holds, and records no decision
-that the tracker has no labels. Only an explicit `none` takes this path - a `list-categories`
+The third form is `none`, for a tracker that carries no labels at all. An entry that prints the `## Categories`
+labels back is not a substitute. Only an explicit `none` takes this path - a `list-categories`
 left undefined is still a stop.
 
 Under `none`, `## Categories` stays required: `file-issue` still picks a row per finding.
 `create` receives an empty `<category>`; as with `pr-create`, each `create` entry substituting
 it says in its notes what an empty value drops.
 
-`<path>` is always a file. A tracker CLI that takes body text on the command line mangles
-backticks and fenced blocks through the shell, so an operation that cannot read a file
+`<path>` is always a file. An operation that cannot read a file
 needs a wrapper that does.
 
 ## Example
@@ -389,7 +334,7 @@ them. The shipped defaults are the template to copy from:
 `reference/backend-github.md` for a tracker reached through an MCP connector,
 `reference/backend-github-gh.md` for one reached through a CLI.
 
-Turning the review round on, and logging time after the pull request is published. The block
+Turning the external reviewer on, and logging time after the pull request is published. The block
 shows the three entries that change; the heading replaces the section whole, so restate the
 other eight exactly as `backend-github.md` ships them:
 
@@ -443,37 +388,33 @@ diff the correctness review could not read.
 | Body arrives as a file | each operation taking `<path>` reads the file rather than a string, or sends `<body>` when it is a `tool:` entry |
 | Runs standalone | paste the command with real values into a shell; it must succeed there first. A literal - `none`, `repo-tests`, `closes`, `refs`, `review-wait`, `## Assets`'s `root` - is not a command and is exempt. So is `verify` whatever its value: its sequence may rewrite files |
 | Tool entries called | call each `tool:` entry of a read operation with real values, since it has no shell form to paste; never call one `baton:setup` Step 4 forbids running |
+| Launcher tools load | for each `## Launcher` entry, the check its notes give passes in the kind of session that launches through it |
 | Agent entries dispatchable | each `agent:` entry names an agent type this session offers, and every `## Launcher` entry that names `allowed_tools` at all names both `Agent` and `Task` |
 
 A backend is done when every row passes.
 
 ## Tools an unattended run needs
 
-A cloud session can have the `mcp__github__*` tools and no `gh`, which is why the shipped
-defaults run through those tools. A cloud run whose `## Launcher` entry's `allowed_tools`
+A cloud session can have the `mcp__github__*` tools and no `gh`. A cloud run whose `## Launcher` entry's `allowed_tools`
 held only `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep` and `Skill` loaded `ToolSearch`
 and the GitHub MCP tools it needed, and called them with no permission denial.
 
 `implement-handoff` and `review-handoff` add the subagent dispatch tool to that need. Harness
 builds differ on that tool's name - `Agent` in some, `Task` in others - so a `## Launcher` entry
 that names `allowed_tools` at all names both and lets a build ignore the name it does not
-carry. An entry written before baton 0.1.7 names neither - add them; without them, runs stop
-at their dispatch-tool check. A personal `~/.claude/baton.md` restating
-`## Launcher` carries its own `allowed_tools` and needs the same edit by hand: it lives
-outside every repo, so no update to this plugin reaches it.
+carry. Without them, runs stop at their dispatch-tool check.
 
 A `## Launcher` entry that names `allowed_tools` at all names `EnterWorktree` and
 `ExitWorktree`, which both runs call - an entry that starts the session in a worktree already,
-`claude --worktree` among them, included. An entry written before baton 0.1.3 does not - add
-them, or its runs stop on a tool they cannot call.
+`claude --worktree` among them, included.
 
-A `cloud` entry adds whatever tool it itself is written with - `RemoteTrigger` on the shipped
-one, added in baton 0.1.10. **Every** cloud `implement-handoff` run needs it, not only a
-stacked one, and so does a cloud `review-handoff` run: both launch through this entry from
-inside the run (`implement-handoff` Step 7, `review-handoff` Step 6). The tool that creates and
-fires the routines has to be on the list both routines grant. The shipped entry is
-self-consistent; an entry copied into `.claude/baton.md` or `~/.claude/baton.md` before 0.1.10
-is not, and neither the reviewer nor the layer above ever starts.
+A `cloud` entry adds whatever tools it itself is written with. The shipped one runs on
+`RemoteTrigger`, or on the `claude-code-remote` server's `list_triggers`, `fire_trigger` and
+`create_session` where `RemoteTrigger` does not load (`backend-github.md`). **Every** cloud
+`implement-handoff` run needs one of those sets, not only a stacked one, and so does a cloud
+`review-handoff` run carrying `next`: both launch through this entry from inside the run
+(`implement-handoff` Step 6, `review-handoff` Step 6). A cloud session does not always carry
+`RemoteTrigger`, so an entry written on it alone fails there, and the run finds out at Step 1.
 
 A `local` entry needs nothing beyond `Bash`, but it starts a session on the machine the
 launching run is on, and that is the constraint a stack's `next` has to be written around.
@@ -486,4 +427,4 @@ every run is on one long-lived machine, and the two are not mixed down a stack.
 A hand-started run in a cloud session launches its reviewer through `local`, into that
 container, under the constraint above.
 
-The review round's wait needs only `Bash` (`implement-handoff` Step 6).
+The external reviewer's wait needs only `Bash` (`review-handoff` Step 3).

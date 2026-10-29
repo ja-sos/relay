@@ -35,7 +35,7 @@ defines, and an operation that fails because its tool is missing or unauthentica
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
-not define - an improvised equivalent writes to a tracker the project did not choose.
+not define.
 
 ## Step 1 - Resolve the target, and state it
 
@@ -47,15 +47,13 @@ In order:
 3. Still nothing: say so and ask which one.
 
 State the resolved target - number, author, head branch - before anything else runs against
-it, so the user can correct it before the work is done rather than after.
+it.
 
 A pull request this side does not own is not this skill's. Stop and switch to
-`baton:review-pr`: someone else's code takes comments, not commits.
+`baton:review-pr`.
 
 Then resolve the **spec**: the issue the pull request delivers and the handoff it was built
-from, where either exists. A review row asking for behaviour the pull request was opened to
-replace finds that behaviour still in the code wherever the change has not reached yet, so the
-code argues for the row; the spec is what says it was replaced. In order:
+from, where either exists. In order:
 
 1. **The issues.** Run `pr-issues` on the pull request. It returns each issue the pull request
    names, with its repository, and whether the pull request delivers it or only references
@@ -71,28 +69,24 @@ code argues for the row; the spec is what says it was replaced. In order:
    `branch` line equals the pull request's head branch, or, failing that, the head branch
    with a trailing `-<6 hex>` removed - the name `implement-handoff` substitutes where the
    handoff's branch already existed. Where several match on one issue, the one appearing last
-   in `has-handoff`'s output binds: rework is posted as a second handoff rather than an edit
-   to the first. Where the matches sit on different issues, bind none: no order across issues
-   is defined. Where none matches and exactly one handoff was collected, it binds, unless it
+   in `has-handoff`'s output binds. Where the matches sit on different issues, bind none. Where none matches and exactly one handoff was collected, it binds, unless it
    was reached only through an issue the pull request references rather than delivers.
    Otherwise bind none, and name every handoff collected in the statement below.
 3. **What counts.** Where a handoff binds, the spec is that handoff and the issues its header
    `issue` line names; run `view` on any of those not yet read, in the repository the handoff
-   was posted in. Any other issue found is context, named in the statement as not spec: a
-   follow-up `baton:self-review` filed from a finding is one the pull request references too.
+   was posted in. Any other issue found is context, named in the statement as not spec.
    Where none binds, the spec is the issues the pull request delivers, or the ones it only
    references where it delivers none.
 
 A `view` or `fetch-handoff` answering not-found - an issue that does not exist, a handoff since
 deleted - is that candidate's answer, not a backend failure: drop the candidate, name it in the
 statement, and go on. Any other failure, an access denial included, falls under the stop rule
-above. A backend can answer not-found for an issue the session cannot read, so the statement
-names a dropped issue as not found or not readable with this session's credentials.
+above. The statement names a dropped issue as not found or not readable with this session's
+credentials.
 `has-handoff` can miss a handoff that has been delivered; an issue is a spec on its own.
 
 State the resolved spec - each issue id, and the binding handoff's locator, or the issue it
-sits on where the output carries no address - before collecting anything, so the user can
-correct it too. Where nothing resolves, say "no spec found" and go on: this is a statement,
+sits on where the output carries no address - before collecting anything. Where nothing resolves, say "no spec found" and go on: this is a statement,
 not a question, and a pull request with no issue and no handoff is ruled against the code
 alone.
 
@@ -107,7 +101,7 @@ Never pre-filter on resolved state.
 
 Build the inventory before touching code. One summary body routinely carries several distinct
 asks alongside meta-requests - rebase this, split that, prefer another name. Each ask is its own
-row, recorded with the surface it came from, so its answer later lands in the right venue.
+row, recorded with the surface it came from.
 
 The inventory holds exactly the actionable candidates: every distinct ask from a person, and
 every unresolved inline finding. Resolved threads are context for judging related rows, never
@@ -123,32 +117,27 @@ was built from - first, and the code second:
 - A row the spec says nothing on, or every row where there is no spec, is ruled against the
   code.
 
-The code still decides whether a factual claim about current behaviour holds: the spec says
-what the pull request is for, not what the code does. Where the pull request's body records a
-deviation from the spec on a row's point, the spec's passage there no longer settles the row,
-and neither does the body: it is written by the side under review. Name the deviation in the
+The code still decides whether a factual claim about current behaviour holds. Where the pull
+request's body records a deviation from the spec on a row's point, the spec's passage there no
+longer settles the row, and neither does the body. Name the deviation in the
 verdict and rule the row against the code.
 
 Present the inventory with a verdict on each row - valid or not, and the authority it rests
 on - and the action proposed, as the **final message of the turn**. End the turn there with no
-tool call after it. The ruling is input only the user can give. A message between tool calls does not
-satisfy this gate, because mid-turn text may never be shown to them at all.
+tool call after it. A message between tool calls does not satisfy this gate.
 
 ## Step 4 - Address
 
 Judge each row's relevance against the spec, where there is one, and its correctness against
-the code, and push back with technical reasoning where a suggestion is wrong. Performative
-agreement helps nobody. Take them one at a time, changing code first.
+the code, and push back with technical reasoning where a suggestion is wrong. Take them one at a time, changing code first.
 
-Verify before publishing, never after: verification is worth running only while what it finds is
-still cheap to fix.
+Verify before publishing, never after.
 
 Ask about any pre-publish check the repo's own instructions leave to a human - one its
 `CLAUDE.md` or `AGENTS.md` says to run before publishing, or forbids running unprompted. A check
 never asked about leaves this step open rather than merely unused.
 
-Keep that question separate from asking to publish: asking to push while verification is still
-undecided inverts the order.
+Keep that question separate from asking to publish.
 
 ## Step 5 - Publish, then answer
 
@@ -159,10 +148,9 @@ Only once verification clears and the user approves, in this order:
    line across unchanged (`defining-backends.md`, `pr-update`).
 3. Answer every Step 3 row in the venue it arrived: an inline finding takes `thread-reply` in its
    own thread, while rows from summary bodies and conversation comments take one `pr-comment`
-   covering them, there being no thread to reply into.
+   covering them.
 
-Answering an *inline* finding at top level is the failure to avoid - its thread stays open and
-the reviewer never sees the answer. Feedback that arrived at top level is answered where it
+Answering an *inline* finding at top level is the failure to avoid. Feedback that arrived at top level is answered where it
 arrived.
 
 Write the pull request body and every reply under `baton:write-deliverables`, the body as a

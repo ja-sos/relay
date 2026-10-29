@@ -64,7 +64,7 @@ An optional owner map (`owners.md`) names the file that owns each kind of fact, 
 points there instead of restating it; see `skills/write-deliverables/reference/defining-owners.md`.
 
 Overriding `Run report` retargets every report `implement-handoff` and `review-handoff` post.
-The override sets reader and shape; what each skill requires (`implement-handoff` Step 7,
+The override sets reader and shape; what each skill requires (`implement-handoff` Step 6,
 `review-handoff` Step 6) stays in.
 
 ## Requires

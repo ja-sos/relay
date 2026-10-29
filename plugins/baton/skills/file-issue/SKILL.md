@@ -35,7 +35,7 @@ defines, and an operation that fails because its tool is missing or unauthentica
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
-not define - an improvised equivalent writes to a tracker the project did not choose.
+not define.
 
 ## Step 1 - Anchor
 
@@ -46,7 +46,7 @@ git rev-parse --short HEAD
 git branch --show-current
 ```
 
-Record the SHA. Line numbers rot; the SHA is what keeps `src/hub.c:117` resolvable.
+Record the SHA.
 
 Run `list-open`, and `list-categories` as the backend's notes on it say. Stop and ask when a
 `## Categories` label is missing from the `list-categories` answer. Never create one.
@@ -91,14 +91,10 @@ Write every body to its own file under the scratchpad directory before printing 
 `issue-<n>-<category>.md`.
 
 Print one line per issue - category, title, and the body's absolute path - and stop for
-approval. Spell the path in full from `/`. A `~` or a relative path leaves the reader
-hunting for the session's scratchpad directory.
-
-Issues are public on creation and close rather than disappear.
+approval. Spell the path in full from `/`.
 
 On approval, run `create` per issue. It takes `<path>`, never body text.
-Where `list-categories` is `none`, pass `<category>` empty - the tracker has no label to give
-it - and apply what the backend's notes on its own `create` say an empty value drops.
+Where `list-categories` is `none`, pass `<category>` empty, and apply what the backend's notes on its own `create` say an empty value drops.
 
 ## Done
 

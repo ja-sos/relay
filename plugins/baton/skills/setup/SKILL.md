@@ -23,10 +23,10 @@ routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 
 | Found | Action |
 |---|---|
-| The request is for `## Repositories` alone, whether or not a backend file exists | Add or replace that one section in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Repositories` checks and Step 4's `## Repositories` checks, then stop: the full Step 3 counts and the Step 4 check table test a backend's operations, which this request neither writes nor changes. It overrides no shipped operation, so it is not the duplicate the no-backend-file rows refuse. |
-| The request is for `## Assets` alone, whether or not a backend file exists | The same, for that section: add or replace it in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Assets` checks, then stop - the section defines no operation, so Step 4 has nothing of it to run. |
-| The request is for `## Repositories` and `## Assets` together, whether or not a backend file exists | Both rows above, in one pass over `~/.claude/baton.md`: write each section and run each one's checks. They are the two optional per-machine sections and neither overrides a shipped operation, so a request for both is still not the duplicate the no-backend-file rows refuse. |
-| No backend file; route 1 or 2 selected | Stop: a copy of the shipped defaults is a second file to keep in sync. |
+| The request is for `## Repositories` alone, whether or not a backend file exists | Add or replace that one section in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Repositories` checks and Step 4's `## Repositories` checks, then stop. |
+| The request is for `## Assets` alone, whether or not a backend file exists | The same, for that section: add or replace it in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Assets` checks, then stop. |
+| The request is for `## Repositories` and `## Assets` together, whether or not a backend file exists | Both rows above, in one pass over `~/.claude/baton.md`: write each section and run each one's checks. |
+| No backend file; route 1 or 2 selected | Stop, and tell the user the shipped defaults already apply, so there is no backend file to write. |
 | No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
 
@@ -44,8 +44,7 @@ neither.
 
 ## Step 3 - Write the file
 
-Target `.claude/baton.md`. Write `~/.claude/baton.md` only on request: a cloud or CI session
-clones the repo and never sees a home directory.
+Target `.claude/baton.md`. Write `~/.claude/baton.md` only on request.
 
 Restate all five sections - `## Tracker`, `## Categories`, `## Forge`, `## Review`,
 `## Launcher` - and every operation each one owns.
@@ -57,8 +56,7 @@ grep -c '^## \(Tracker\|Categories\|Forge\|Review\|Launcher\)$' .claude/baton.md
 - PASS: 5.
 - FAIL: fewer. Add the missing sections before Step 4.
 
-`## Forge` gets the same count of its own operations that `## Workflow` gets below, and for
-the same reason: `stack-link` writes to the forge, so Step 4 never runs it.
+`## Forge` gets the same count of its own operations that `## Workflow` gets below.
 
 ```
 grep -c '^- \*\*\(verify-checkout\|pr-create\|stack-link\|pr-view\|pr-issues\|pr-update\|closes\|refs\):\*\*' .claude/baton.md
@@ -83,8 +81,7 @@ grep -c '^- \*\*\(post-handoff\|has-handoff\|started\|verify\|code-review\|reque
 ```
 
 - PASS: 11, or 0 where the file has no `## Workflow`.
-- FAIL: anything between. Add the missing operations, `wrap-up` included, before Step 4:
-  Step 4 never runs the writing operations, so it cannot catch one left out.
+- FAIL: anything between. Add the missing operations, `wrap-up` included, before Step 4.
 
 `## Repositories` is the seventh section and the second optional one. It stays out of
 `.claude/baton.md` altogether: it maps `owner/repo` to an absolute local path. Write it in
@@ -106,8 +103,7 @@ grep -c '^| `[^/`]*/[^`]*` | `/' ~/.claude/baton.md 2>/dev/null
 ```
 
 - PASS: one per repository the user named.
-- FAIL: fewer. A relative path resolves against whatever directory a launcher happens to start
-  in, so a row that is not absolute is a row to rewrite.
+- FAIL: fewer. A row that is not absolute is a row to rewrite.
 
 `## Assets` is the eighth section and the third optional one. It stays out of
 `.claude/baton.md`: write it in `~/.claude/baton.md`, and only on request. Its one entry is
@@ -122,11 +118,9 @@ grep -c '^## Assets$' ~/.claude/baton.md 2>/dev/null
 - FAIL: more than 1. Keep one heading.
 
 This next check runs only where the check above found the section. Skip it where the user did
-not ask for `## Assets`: the file carries no `root`, and running it there prints a failure
-about an entry nobody meant to write.
+not ask for `## Assets`.
 
-Written, its `root` must be an absolute path to a directory that exists. A relative path
-resolves against whatever directory the run happens to start in:
+Written, its `root` must be an absolute path to a directory that exists:
 
 ```
 root=$(sed -n 's/^- \*\*root:\*\* *//p' ~/.claude/baton.md 2>/dev/null | tr -d '`' | tail -1)
@@ -160,8 +154,7 @@ undefined operation.
   `none`, the other three return.
 - FAIL: any row fails or any operation errors. Fix the entry and restart Step 4.
 
-Where the file carries `## Repositories`, check every row of it too. A wrong path sends a run
-into the wrong tree rather than failing, so the check is the repository each path answers as,
+Where the file carries `## Repositories`, check every row of it too. The check is the repository each path answers as,
 not merely that something is there:
 
 ```
@@ -176,14 +169,9 @@ Then run `verify-checkout` in each row's path and compare its answer with that r
 - FAIL: any row whose path is missing, is not a checkout, or answers with a different
   repository. Fix the row and restart Step 4.
 
-`verify-checkout` reads and writes nothing, so running it once per row adds nothing to the
-list below.
-
 Never verify by running `create`, `comment`, `pr-create`, `stack-link`, `review-post`,
 `post-handoff`, `started`, `published`, `reviewed`, `stopped`, `wrap-up` or
-`request-reviewer`. Each one writes to the tracker or the forge - `stack-link` to a pull
-request belonging to somebody else's handoff. Never run `verify` either: a project's sequence may rewrite files in the
-user's checkout.
+`request-reviewer`. Never run `verify` either.
 
 ## Step 5 - Offer document types and an owner map
 

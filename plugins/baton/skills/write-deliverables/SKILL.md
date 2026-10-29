@@ -13,15 +13,13 @@ answer to their question, not an artifact they will forward, keep, or act on lat
 **A skill that mandates a template outranks this one.** Where another skill fixes the section
 list - `baton:file-issue`'s category headings, `baton:write-handoff`'s handoff header, a
 repo's PR template - it owns which sections exist, and this skill applies only *inside* them.
-Never put a mandated heading through Step 3 and never drop one as redundant: an empty mandated
-section is a signal to its reader, not padding.
+Never put a mandated heading through Step 3 and never drop one as redundant.
 
 Content works the same way as sections. Where a skill requires something by name in a document
-it mandates - `baton:implement-handoff`'s review findings and their dispositions - that skill
+it mandates - `baton:review-handoff`'s review findings and their dispositions - that skill
 owns whether it is present. Never put mandated content through Step 3, never cut it under
 Step 4's Delete on sight or any Step 5 gate row, and never drop it because a contract's
-must-not-include reaches it. What a reader could look up elsewhere is exactly what a mandated
-claim is often for: that they do not have to. The contract still owns the reader the document
+must-not-include reaches it. The contract still owns the reader the document
 is written for, and the order, emphasis and wording that reader gets; this skill still owns
 every sentence's shape.
 
@@ -31,8 +29,15 @@ change wording the user has already seen. The exception is your own mid-turn dis
 skill never ran: say so in one line and let the user decide, rather than reworking first.
 
 **One run per document.** Having run this skill earlier in the session buys nothing for the
-next one. Re-read these steps rather than recalling them - a half-remembered checklist is the
-failure this skill exists to prevent.
+next one. Re-read these steps rather than recalling them.
+
+**The short path is for skill-mandated run documents alone.** `baton:implement-handoff` and
+`baton:review-handoff` name it wherever they write a pull request body or a Run report - the
+no-change and stop reports included - and it covers those documents and nothing else. On it,
+run Step 1, draft the document in the file, then run Step 5 over gate rows G1, G3, G8 and G11
+only, restarting at G1 over those four on any FAIL. Steps 2 to 4 and the other eight rows do not
+run, so G1 and G3 take GOAL and READER from the contract Step 1 loaded. Every other document
+takes every step.
 
 ## Step 1 - Contract
 
@@ -64,8 +69,7 @@ before applying them.
 
 ## Step 2 - Name the reader and what they already have
 
-Before any prose, write these five lines in your working notes, not in the document. Every
-deletion below follows from them. A contract supplies `READER`, `GOAL` and `ALREADY HAS`;
+Before any prose, write these five lines in your working notes, not in the document. A contract supplies `READER`, `GOAL` and `ALREADY HAS`;
 `ONLY YOU` and `COST` are yours to write either way.
 
 ```
@@ -93,15 +97,12 @@ reader question does not exist.
 List the headings you intend to write. Give each one line: **KEEP**, naming the ONLY YOU fact
 it will carry, or **CUT**. A section you cannot justify here is one you never open.
 
-This pass prevents; Step 5 only cleans up, and a section is far harder to delete once it
-exists and reads well.
-
 **No headings is not an exemption.** A one-sentence reply takes this pass too - with nothing
 to list, the verdict is on the whole text.
 
 ## Step 4 - Draft, in the file
 
-Draft in the file itself - the gate runs on real text, not on intent.
+Draft in the file itself.
 
 - Owned facts, where a map is loaded: before writing a fact the loaded owner map assigns to
   another file, search that file for it. Where the owner states it, write one pointer naming
@@ -136,8 +137,7 @@ Content the owning skill mandates is never deleted here, per the opening section
   Notes / Risks as a default skeleton.
 - **A heading whose body only restates the heading**, or kept for symmetry with nothing under it.
 - **A summary of a document short enough to read**, and a closing paragraph restating the opening.
-- **Value claims** - "more maintainable", "robust", "cleaner", "properly". Unfalsifiable, and
-  no reader acts on them.
+- **Value claims** - "more maintainable", "robust", "cleaner", "properly".
 - **Predicted impact you cannot observe** - "this will improve performance".
 - **Test enumeration the diff already shows.**
 - **Human-time or effort estimates** - hours, days, story points, "quick win", "major
@@ -152,8 +152,7 @@ Content the owning skill mandates is never deleted here, per the opening section
 Re-read the file from disk - not from memory of what you meant to write. Check every row
 against the actual text and record PASS or FAIL.
 
-**On any FAIL: fix it, then restart the gate at G1.** Fixes introduce new violations - that is
-why it restarts. Done means one full clean pass.
+**On any FAIL: fix it, then restart the gate at G1.** Done means one full clean pass.
 
 No row's fix deletes content the owning skill mandates, per the opening section: a row that
 fires on it is fixed by rewording, or passes with the content as it stands.
@@ -198,6 +197,9 @@ it feels solid:
 - a version, identifier, path, flag or config string
 - a behavioural claim about code you did not run
 
+**A claim already audited is exempt.** Where a `baton:claim-audit` dispatched earlier in the
+same run already ruled on a claim, its verdict form stands and the claim is not audited again.
+
 ### Keeping flagged text
 
 One way out, written explicitly:
@@ -214,7 +216,7 @@ aimed at the wrong audience - return to Step 2.
 - Pass/fail only. "Close enough", "mostly fine" and "reads well" are FAIL.
 - Do not rule that a check does not apply here. If the trigger appears, it fires.
 - Length never suspends the gate. A long document runs it too.
-- A CUT is deleted, never shortened - a shortened section leaves the skeleton behind.
+- A CUT is deleted, never shortened.
 - Never report a document finished while any check is FAIL.
 
 Report the result in one line: `gate: clean on pass 3`. Not a checklist dump.

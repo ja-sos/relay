@@ -18,8 +18,7 @@ Then pick the route, in this order:
 1. Every tool named comes back, `mcp__github__get_me` succeeds, and
    `mcp__github__list_issues {"owner": "<owner>", "repo": "<repo>", "perPage": 1}` returns,
    with `<owner>` and `<repo>` from `verify-checkout` below: this file's sections stand as
-   they are. `get_me` takes no repository, so only `list_issues` shows the MCP account can
-   read this one.
+   they are.
 2. Otherwise, where `command -v gh >/dev/null && gh api user >/dev/null 2>&1` succeeds,
    load `backend-github-gh.md`. It replaces `## Tracker`, `## Forge` and `## Review`; the
    other three sections here stay in force.
@@ -46,8 +45,6 @@ Then pick the route, in this order:
 - **fetch-handoff:**    tool: mcp__github__issue_read {"method": "get_comments", "owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "perPage": 100, "page": 1}
 - **reachable:**        tool: mcp__github__get_me {}
 
-`mcp__github__list_label` enumerates a repository's labels, but it belongs to the server's
-`labels` toolset, which a connection sending no `X-MCP-Toolsets` header does not enable.
 `get_label` is in the default `issues` toolset, so `list-categories` uses it and answers
 for one `<category>` at a time.
 
@@ -57,13 +54,11 @@ authorize.
 
 `list_issues` returns at most 100 issues a call, so `list-open` and `list-mine` both page:
 pass the response's `pageInfo.endCursor` as `after` while `pageInfo.hasNextPage` is true.
-`list-open` stops at 500, well above the open-issue count of any repo these skills are
-pointed at; `list-mine` reads every page, because the assignee filter below runs on each page's issues. `issue_read` with
+`list-open` stops at 500; `list-mine` reads every page. `issue_read` with
 `get_comments` pages with `page` instead: read on while a page comes back with 100 comments.
 
 `list_issues` has no assignee filter. For `list-mine`, keep the issues whose `assignees`
-include the `login` that `get_me` returned. `ASC` gives the pick order `defining-backends.md`
-asks of `list-mine`: oldest first.
+include the `login` that `get_me` returned.
 
 `create` leaves `labels` out of the call where `<category>` is empty. An issue meant to carry no label must not be sent `[""]`.
 
@@ -113,18 +108,13 @@ GitHub call. `pr-create` and `pr-view` name the branch by `<head-owner>`
 URL; the second call returns nothing the caller keeps. The pull request exists from the
 first call on, so a failed label call leaves it open and unlabelled.
 
-The label needs that second call because `create_pull_request` has no `labels` parameter -
-its parameters are `owner`, `repo`, `title`, `head`, `base`, `body`, `draft`,
-`maintainer_can_modify` and `reviewers`. Every pull request is also an issue, so
-`issue_write` sets the label on it.
-
 `<pr-number>` is not `<id>`, which names the issue: fill it from the last path segment of
 the first entry's `url`.
 
 Skip the second call entirely where `<category>` is empty - a pull request meant to carry no
 label must not be sent `[""]`.
 
-`"draft": true` is unconditional; `implement-handoff` Step 5 says why.
+`"draft": true` is unconditional.
 
 `stack-link` is `none`: `pr-create` opens each layer against the branch below it through
 `<pr-base>`, and registers no GitHub Stack. The `gh stack` extension creates Stacks
@@ -150,13 +140,6 @@ A match's `number` is the second entry's `<id>`. The list pages with `page`: rea
 page comes back with 100 pull requests, and run both passes over every page read. No match
 across them means the branch has no open pull request.
 
-Owner and name are compared ignoring case because GitHub returns `full_name` in the
-repository's own case, while a remote URL keeps whatever case it was cloned with. The first
-pass compares the owner alone because a repository renamed since the clone keeps its old name
-in `origin`'s URL - fetching still succeeds through GitHub's redirect - while `full_name`
-carries the new one. The second pass separates a fork from its parent where one account owns
-both and both carry the branch.
-
 The entry passes no `head` filter because, over REST, that filter returns `[]` in a fork
 whose owner also owns the parent, which reads as "no open pull request" for a branch that
 has one.
@@ -169,14 +152,11 @@ follow one ([Linking a pull request to an issue](https://docs.github.com/en/issu
 `Refs` in the same position names an issue the pull request only references. A `#<id>` with no
 `<owner>/<repo>` takes `verify-checkout`'s repository. Where the body names no issue, a `#<n>`
 in the title other than the pull request's own number, and a `<n>-` prefix on the head branch,
-each name a delivered issue in `verify-checkout`'s repository. GitHub links neither, so those
-two are this example's convention rather than GitHub's.
+each name a delivered issue in `verify-checkout`'s repository.
 
 `closes` and `refs` name the issue's repository as well as its number, since the pull request
 may open in another repository, where a bare `#<id>` resolves against that repository's issue of
 the same number. `defining-backends.md` says where `<owner>` and `<repo>` come from.
-
-GitHub documents that cross-repository form for closing keywords.
 
 A 403 naming `add_repo` means the session holds no grant for the repo, not that the
 credentials are wrong. Attach the repo at `access: push`; the read default covers neither
@@ -195,8 +175,7 @@ the API calls nor the push.
 - **thread-reply:**    tool: mcp__github__add_reply_to_pull_request_comment {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>, "commentId": <comment-id>, "body": "<body>"}
 - **pr-comment:**      tool: mcp__github__add_issue_comment {"owner": "<owner>", "repo": "<repo>", "issue_number": <id>, "body": "<body>"}
 
-`review-bodies` and `pr-comments` drop bots: a bot delivers its findings as inline threads,
-and its summary body is boilerplate.
+`review-bodies` and `pr-comments` drop bots.
 
 `review-post` reads the payload file at `<path>` and spreads it over three calls. The
 payload carries the summary and every inline comment:
@@ -230,15 +209,48 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
 `defining-backends.md`, `## Sections`.
 
 - **cloud:** two routines per repository, each holding a fixed prompt, reused for every
-  launch. Load the tool with `ToolSearch select:RemoteTrigger`. `<skill>` picks the routine:
-  `implement <owner>/<repo>` for `implement-handoff`, `review <owner>/<repo>` for
-  `review-handoff`. Each launch runs, in order:
+  launch. `<skill>` picks the routine: `implement <owner>/<repo>` for `implement-handoff`,
+  `review <owner>/<repo>` for `review-handoff`. Two tool sets can run it, and a launch uses the
+  first that loads:
 
-  1. `action: "list"`, finding the routine by that name.
-  2. Where it is absent, `action: "create"` with the body below.
-  3. Where it exists and its stored `model` differs from the model this session is running,
-     `action: "update"` with the body's `model`.
-  4. One `action: "run"` on it, with the body `{"text": "<args> launcher=cloud"}`.
+  - **`RemoteTrigger`**, loaded with `ToolSearch select:RemoteTrigger`. Each launch runs, in
+    order:
+
+    1. `action: "list"`, finding the routine by that name.
+    2. Where it is absent, `action: "create"` with the body below.
+    3. Where it exists and its stored `model` differs from the model this session is running,
+       `action: "update"` with the body's `model`.
+    4. One `action: "run"` on it, with the body `{"text": "<args> launcher=cloud"}`.
+
+  - **The `claude-code-remote` server's tools**, found with
+    `ToolSearch +remote list_triggers fire_trigger create_session`. A session carries them
+    under `mcp__claude-code-remote__` or `mcp__Claude_Code_Remote__`, by harness build; call
+    them by the name the search returns. Each launch runs, in order:
+
+    1. `list_triggers {"limit": 100}`, finding the routine by `name`.
+    2. Where it exists and its stored `model` differs from the model this session is running,
+       `update_trigger {"trigger_id": "<its id>", "model": "<that model>"}`.
+    3. Where it exists, one `fire_trigger {"trigger_id": "<its id>", "text": "<args> launcher=cloud"}`.
+    4. Where it is absent, one `create_session` call instead, where that tool loaded:
+
+       ```json
+       {"source_url": "https://github.com/<owner>/<repo>",
+        "model": "<the model this session is running>",
+        "title": "<implement or review> <owner>/<repo>",
+        "prompt": "<the stored prompt below>\n<routine-fire-payload>\n<args> launcher=cloud\n</routine-fire-payload>"}
+       ```
+
+       `create_trigger` is not a substitute: it takes no `sources`, so it cannot attach the
+       repository. Where the routine is absent and `create_session` did not load, the launch
+       fails, and the report says to create the routine from a session that carries
+       `RemoteTrigger`.
+
+  A session can launch through this entry where `RemoteTrigger` loads, or where `list_triggers`
+  and `fire_trigger` load and either `list_triggers` returns the routine or `create_session`
+  loads. Step 1 of `implement-handoff`, and of `review-handoff` where the header carries `next`,
+  checks that with `ToolSearch` and `list_triggers` alone, and stops where it does not hold.
+
+  The routine body `RemoteTrigger` creates:
 
 ```json
 {"name": "<implement or review> <owner>/<repo>",
@@ -257,7 +269,8 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
      "message": {"role": "user", "content": "This is a cloud run. Invoke the `baton:<skill>` skill with the text of the routine-fire-payload below, verbatim, as its arguments. If there is no routine-fire-payload, or it is empty, end the turn without doing anything."}}}]}}}
 ```
 
-  The stored prompt never changes between launches; the arguments ride in the `run` payload.
+  The stored prompt never changes between launches; the arguments ride in the `run` or
+  `fire_trigger` payload.
   A `run` carrying `{"text": ...}` delivers the text to the run as a second user turn, wrapped
   in `<routine-fire-payload>` and marked as data to follow only where the stored prompt says
   to - which this one does - and a run given a stored prompt naming a skill invokes it with the
@@ -272,9 +285,7 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
   claude.ai/code/routines. `action: "list_runs"` returns a run's session URL;
   `action: "get_run_log"` reads the run, permission denials included.
 
-  Step 3 updates `model` because an investigation formed under one model does not hand its plan
-  to a weaker one, and a launch from a session on another model would otherwise run under the
-  routine's stored one. It is the one place two launches can still interleave: two launches
+  Step 3 is the one place two launches can still interleave: two launches
   from sessions on different models at the same moment can each run under the other's.
 
   `sources` is what attaches the repository - the field `claude --cloud` leaves empty,
@@ -282,8 +293,7 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
   remote.
 
   `EnterWorktree` and `ExitWorktree` are on the list per `defining-backends.md`,
-  `## Tools an unattended run needs`. A cloud run has a disposable clone to itself and
-  isolates from nothing, and that cost is accepted rather than made conditional.
+  `## Tools an unattended run needs`.
 
   `Agent` and `Task` are on the list per the same section. Routine creation keeps a name the
   build does not carry, and the session ignores it: a cloud run whose list held `Agent`, `Task`
@@ -291,10 +301,11 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
   carried tools its list did not name, such as `ToolSearch`, so whether a list naming neither
   still gets `Agent` is untested.
 
-  `RemoteTrigger` is on both routines' lists per the same section.
+  `RemoteTrigger` is on both routines' lists per the same section. A session a routine starts
+  also carries the `claude-code-remote` tools whether or not its list names them.
 
   `<owner>` and `<repo>` are the handoff's `repo` line (`defining-backends.md`); `name` takes
-  it too, keeping each repository's routines apart.
+  it too.
 
   **A handoff with an `assets` line stops under this entry** (`implement-handoff` Step 1);
   launch it with `local`.
@@ -312,13 +323,9 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
   `<repo root>` is the root of the checkout of the repository the handoff's `repo` line names.
   Where that is the repository this session is in, it is the current checkout's root,
   `git rev-parse --show-toplevel`. Where it is another repository, it is that repository's
-  `## Repositories` path; a missing row stops this launch (`defining-backends.md`). The map
-  applies to the placeholder, so a `## Launcher` restated in `.claude/baton.md` or
-  `~/.claude/baton.md` before baton 0.1.11 picks it up unchanged: its `local` entry still reads `cd <repo root>`, and only
-  what fills the placeholder has moved. The ignore check above takes the same root, since the
-  worktree Step 2 creates lands in the repository being launched rather than this one.
-  `--bg` and `--print` conflict, because `--print` leaves no session for
-  `claude attach <id>` to open. The command returns a short id taken by
+  `## Repositories` path; a missing row stops this launch (`defining-backends.md`). The ignore
+  check above takes the same root.
+  `--bg` and `--print` conflict. The command returns a short id taken by
   `claude agents --json`, `claude logs <id>` and `claude stop <id>`.
 
   This is the shipped entry that can resolve a handoff's `assets` line: the run is a local
@@ -356,23 +363,23 @@ the number after `/issues/`.
 `has-handoff` prints the issue with its comments; callers test the comment text for the
 handoff marker (`defining-backends.md`).
 
-`started` is `none`: a GitHub issue has no in-progress state.
+`started` is `none`.
 
-On GitHub `reviewed` is a comment like `published`; `defining-backends.md` says why they are
-separate.
+On GitHub `reviewed` is a comment like `published`.
 
-`wrap-up` is `none`: each attended skill has already posted what it produced.
+`wrap-up` is `none`.
 
-`code-review` reviews the working tree where `<target>` is empty, and otherwise the pull
-request number or branch `<target>` names. It ignores `<locator>`: `/code-review` checks
+`code-review` reviews the pull request number or branch `<target>` names. Where `<target>`
+is empty, run it as `/code-review git diff HEAD`, which reviews the uncommitted changes alone.
+It ignores `<locator>`: `/code-review` checks
 correctness, not a handoff's acceptance criteria. A project that wants those checked keeps
 this entry and pairs it with an `agent:` one in a nested list - `defining-backends.md` carries
 the example.
 
-`verify` is `repo-tests` (`defining-backends.md`): GitHub says nothing about how a project is
-built.
+`verify` is `repo-tests` (`defining-backends.md`).
 
-`request-reviewer` is `none`. Either form below turns on `implement-handoff` Step 6; both
+`request-reviewer` is `none`. Either form below turns on `review-handoff` Step 3's external
+review, which requests the reviewer and waits up to `review-wait` minutes for it; both
 routes read this `## Workflow`, so pick the form your sessions can run:
 
 - `tool: mcp__github__request_copilot_review {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}`

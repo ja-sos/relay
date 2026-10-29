@@ -35,7 +35,7 @@ defines, and an operation that fails because its tool is missing or unauthentica
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
-not define - an improvised equivalent writes to a tracker the project did not choose.
+not define.
 
 ## The rules for run output
 
@@ -58,8 +58,7 @@ Run `pr-view` for the current branch, and compare the pull request's head commit
 - Equal: the target is the pull request's diff.
 - Different: one side holds commits the other lacks, and either target misses them. Report
   both commits and ask which to review before running anything.
-- No pull request: the target is the full branch diff against the merge target, so every
-  commit on the branch is covered rather than only uncommitted edits.
+- No pull request: the target is the full branch diff against the merge target.
 
 With a pull request settled, collect its threads as the reference's "Collecting the review
 threads" says. Where there is no pull request, or it carries no threads, this step collects
@@ -68,10 +67,9 @@ nothing and Step 1 reviews the target above alone.
 ## Step 1 - Review
 
 Run `code-review` over the target Step 0 settled, with the pull request number as its
-`<target>` - or the branch name for the local branch - and `<locator>` empty, this skill
-taking a branch rather than a handoff. Carry the provenance rule into it. Findings land
-as fixes in the working tree, never as comments on the pull request: the branch is yours to
-fix, not yours to have written.
+`<target>` - or the branch name for the local branch - and `<locator>` empty. Carry the
+provenance rule into it. Findings land as fixes in the working tree, never as comments on the
+pull request.
 
 Once it returns, check each thread Step 0 collected as the reference's "Checking the threads"
 says.
@@ -88,7 +86,7 @@ item:
 This step closes every one before the gate rather than carrying it to the next reader.
 
 Standing findings sit under no fixed heading: collect them by content - a severity and the
-reason it stands (`implement-handoff` Step 5) - wherever in the body they appear. A standing
+reason it stands (`review-handoff` Step 5) - wherever in the body they appear. A standing
 finding that Step 1's `code-review` also returned - the same failure, at the same file and an
 overlapping line range at the reviewed head - is one item, not two: it
 is ruled on here and listed only in this step's group at the gate. Where either differs, they
@@ -148,8 +146,7 @@ keep it in the body with the severity and evidence Step 2 settled and that it st
 the handoff's scope, file it with `baton:file-issue`, or whatever else they say. This skill
 sets no default for it and never decides for them, so its row proposes nothing.
 
-Which fixes to apply is input only the user can give, so stopping is this step's required
-outcome, not a failure to finish. Applying a fix in the same turn as the findings does not
+Stopping is this step's required outcome, not a failure to finish. Applying a fix in the same turn as the findings does not
 satisfy the gate, whatever text precedes it.
 
 ## Step 4 - Apply and verify
@@ -162,8 +159,7 @@ Ask about any pre-publish check the repo's own instructions leave to a human - o
 `CLAUDE.md` or `AGENTS.md` says to run before publishing, or forbids running unprompted. A check
 never asked about leaves this step open rather than merely unused, and it belongs before the push.
 
-Keep that question separate from asking to publish: asking to push while verification is still
-undecided inverts the order.
+Keep that question separate from asking to publish.
 
 ## Step 5 - Publish
 
@@ -175,7 +171,7 @@ the local branch holds nothing the pull request lacks, there is nothing to push,
 go-ahead covers `pr-update` alone.
 
 With one open, run `pr-update` when the applied fixes left its body inaccurate, and whenever
-Step 2 collected an item, fix or no fix: closing an item changes the body. Write that
+Step 2 collected an item, fix or no fix. Write that
 body under `baton:write-deliverables`, as a **PR description**:
 what the code does now and why it is shaped that way, as though the final diff were the only
 version that ever existed. Delete whatever the current diff no longer supports, and never narrate

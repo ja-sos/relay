@@ -35,7 +35,7 @@ defines, and an operation that fails because its tool is missing or unauthentica
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
-not define - an improvised equivalent writes to a tracker the project did not choose.
+not define.
 
 ## Step 1 - Resolve the target, and state it before reviewing
 
@@ -50,15 +50,12 @@ Never fall back to the local branch diff. That is a different deliverable and it
 `baton:self-review`.
 
 State the resolved target - number, author, head branch - before any review work, and never
-announce one target then switch to another inside the same turn. The user cannot see when a
-message was composed: an answer that looks like it addresses your latest question may have been
-typed before that question existed. State the target first and let them correct it.
+announce one target then switch to another inside the same turn. State the target first and let them correct it.
 
-A pull request the user authored is not this skill's: reviewing your own side's work means
-applying fixes, not commenting on them. Stop, tell the user so, and offer the alternatives -
+A pull request the user authored is not this skill's. Stop, tell the user so, and offer the alternatives -
 `baton:self-review` for a branch an unattended `baton:implement-handoff` run wrote, or the
 `code-review` operation directly for one they wrote by hand - and let them choose. This skill
-cannot tell the two apart, so it never picks for them.
+never picks for them.
 
 ## Step 2 - Review
 
@@ -75,8 +72,7 @@ Write the payload to a file, shaped as the backend's `review-post` entry describ
 Write every piece of text that ships under `baton:write-deliverables` - the summary and each
 inline comment alike.
 
-Then show the user that text and stop. Findings are this step's deliverable; posting is a
-separate decision and it is theirs.
+Then show the user that text and stop.
 
 ## Step 4 - Post on an explicit go-ahead
 
@@ -94,7 +90,7 @@ anchors landed.
 
 Run `wrap-up` as the last action of the run, with `review-pr` as `<skill>`, the pull request
 number as `<id>`, and its URL and head branch as `<pr-url>` and `<head-branch>` - both from
-Step 1's `pr-view`, because the pull request under review may not be the checked-out branch.
+Step 1's `pr-view`.
 
 Run it where the user declines to post, too. An undefined `wrap-up` reads as `none`, and a
 failed one is reported by name and not retried (`defining-backends.md`, `wrap-up`).
