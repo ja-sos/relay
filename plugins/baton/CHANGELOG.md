@@ -3,6 +3,14 @@
 What changed in each baton version that a backend file, a restated section or a handoff
 written for an earlier version has to account for. Newest first.
 
+## 0.3.1
+
+- The `cloud` entry of `backend-github.md`'s `## Launcher` no longer claims that a
+  `claude --cloud` session arrives with an uploaded copy of the checkout and no remote, or that
+  a routine without `sources` gets no repository. A `cloud` entry restated in
+  `.claude/baton.md` or `~/.claude/baton.md` from an earlier version keeps the old wording, and
+  no update to this plugin reaches it: copy the shipped entry again.
+
 ## 0.3.0
 
 - `implement-handoff` runs no `code-review`. Its review loop and its wait-and-fix round are

@@ -240,7 +240,7 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
         "prompt": "<the stored prompt below>\n<routine-fire-payload>\n<args> launcher=cloud\n</routine-fire-payload>"}
        ```
 
-       `create_trigger` is not a substitute: it takes no `sources`, so it cannot attach the
+       `create_trigger` is not a substitute: it takes no `sources`, so it cannot name the
        repository. Where the routine is absent and `create_session` did not load, the launch
        fails, and the report says to create the routine from a session that carries
        `RemoteTrigger`.
@@ -288,9 +288,7 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
   Step 3 is the one place two launches can still interleave: two launches
   from sessions on different models at the same moment can each run under the other's.
 
-  `sources` is what attaches the repository - the field `claude --cloud` leaves empty,
-  which is why a `--cloud` session arrives with an uploaded copy of the checkout and no
-  remote.
+  `sources` names the repository the routine's sessions start with.
 
   `EnterWorktree` and `ExitWorktree` are on the list per `defining-backends.md`,
   `## Tools an unattended run needs`.
