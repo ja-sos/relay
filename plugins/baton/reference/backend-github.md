@@ -209,15 +209,48 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
 `defining-backends.md`, `## Sections`.
 
 - **cloud:** two routines per repository, each holding a fixed prompt, reused for every
-  launch. Load the tool with `ToolSearch select:RemoteTrigger`. `<skill>` picks the routine:
-  `implement <owner>/<repo>` for `implement-handoff`, `review <owner>/<repo>` for
-  `review-handoff`. Each launch runs, in order:
+  launch. `<skill>` picks the routine: `implement <owner>/<repo>` for `implement-handoff`,
+  `review <owner>/<repo>` for `review-handoff`. Two tool sets can run it, and a launch uses the
+  first that loads:
 
-  1. `action: "list"`, finding the routine by that name.
-  2. Where it is absent, `action: "create"` with the body below.
-  3. Where it exists and its stored `model` differs from the model this session is running,
-     `action: "update"` with the body's `model`.
-  4. One `action: "run"` on it, with the body `{"text": "<args> launcher=cloud"}`.
+  - **`RemoteTrigger`**, loaded with `ToolSearch select:RemoteTrigger`. Each launch runs, in
+    order:
+
+    1. `action: "list"`, finding the routine by that name.
+    2. Where it is absent, `action: "create"` with the body below.
+    3. Where it exists and its stored `model` differs from the model this session is running,
+       `action: "update"` with the body's `model`.
+    4. One `action: "run"` on it, with the body `{"text": "<args> launcher=cloud"}`.
+
+  - **The `claude-code-remote` server's tools**, found with
+    `ToolSearch +remote list_triggers fire_trigger create_session`. A session carries them
+    under `mcp__claude-code-remote__` or `mcp__Claude_Code_Remote__`, by harness build; call
+    them by the name the search returns. Each launch runs, in order:
+
+    1. `list_triggers {"limit": 100}`, finding the routine by `name`.
+    2. Where it exists and its stored `model` differs from the model this session is running,
+       `update_trigger {"trigger_id": "<its id>", "model": "<that model>"}`.
+    3. Where it exists, one `fire_trigger {"trigger_id": "<its id>", "text": "<args> launcher=cloud"}`.
+    4. Where it is absent, one `create_session` call instead, where that tool loaded:
+
+       ```json
+       {"source_url": "https://github.com/<owner>/<repo>",
+        "model": "<the model this session is running>",
+        "title": "<implement or review> <owner>/<repo>",
+        "prompt": "<the stored prompt below>\n<routine-fire-payload>\n<args> launcher=cloud\n</routine-fire-payload>"}
+       ```
+
+       `create_trigger` is not a substitute: it takes no `sources`, so it cannot attach the
+       repository. Where the routine is absent and `create_session` did not load, the launch
+       fails, and the report says to create the routine from a session that carries
+       `RemoteTrigger`.
+
+  A session can launch through this entry where `RemoteTrigger` loads, or where `list_triggers`
+  and `fire_trigger` load and either `list_triggers` returns the routine or `create_session`
+  loads. Step 1 of `implement-handoff`, and of `review-handoff` where the header carries `next`,
+  checks that with `ToolSearch` and `list_triggers` alone, and stops where it does not hold.
+
+  The routine body `RemoteTrigger` creates:
 
 ```json
 {"name": "<implement or review> <owner>/<repo>",
@@ -236,7 +269,8 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
      "message": {"role": "user", "content": "This is a cloud run. Invoke the `baton:<skill>` skill with the text of the routine-fire-payload below, verbatim, as its arguments. If there is no routine-fire-payload, or it is empty, end the turn without doing anything."}}}]}}}
 ```
 
-  The stored prompt never changes between launches; the arguments ride in the `run` payload.
+  The stored prompt never changes between launches; the arguments ride in the `run` or
+  `fire_trigger` payload.
   A `run` carrying `{"text": ...}` delivers the text to the run as a second user turn, wrapped
   in `<routine-fire-payload>` and marked as data to follow only where the stored prompt says
   to - which this one does - and a run given a stored prompt naming a skill invokes it with the
@@ -267,7 +301,8 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
   carried tools its list did not name, such as `ToolSearch`, so whether a list naming neither
   still gets `Agent` is untested.
 
-  `RemoteTrigger` is on both routines' lists per the same section.
+  `RemoteTrigger` is on both routines' lists per the same section. A session a routine starts
+  also carries the `claude-code-remote` tools whether or not its list names them.
 
   `<owner>` and `<repo>` are the handoff's `repo` line (`defining-backends.md`); `name` takes
   it too.

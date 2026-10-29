@@ -135,7 +135,9 @@ match, or a `base` that is not an ancestor of HEAD, is a stop: the plan addresse
 this clone does not contain. A loaded `stacked-handoff.md` replaces the two lines above.
 
 Resolve the `## Launcher` entry `launcher=` names - `local` where the opening turn carried
-none - against the loaded files. Stop where no loaded file defines it.
+none - against the loaded files. Stop where no loaded file defines it, or where this session
+cannot launch through it - load the tools the entry names, and run the read-only checks its
+notes give. A launch that would fail at Step 6 fails here, before anything is built.
 
 Every entry's `<owner>` and `<repo>` follow the placeholder table in `defining-backends.md`,
 `## Operations`; the locator is the issue's repository for the whole run. `verify-checkout`

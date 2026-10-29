@@ -851,3 +851,22 @@ Assets are resolved at Step 1 rather than at the first read because a stop after
 `EnterWorktree` leaves a worktree standing. The run never carries on with the assets that did
 resolve because the handoff listed all of them because the work needs all of them. A path the
 `assets` line does not carry is not an asset the run has, whatever the body calls it.
+
+## reference/backend-github.md, `## Launcher`, `cloud`
+
+The `claude-code-remote` route exists because a cloud `implement-handoff` run on 2026-10-29
+(issue #53) had no `RemoteTrigger` tool - `ToolSearch select:RemoteTrigger` found nothing - and
+so opened its pull request without launching `review-handoff`. The same session carried
+`mcp__Claude_Code_Remote__list_triggers`, `fire_trigger` and `create_session`; the review session
+then started for it carried `mcp__claude-code-remote__list_triggers` and `fire_trigger` but no
+`create_session`. That is why the entry names the tools by search rather than by prefix, and why
+`create_session` is only the fallback for a missing routine.
+
+`create_session` with `source_url` started that review session with the repository attached.
+`create_trigger` was passed over because it takes no `sources`.
+
+## skills/implement-handoff/SKILL.md, Step 1, the launcher check
+
+The launcher is checked for a usable tool at Step 1, not only for a definition, because a launch
+that fails at Step 6 leaves a finished pull request with no reviewer, and the run cannot recover
+it.

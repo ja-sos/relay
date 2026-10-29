@@ -25,6 +25,13 @@ written for an earlier version has to account for. Newest first.
   `reference/stacked-handoff.md`, `reference/handoff-assets.md` and
   `reference/bundled-issues.md`, loaded only where the header carries the matching line. The
   per-issue call walk is stated once, in `reference/per-issue-calls.md`.
+- The shipped `cloud` launcher also runs on the `claude-code-remote` server's `list_triggers`,
+  `update_trigger`, `fire_trigger` and `create_session`, where `RemoteTrigger` does not load. A
+  cloud session can lack `RemoteTrigger`, and a `cloud` entry restated in `.claude/baton.md` or
+  `~/.claude/baton.md` on `RemoteTrigger` alone fails there: copy the shipped entry again.
+- `implement-handoff` Step 1, and `review-handoff` Step 1 where the header carries `next`, now
+  stop where this session cannot launch through the `## Launcher` entry it will use, instead of
+  finding out after the pull request is open.
 - Rationale moved from the skills and reference files to `maintainers-notes.md`, and
   version-upgrade notes to this file.
 

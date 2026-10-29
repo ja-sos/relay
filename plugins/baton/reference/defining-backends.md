@@ -47,7 +47,9 @@ other way: the prompt arrives as a user turn, so a suggestion copied into it out
 handoff section it was copied from.
 
 Entries also run unasked inside unattended runs (`implement-handoff` Step 6, `review-handoff`
-Step 6), so each must be runnable there - see **Tools an unattended run needs**.
+Step 6), so each must be runnable there - see **Tools an unattended run needs**. An entry's
+notes say what a session needs to launch through it, and how to check that without launching;
+the skills run that check at Step 1.
 
 `## Repositories` is optional, as `## Workflow` is. It maps
 each repository a change spans to an absolute local path:
@@ -386,6 +388,7 @@ diff the correctness review could not read.
 | Body arrives as a file | each operation taking `<path>` reads the file rather than a string, or sends `<body>` when it is a `tool:` entry |
 | Runs standalone | paste the command with real values into a shell; it must succeed there first. A literal - `none`, `repo-tests`, `closes`, `refs`, `review-wait`, `## Assets`'s `root` - is not a command and is exempt. So is `verify` whatever its value: its sequence may rewrite files |
 | Tool entries called | call each `tool:` entry of a read operation with real values, since it has no shell form to paste; never call one `baton:setup` Step 4 forbids running |
+| Launcher tools load | for each `## Launcher` entry, the check its notes give passes in the kind of session that launches through it |
 | Agent entries dispatchable | each `agent:` entry names an agent type this session offers, and every `## Launcher` entry that names `allowed_tools` at all names both `Agent` and `Task` |
 
 A backend is done when every row passes.
@@ -405,11 +408,13 @@ A `## Launcher` entry that names `allowed_tools` at all names `EnterWorktree` an
 `ExitWorktree`, which both runs call - an entry that starts the session in a worktree already,
 `claude --worktree` among them, included.
 
-A `cloud` entry adds whatever tool it itself is written with - `RemoteTrigger` on the shipped
-one. **Every** cloud `implement-handoff` run needs it, not only a stacked one, and so does a
-cloud `review-handoff` run: both launch through this entry from inside the run
-(`implement-handoff` Step 6, `review-handoff` Step 6). The tool that creates and fires the
-routines has to be on the list both routines grant.
+A `cloud` entry adds whatever tools it itself is written with. The shipped one runs on
+`RemoteTrigger`, or on the `claude-code-remote` server's `list_triggers`, `fire_trigger` and
+`create_session` where `RemoteTrigger` does not load (`backend-github.md`). **Every** cloud
+`implement-handoff` run needs one of those sets, not only a stacked one, and so does a cloud
+`review-handoff` run carrying `next`: both launch through this entry from inside the run
+(`implement-handoff` Step 6, `review-handoff` Step 6). A cloud session does not always carry
+`RemoteTrigger`, so an entry written on it alone fails there, and the run finds out at Step 1.
 
 A `local` entry needs nothing beyond `Bash`, but it starts a session on the machine the
 launching run is on, and that is the constraint a stack's `next` has to be written around.

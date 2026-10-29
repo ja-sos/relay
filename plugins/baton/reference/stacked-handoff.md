@@ -30,7 +30,8 @@ The second line exiting non-zero is a stop: this clone does not hold `base`. Ste
 
 Where the header carries `pr-base`, resolve `stack-link` against the loaded backend files too.
 Where it carries `next`, resolve the `## Launcher` entry its first value names. Stop where no
-loaded file defines either.
+loaded file defines either, or where this session cannot launch through that entry, checked as
+`implement-handoff` Step 1 checks its own launcher.
 
 **Step 2.** A handoff carrying `pr-base` never takes the no-change exit. Ask nothing of HEAD;
 go to `started` and the branch cut.
@@ -75,7 +76,8 @@ says the reviewer carries `next`, and does not present the locator as unlaunched
 
 **Step 1.** Note whether the head ref equals the header's `branch`. Where the header carries
 `next`, resolve the `## Launcher` entry its first value names, and stop where no loaded file
-defines it.
+defines it or this session cannot launch through it, checked as `implement-handoff` Step 1
+checks its own launcher.
 
 **Step 3.** On a pull request whose header carries `pr-base`, a finding in the layer below is
 outside the handoff's scope. A review engine given a branch may compare it with the default
