@@ -105,7 +105,7 @@ that is the handoff to run.
 
 Then load the reference file for each header line that needs one, from
 `${CLAUDE_PLUGIN_ROOT}/reference/`. Each file's `implement-handoff` section adds to the steps it
-names:
+names, and replaces what they say where the two differ:
 
 | Where the header carries | Load |
 |---|---|

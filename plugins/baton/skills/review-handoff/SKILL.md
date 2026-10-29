@@ -107,8 +107,15 @@ prompts for it.
 
 Run `fetch-handoff` on the locator, deriving `<id>` and `<comment-id>` as the backend's notes on
 `fetch-handoff` say. Read the header as `implement-handoff` Step 1 does, including its stop on
-`issue` and `closes` lists of different lengths, and load the reference files its table names
-for the header's lines. Each file's `review-handoff` section adds to the steps it names.
+`issue` and `closes` lists of different lengths. Then load the reference file for each header
+line that needs one, from `${CLAUDE_PLUGIN_ROOT}/reference/`. Each file's `review-handoff`
+section adds to the steps it names, and replaces what they say where the two differ:
+
+| Where the header carries | Load |
+|---|---|
+| a `pr-base` line or a `next` line | `stacked-handoff.md` |
+| an `assets` line | `handoff-assets.md` |
+| more than one entry on its `issue` line | `bundled-issues.md` |
 
 A fetched comment carrying the handoff marker but **no fenced header** is a pointer, not a
 handoff, and is a stop naming the issue and locator the pointer carries.
@@ -227,19 +234,21 @@ Classify every finding against the reference's "Severity" section.
 
 ### The loop
 
-Each round runs, over the findings its `code-review` call returned:
+Each round runs over its findings - those its `code-review` call returned, and in the first
+round the threads whose findings stand:
 
 1. Apply every Critical and Important finding the run can fix. Apply a Minor one only where
    the fix is smaller than the paragraph explaining why it was left.
 2. Run the handoff's commands. A failure is a stop, at every turn of the loop. `verify` waits
    for Step 4.
-3. Where this round returned no Critical finding, or this is the third round: commit what item
-   1 applied, on the review branch, and end the loop. Those last fixes go unreviewed, and the
-   Run report says so.
+3. Where this round's findings hold no Critical one, or this is the third round: commit what
+   item 1 applied, on the review branch, and end the loop. Those last fixes go unreviewed, and
+   the Run report says so.
 4. Otherwise run `code-review` again, with an empty `<target>` and an empty `<locator>`, while
-   this round's fixes are still uncommitted: it reviews those fixes alone, and an entry that
-   checks acceptance criteria checked them against the whole change in the first round. Once it
-   returns, commit them on the review branch. Its findings are the next round's.
+   this round's fixes are still uncommitted and every file they created is marked with
+   `git add -N`: it reviews those fixes alone, and an entry that checks acceptance criteria
+   checked them against the whole change in the first round. Once it returns, commit them on
+   the review branch. Its findings are the next round's.
 
 Never commit a round's fixes before item 4's `code-review` returns: an empty `<target>` is the
 working tree, and a committed tree hands the review an empty diff.
@@ -346,7 +355,8 @@ that issue's id as `<id>`, the pull request URL as `<pr-url>`, and the same one 
   out - or that `request-reviewer` is `none`;
 - every finding every round collected, each with its severity and its disposition, and every
   thread with its disposition and the evidence that settled it;
-- that the loop's last fixes went unreviewed, where its last round applied any;
+- that the loop's last fixes went unreviewed, where its last round applied any, and so did any
+  file `verify` rewrote in Step 4;
 - whether the pull request body carries `## Not verified here` or `## Unverified claims`,
   pointing to each heading present without repeating its entries;
 - after a `keep`, the worktree path and which check failed.
