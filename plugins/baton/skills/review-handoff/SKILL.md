@@ -108,8 +108,8 @@ prompts for it.
 Run `fetch-handoff` on the locator, deriving `<id>` and `<comment-id>` as the backend's notes on
 `fetch-handoff` say. Read the header as `implement-handoff` Step 1 does, including its stop on
 `issue` and `closes` lists of different lengths. Then load the reference file for each header
-line that needs one, from `${CLAUDE_PLUGIN_ROOT}/reference/`. Each file's `review-handoff`
-section adds to the steps it names, and replaces what they say where the two differ:
+line that needs one, from `${CLAUDE_PLUGIN_ROOT}/reference/`, and apply it as the file itself
+says. Where a loaded file and a step here differ, the file wins:
 
 | Where the header carries | Load |
 |---|---|
@@ -138,8 +138,9 @@ Three answers are stops: a pull request that is not open, one whose head reposit
 
 Then resolve, against the loaded backend files and before `EnterWorktree`, every operation this
 run calls: `review-threads`, `code-review`, `verify`, `request-reviewer`, `review-wait`,
-`review-list`, `pr-comments`, `pr-update`, `reviewed` and `stopped`. `review-wait`,
-`review-list` and `pr-comments` need resolving only where `request-reviewer` is not `none`.
+`review-list`, `review-bodies`, `pr-comments`, `pr-update`, `reviewed` and `stopped`.
+`review-wait`, `review-list`, `review-bodies` and `pr-comments` need resolving only where
+`request-reviewer` is not `none`.
 Find the subagent dispatch tool - `Agent` in some harness builds, `Task` in others - in this
 session's tools. Any of these missing is a stop here.
 
@@ -223,13 +224,17 @@ wait in milliseconds, but it stays armed to its timeout after the event that mat
 is the default.
 
 When the new output holds no review by the reviewer `request-reviewer` named, keep it as the
-copy and wait again for what is left. On timeout, carry on: the Run report says the reviewer
+copy and wait again for what is left. Before taking the timeout - including where the first
+round outlasted the whole wait - run `review-list` and `pr-comments` once more and compare with
+the kept copy. On timeout, carry on: the Run report says the reviewer
 was requested and no review arrived. A review arriving later is `baton:address-review`'s.
 
 Then collect the pull request's threads as the reference's "Collecting the review threads"
 says - after the review arrived or the wait ran out, where a reviewer was requested. Check each
 collected thread as the reference's "Checking the threads" says: a thread whose finding stands
 joins the round's findings, and every thread keeps its own disposition for the Run report.
+Where a reviewer was requested, run `review-bodies` and `pr-comments` as well: each finding the
+reviewer `request-reviewer` named wrote there joins the round's findings, ruled on its merits.
 Classify every finding against the reference's "Severity" section.
 
 ### The loop

@@ -739,6 +739,11 @@ The `local` launcher's ignore check takes the same root because the worktree Ste
 
 `verify` is `repo-tests` because GitHub says nothing about how a project is built.
 
+An empty `<target>` is run as `git diff HEAD` because `/code-review` given no target diffs the
+branch against its upstream - or `main`, or `HEAD~1` - and adds the working tree on top, per its
+prompt in Claude Code 2.1.312. Left empty, `review-handoff`'s fix-only rounds would re-review the
+whole branch.
+
 ## reference/backend-github-gh.md
 
 ### Tracker
@@ -851,6 +856,13 @@ Assets are resolved at Step 1 rather than at the first read because a stop after
 `EnterWorktree` leaves a worktree standing. The run never carries on with the assets that did
 resolve because the handoff listed all of them because the work needs all of them. A path the
 `assets` line does not carry is not an asset the run has, whatever the body calls it.
+
+## reference/bundled-issues.md
+
+`implement-handoff` Step 5 picks each issue's reference line by that issue's own `closes` value.
+A `closes` line on an issue the bundle leaves open shuts it on merge whatever remains open on
+it, and the run has no way to reopen it. An issue whose line goes missing from the body is
+unlinked on merge, and nothing errors.
 
 ## reference/backend-github.md, `## Launcher`, `cloud`
 

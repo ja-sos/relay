@@ -369,8 +369,9 @@ On GitHub `reviewed` is a comment like `published`.
 
 `wrap-up` is `none`.
 
-`code-review` reviews the working tree where `<target>` is empty, and otherwise the pull
-request number or branch `<target>` names. It ignores `<locator>`: `/code-review` checks
+`code-review` reviews the pull request number or branch `<target>` names. Where `<target>`
+is empty, run it as `/code-review git diff HEAD`, which reviews the uncommitted changes alone.
+It ignores `<locator>`: `/code-review` checks
 correctness, not a handoff's acceptance criteria. A project that wants those checked keeps
 this entry and pairs it with an `agent:` one in a nested list - `defining-backends.md` carries
 the example.

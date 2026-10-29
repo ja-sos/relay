@@ -104,8 +104,8 @@ Step 1 pointer, not a handoff. It is a stop. Name the issue and locator the poin
 that is the handoff to run.
 
 Then load the reference file for each header line that needs one, from
-`${CLAUDE_PLUGIN_ROOT}/reference/`. Each file's `implement-handoff` section adds to the steps it
-names, and replaces what they say where the two differ:
+`${CLAUDE_PLUGIN_ROOT}/reference/`, and apply it as the file itself says. Where a loaded file and
+a step here differ, the file wins:
 
 | Where the header carries | Load |
 |---|---|
@@ -132,7 +132,8 @@ git merge-base --is-ancestor <base> HEAD
 
 Run `verify-checkout`; its answer must equal the header's `repo`. A repo that does not
 match, or a `base` that is not an ancestor of HEAD, is a stop: the plan addresses code
-this clone does not contain. A loaded `stacked-handoff.md` replaces the two lines above.
+this clone does not contain. Where the header carries `pr-base`, a loaded `stacked-handoff.md`
+replaces the two lines above.
 
 Resolve the `## Launcher` entry `launcher=` names - `local` where the opening turn carried
 none - against the loaded files. Stop where no loaded file defines it, or where this session
@@ -165,8 +166,8 @@ git rev-parse --path-format=absolute --git-dir --git-common-dir
 
 Skip `git switch -c` when HEAD is already on `<branch>`, testing it after `EnterWorktree` in
 the directory the build runs in, never in the one the session started in. A turn resuming
-from a stop skips all three and goes straight to the build. Test the pair rather than the
-branch name.
+from a stop skips `EnterWorktree` by the pair test; `git switch -c` and `started` are skipped
+only where HEAD is already on `<branch>`.
 
 Otherwise give the run a worktree of its own. Call `EnterWorktree` with a `name` of
 `<issue>-<6 hex>`, where `<issue>` is the **primary** issue - the first entry of the header's

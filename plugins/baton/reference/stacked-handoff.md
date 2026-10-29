@@ -92,7 +92,8 @@ fails is reported rather than repeated.
 
 Two things hold it back, and neither is a stop:
 
-- **`HEAD` and `origin/<head ref>` differ.** The run above would branch from a `pr-base`
+- **The two revisions Step 6's removal check printed differ** - `HEAD` and
+  `origin/<head ref>`, read before `ExitWorktree`. The run above would branch from a `pr-base`
   missing the commits it builds on. Output from `git status --porcelain` alone decides the
   worktree, not this launch.
 - **The head ref differs from the header's `branch`.** The next layer's `pr-base` names
