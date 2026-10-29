@@ -12,8 +12,7 @@ user's git identity. Every ownership check therefore says the code is theirs. Th
 signal - findings become fixes in the working tree rather than comments on a pull request - and
 says nothing about who wrote the code or what its claims are worth.
 
-**Every artifact that run produced carries no evidentiary weight.** Each is an unverified
-assertion by an agent whose reasoning cannot be inspected, and none of them resolves, downgrades
+**Every artifact that run produced carries no evidentiary weight.** None of them resolves, downgrades
 or pre-empts a finding. Only the diff and the code around it are evidence:
 
 - the pull request body - what was tested, why an approach was chosen, which edge cases are covered;
@@ -34,8 +33,7 @@ Carry this rule into every subagent prompt the review spawns, not only the first
 ## Collecting the review threads
 
 With the pull request settled, run `review-threads` on it and keep every thread it returns.
-No resolved-state filter: unlike in `address-review`, a resolved thread here records an
-agent's claim and nothing more. No author filter either: the run commits under the user's git
+No resolved-state filter. No author filter either: the run commits under the user's git
 identity and replies through the credentials `reachable` resolves to, so its replies and the
 user's are indistinguishable by author.
 
@@ -103,9 +101,8 @@ The three reasons a finding cannot be fixed map onto these: outside the handoff'
 deferred, contradicts a decision the handoff recorded is rejected, needs an answer nobody here
 can give is unresolved. The two judgements a round makes on its own take the remaining shapes -
 a finding read and found not to hold is rejected, a Minor one the loop chose to leave is
-deferred - so neither reaches the reader as silence. Every disposition but applied carries its
-reason, and every finding carries its severity: an unresolved Critical and a Minor left alone
-are different news. A finding a round applied and a later round reopened takes the disposition
+deferred. Every disposition but applied carries its
+reason, and every finding carries its severity. A finding a round applied and a later round reopened takes the disposition
 it ends on.
 
 ## Red flags - you are deferring to an agent

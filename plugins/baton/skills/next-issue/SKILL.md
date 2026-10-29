@@ -34,7 +34,7 @@ defines, and an operation that fails because its tool is missing or unauthentica
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
-not define - an improvised equivalent writes to a tracker the project did not choose.
+not define.
 
 ## Step 1 - Candidates
 
@@ -51,8 +51,7 @@ marker that heads a handoff or a pointer to one:
 ```
 
 **Skip every issue whose output carries the marker**, whatever became of the handoff it sits
-in. The issue has been investigated, and picking it up again produces a second investigation of
-settled work. That holds for a pointer as for a handoff, and whether the run it scoped is
+in. That holds for a pointer as for a handoff, and whether the run it scoped is
 pending or has already merged.
 
 A comment carrying the marker and no fenced header is a pointer (`write-handoff` Step 1). Keep
@@ -62,22 +61,18 @@ An issue whose handoff carried `closes: no` stays open after its pull request me
 its marker, so this step goes on skipping it after its run has finished - an issue deliberately
 left open for further work is not offered again here.
 
-Stop walking at the first candidate whose output carries no marker - `has-handoff` costs a call
-per issue, and the ones below the answer do not need one.
+Stop walking at the first candidate whose output carries no marker.
 
 ## Step 3 - Report
 
-Name the surviving issue by number and title. List every issue skipped above it and why, so the
-choice can be overruled. "Why" is what the marker sat in: a handoff of the issue's own, or a
-pointer into another issue's bundle - and for a pointer, the issue it names. A skip the report
-does not explain is one nobody can judge.
+Name the surviving issue by number and title. List every issue skipped above it and why. "Why" is what the marker sat in: a handoff of the issue's own, or a
+pointer into another issue's bundle - and for a pointer, the issue it names.
 
-Add each skipped issue's `closes` value where the marker sat in a handoff: under `closes: no`
-the marker may record finished work rather than pending work. A pointer carries no `closes`
+Add each skipped issue's `closes` value where the marker sat in a handoff. A pointer carries no `closes`
 value, so report that value as unread and name the primary issue whose handoff holds it, rather
 than asserting one this step never saw.
 
-When nothing survives, say so and name what was skipped; that list is what a person picks from.
+When nothing survives, say so and name what was skipped.
 Never invent an issue, and never return one carrying the marker because the list would
 otherwise be empty.
 

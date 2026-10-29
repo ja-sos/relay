@@ -18,21 +18,14 @@ check selects it. It defines those three sections and nothing else - `## Categor
 - **fetch-handoff:**   gh api repos/<owner>/<repo>/issues/comments/<comment-id> --jq .body
 - **reachable:**       gh api user
 
-`view`, `comment`, `close-fixed` and `close-invalid` pass `-R` because they address the
-issue's repository, which may not be the checkout's (`defining-backends.md`).
-
 `comment` prints the created comment's URL on stdout, and that is the locator
-`post-handoff` reports. Do not re-derive it by listing an issue's comments: the listing is
-paginated, so the newest comment is not the last entry of the first page.
+`post-handoff` reports. Do not re-derive it by listing an issue's comments.
 
-`list-open` is capped at 500. `gh label list` defaults to 30, so `list-categories` carries a
+`list-open` is capped at 500. `list-categories` carries a
 limit, and returns every label.
 
 `create` drops `--label "<category>"` where `<category>` is empty, and runs the rest of the
 command as written.
-
-`list-mine` carries `--search "sort:created-asc"` because `gh issue list` defaults to
-newest first, and `list-mine` returns pick order, oldest first.
 
 `gh auth status` reports failure in every cloud session: it validates the literal
 `GH_TOKEN`, which the proxy leaves as the sentinel `proxy-injected` while substituting
@@ -53,12 +46,11 @@ real credentials on outbound requests. `reachable` is the check that works.
 
 `pr-create` returns its first command's stdout, the pull request's URL, and the second command
 takes that URL as `<pr-url>`. Skip the second command where `<category>` is empty.
-`--base "<pr-base>"` is always passed: `<pr-base>` is never empty (`defining-backends.md`).
+`--base "<pr-base>"` is always passed.
 
-The label is a separate command so the URL is in hand before anything can fail on the label.
 A failed `gh pr edit` leaves the pull request open and unlabelled.
 
-`--draft` is unconditional; `implement-handoff` Step 5 says why.
+`--draft` is unconditional.
 
 `stack-link` is `none` here as it is on the MCP route, and the note there says why.
 
@@ -78,10 +70,7 @@ A failed `gh pr edit` leaves the pull request open and unlabelled.
 - **thread-reply:**    gh api -X POST repos/<owner>/<repo>/pulls/<id>/comments/<comment-id>/replies --input <path>
 - **pr-comment:**      gh pr comment <id> --body-file <path>
 
-`pr-comments` uses the `issues` path because every pull request is also an issue - it is the
-only endpoint returning top-level notes that belong to no review.
-
-`review-threads` needs GraphQL, since `isResolved` has no REST equivalent, and `databaseId` is the
+`review-threads` needs GraphQL, and `databaseId` is the
 id `thread-reply` takes while GraphQL's own `id` is not. `<owner>` and `<repo>` are not substituted
 here the way they are on `gh api repos/...`, so they are passed:
 

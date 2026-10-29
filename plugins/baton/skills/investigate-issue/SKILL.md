@@ -35,7 +35,7 @@ defines, and an operation that fails because its tool is missing or unauthentica
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
-not define - an improvised equivalent writes to a tracker the project did not choose.
+not define.
 
 ## Step 1 - Load
 
@@ -47,9 +47,7 @@ Run `view` against the issue. An earlier comment may already hold an investigati
 before starting another.
 
 Run `has-handoff` too. When its output carries the handoff marker, read that handoff, put it
-to the user with what it already covers, and go no further without their say-so. An issue
-waiting on an implementation run is settled work, and investigating it again ends in a second
-plan and a second run against the same change. That holds where `baton:implement-handoff`
+to the user with what it already covers, and go no further without their say-so. That holds where `baton:implement-handoff`
 reported HEAD already satisfying the handoff: what happens to that issue is the user's to
 decide.
 
@@ -57,13 +55,10 @@ decide.
 issue's handoff carries a pointer: a comment carrying the marker and no fenced header
 (`write-handoff` Step 1). Follow it: run `view` against the issue the pointer names and read
 the handoff there, then put that handoff to the user as the one covering this issue, naming the
-primary issue and quoting the locator the pointer carried. The pointer alone says an issue is
-scoped without saying by what, which leaves the user nothing to overrule.
+primary issue and quoting the locator the pointer carried.
 
 Where that issue carries more than one handoff, put them all to the user with the pointer's
-locator beside them and let the user say which one binds. `view` output need not carry a comment
-address to match the locator against, so the reader resolves it rather than this step: that
-reader is present, which is the whole difference between this skill and `implement-handoff`.
+locator beside them and let the user say which one binds.
 
 An issue can also carry a pointer **and** a handoff of its own, on separate work. Neither
 outranks the other: put both to the user - the handoff read above and the bundle the pointer
@@ -84,8 +79,7 @@ line number of unknown age and locate it by content before trusting it.
 **A change can span repositories.** Where the issue cites files in a repository other than
 this one, that repository is part of the investigation. Read it at the path its row in the
 backend's `## Repositories` section gives. A citation resolves against the repository it belongs
-to and nothing else, so a line number located in the wrong clone is worse than no line number at
-all.
+to and nothing else.
 
 A citation carries no repository of its own, and the `Found at` line anchors only the
 repository the issue was filed from (`file-issue` Steps 1 and 4). Attribute each citation by
@@ -109,8 +103,7 @@ Reproduce at HEAD before forming a theory of the cause.
 | Never held | State the counter-evidence. Stop. |
 
 Where the change spans repositories, reproduce against each one's HEAD, in its own clone, and
-record each HEAD as you go. Step 5 writes one handoff per repository and every handoff's
-`base` is its own repository's HEAD, so a HEAD not recorded here is a `base` guessed later.
+record each HEAD as you go.
 
 On either stop, report to the user and propose closing - `close-fixed` for a fix that landed,
 `close-invalid` for a finding that never held - unless that stop's operation is `none`. Never
@@ -140,13 +133,10 @@ third. Name what loses, and the constraint that rules it out.
 lives, never whether a part of the issue is needed. Scope comes from the issue and what
 it links, including one named as the follow-on, whose target state this one must not foreclose.
 
-Do not propose dropping or deferring a part because nothing in the code requires it yet. Where
-the work removes an arrangement, what the code needs today is a product of that arrangement. A
+Do not propose dropping or deferring a part because nothing in the code requires it yet. A
 part that looks genuinely unnecessary gets one sentence saying so, and stays in scope.
 
-Settle any decision the user must make here, while the code is in front of you. Stating the
-question plainly is also what exposes a mis-framed one - a decision resting on a misread
-comment dissolves once it is in words.
+Settle any decision the user must make here, while the code is in front of you.
 
 **Decide which repositories change, and in what order.** A change spanning repositories that
 depend on one another splits by repository, one handoff each. For every repository, name what
@@ -175,8 +165,7 @@ Write the handoff under `baton:write-handoff`, which posts it to this issue and 
 body through `baton:write-deliverables`.
 
 Where the approach settles other issues in the same pull request, name them on the header's
-`issue` line after this one, each with its own `closes` value. This issue stays first - it
-drove the investigation and it keeps the handoff - and `write-handoff` Step 1 posts a pointer
+`issue` line after this one, each with its own `closes` value. This issue stays first, and `write-handoff` Step 1 posts a pointer
 to it on each of the others. Bundle only issues this investigation actually covered; one that
 merely looks related is a separate investigation, and `closes: no` is the answer wherever a
 bundled issue keeps work beyond this change.
@@ -185,31 +174,25 @@ bundled issue keeps work beyond this change.
 An issue in another repository takes a handoff of its own, which the split below writes where
 the change spans repositories.
 
-Its `base` is the HEAD that Step 2 reproduced against and Step 3 named the cause at, so
-the plan stays falsifiable against the code it was formed on.
+Its `base` is the HEAD that Step 2 reproduced against and Step 3 named the cause at.
 
 **Where the implementation will need a file under the backend's `## Assets` root, list it on
 the handoff's `assets` line.** What decides the line is what the run needs, not what this
 session happened to open: a file identified here and never read is still a file the run has to
-have, and one read here that the plan has already extracted everything from is not. The
-implementing session shares no disk with this one, and the run reaches only the asset files
-that line lists (`write-handoff` Step 3), so a file left off is a file the run silently builds
-without.
+have, and one read here that the plan has already extracted everything from is not.
 
-List the paths relative to that root, and list only what the implementation needs: each entry
-is one more thing that can stop a run. Omit the line where the work needs nothing outside the
+List the paths relative to that root, and list only what the implementation needs. Omit the line where the work needs nothing outside the
 repository, which is the usual case.
 
 **One handoff per affected repository.** Where Step 4 named more than one, post one handoff
 for each, held and unheld alike, in this same investigation. Each handoff's `repo` names its
 own repository, and its `base` is that repository's HEAD from Step 2, so a held handoff is
-posted now rather than written later: nothing here asks for a `base` that does not exist yet.
+posted now rather than written later.
 The accepted cost is that a held plan can go stale before it is launched, and what it waits on
 is recorded so its reader can tell.
 
 `closes: yes` goes on the one handoff launched last - the top of Step 4's dependency order,
-whose pull request finishes the issue - and every other handoff gets `closes: no`, so the
-issue stays open while work on it remains.
+whose pull request finishes the issue - and every other handoff gets `closes: no`.
 
 Where Step 4 split the work into a stack of pull requests, each layer is its own handoff. Post
 the layers top first, as `write-handoff` `## Done` requires, with `next` and `pr-base` as its
@@ -245,23 +228,19 @@ answer is `cloud` all the same, say what will happen before taking it. A handoff
 **Launch the unheld handoffs; report the held ones.** Start every handoff Step 4 called unheld,
 each through the chosen entry and each with its own locator. Then report each held handoff in
 the order it is to be launched: its locator, the repository it belongs to, and what it waits
-on, named as the upstream repository and the release. Launch none of them. A held handoff's run
-would build against an upstream version that does not exist, and the report is what the
-developer relaunching it later works from.
+on, named as the upstream repository and the release. Launch none of them.
 
 **A stack is launched once, at the bottom.** Start the bottom layer alone and nothing else.
 
 Then run `wrap-up` as the last action of the run, with `investigate-issue` as `<skill>` and
-the issue number as `<id>`. `<pr-url>` and `<head-branch>` are empty: no pull request exists
-yet, and the implementation run cuts its own branch. It runs where the answer names no
-launcher too - the investigation ended either way. An undefined `wrap-up` reads as `none`, and
+the issue number as `<id>`. `<pr-url>` and `<head-branch>` are empty. It runs where the answer names no
+launcher too. An undefined `wrap-up` reads as `none`, and
 a failed one is reported by name and not retried (`defining-backends.md`, `wrap-up`).
 
 ## Done
 
 Stop before editing any file the repo tracks - in every repository this investigation read,
-not only this one. A repository reached through `## Repositories` is the user's own working
-checkout rather than a copy, so an edit there lands in a tree nobody asked this run to touch.
+not only this one.
 
 Report the issue number, the Step 2 outcome, the cause in one line, the chosen approach
 in one line, the handoff locator, and where the implementation is running.

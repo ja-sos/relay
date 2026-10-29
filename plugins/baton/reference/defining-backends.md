@@ -20,7 +20,7 @@ A `##` heading is the key, and a matching heading replaces the shipped section
 **wholesale** - not operation by operation. Overriding one entry of `## Tracker` means
 restating all of them; an omitted entry is undefined, not inherited.
 
-A cloud or CI session clones the repo and never sees your home directory. A backend an
+A backend an
 unattended run must use goes in `.claude/baton.md`.
 
 ## Sections
@@ -58,7 +58,7 @@ each repository a change spans to an absolute local path:
 | `owner/service` | `/home/you/src/service` |
 
 Skills resolve a repository other than the checkout through `## Repositories`; each says what
-a missing row does. The checkout's own repository needs no row. Paths differ per machine, so the
+a missing row does. The checkout's own repository needs no row. The
 section belongs in `~/.claude/baton.md` rather than the committed `.claude/baton.md`. The
 shipped `cloud` launcher clones and never reads it (`backend-github.md`).
 
@@ -78,12 +78,11 @@ under `root` resolves wherever it points, for `test -e` and for the read alike. 
 therefore trusted as far as its contents are - it is one folder on one machine, filled by the
 person who configured it.
 
-The root differs per machine, so the section belongs in `~/.claude/baton.md` rather than the
-committed `.claude/baton.md`, for the reason `## Repositories` does. A backend with no
+The section belongs in `~/.claude/baton.md` rather than the
+committed `.claude/baton.md`. A backend with no
 `## Assets` resolves nothing and runs no check for a handoff carrying no `assets` line.
 
-The `cloud` launcher cannot resolve the section: it clones the repository and never sees a
-home directory. A handoff carrying `assets` belongs to `local`, or to a launcher of the
+The `cloud` launcher cannot resolve the section. A handoff carrying `assets` belongs to `local`, or to a launcher of the
 project's own that starts the run on the machine whose `~/.claude/baton.md` defines the root.
 
 Runs treat the folder as read-only (`handoff-assets.md`, `## May not do`).
@@ -118,8 +117,7 @@ issue baton can find, that the tracker carries no labels to check categories aga
 undefined says the backend is incomplete, and every skill treats it as a stop - except an
 undefined `wrap-up`, which the attended skills read as `none`.
 
-`close-fixed` and `close-invalid` each take `none` on their own, because a tracker can let
-baton resolve an issue as done while a triager owns "not planned", or the reverse. Under `none`
+`close-fixed` and `close-invalid` each take `none` on their own. Under `none`
 the project closes that kind of issue by its own means - tracker automation, or a person who
 owns resolutions. Each caller says what it does under `none`. An undefined close operation
 is still a stop: the `wrap-up` exception above covers that operation alone.
@@ -129,22 +127,16 @@ writes no reference line for that kind of issue, and the project links pull requ
 itself. What merging does to the issue is that linking's to decide, not the handoff's `closes`
 value. An undefined `closes` or `refs` is still a stop.
 
-`repo-tests` is a literal the skills recognise rather than a command they run, because no
-single command is every repo's suite. It is `verify`'s shipped value, and a project that
+`repo-tests` is a literal the skills recognise rather than a command they run. It is `verify`'s shipped value, and a project that
 mandates a sequence of its own - a formatter pass, then a test-and-lint target - writes that
-sequence here instead. A sequence that rewrites files does so before any of its checks:
-`implement-handoff` commits the tree `verify` leaves (`implement-handoff` Step 3), so a
-rewrite after the checks commits a tree none of them ran against. In a repo with no test
+sequence here instead. A sequence that rewrites files does so before any of its checks. In a repo with no test
 command it passes with nothing run, and the handoff's own commands are the only thing checking
 the change.
 
-`none` is not among `verify`'s values. A project that wants nothing repo-wide already has
-`repo-tests`, which runs nothing where there is nothing to run, and a project that has a
-sequence should not be able to turn the check off from the same field it configures it in.
+`none` is not among `verify`'s values.
 
-`tool:` exists so that a tracker reachable only through an MCP connector needs no CLI and
-no second set of credentials. Inside its JSON, `<body>` is the text of the file at
-`<path>`, JSON-escaped: a tool call has no shell to redirect a file into, so an operation
+Inside a `tool:` entry's JSON, `<body>` is the text of the file at
+`<path>`, JSON-escaped: an operation
 taking `<path>` sends `<body>` instead.
 
 `agent:` exists for the operation that is a judgement rather than a call - a reviewer that
@@ -182,8 +174,7 @@ git remote get-url origin | sed -E 's#\.git$##; s#.*[/:]([^/:]+)/[^/]+$#\1#'
 `<head-owner>` differs from `<owner>` in a fork clone: `verify-checkout` answers with the
 upstream repository, and the branch is pushed to `origin`.
 
-`closes` and `refs` sit in `## Forge` and follow the tracker's rule all the same, because what
-they reference is the issue rather than the pull request.
+`closes` and `refs` sit in `## Forge` and follow the tracker's rule all the same.
 
 | Operation | Substitutes |
 |---|---|
@@ -230,8 +221,7 @@ applies the note instead. `<pr-base>` is the handoff's `pr-base` line, or `<defa
 where that line is absent - it is never empty. It does not replace the derived
 `<default-branch>` above, which every other entry keeps using.
 
-Open a draft in an overriding `pr-create`, as both shipped routes do: no run marks one ready
-(`implement-handoff`, `## What this run may do unasked`).
+Open a draft in an overriding `pr-create`, as both shipped routes do.
 
 `stack-link` registers a pull request as one layer of a stack, and is called only for a
 handoff carrying `pr-base`. `<pr-url>` is what `pr-create` returned and `<pr-base>` the branch
@@ -239,12 +229,11 @@ below. It runs once per pull request, so `<id>` is the **primary** issue - the f
 the header's `issue` line.
 
 `pr-update` replaces the pull request body whole. A caller writes the complete body and carries
-every issue reference line - `closes`, `refs` - across unchanged: each one dropped is an issue
-the merge stops settling.
+every issue reference line - `closes`, `refs` - across unchanged.
 
 `review-bodies`, `pr-comments` and `review-threads` are one set, not three alternatives: each
 reads a surface the others cannot see, and defining fewer loses a surface with no error. Any
-author filtering belongs inside the command, since it is part of what the operation collects.
+author filtering belongs inside the command.
 A `tool:` entry cannot filter its output, so the backend's notes name the filter and the
 caller applies it.
 
@@ -267,14 +256,11 @@ file defines as `none`. Add the entry the project runs when an attended flow end
 
 `wrap-up`'s callers pass `<skill>`, `<id>`, `<pr-url>` and `<head-branch>`, any of which may
 be empty.
-Quote each in a shell entry - `log-flow "<skill>" "<id>" "<pr-url>" "<head-branch>"` - so an
-empty value still arrives as its own argument instead of shifting the ones after it.
+Quote each in a shell entry - `log-flow "<skill>" "<id>" "<pr-url>" "<head-branch>"`.
 
-`verify` takes no placeholders: what it checks is the whole repo, not this change, which is
-what the handoff's own commands cover.
+`verify` takes no placeholders.
 
-`reviewed` is kept apart from `published` so that a `published` moving a
-ticket's status does not move it again when the review finishes; an entry that moves a ticket
+An entry that moves a ticket
 belongs in `published`, and `reviewed` says what the review did.
 
 `stopped` also carries the no-change exit (`implement-handoff` Step 2), which is no failure.
@@ -303,8 +289,7 @@ and may be empty; an entry whose prompt checks acceptance criteria then says so 
 inventing them. The shipped entry uses neither placeholder beyond `<target>`.
 
 `review-wait` is a number of minutes, not a command: how long `review-handoff` Step 3 waits for
-the reviewer `request-reviewer` asked for, counted from the request. The cap is 60, which keeps
-the wait inside `Monitor`'s `timeout_ms` maximum of 3600000 ms. `review-handoff` is the only
+the reviewer `request-reviewer` asked for, counted from the request. The cap is 60. `review-handoff` is the only
 skill that runs `request-reviewer` or reads `review-wait`.
 
 `list-mine` returns the issues assigned to the user in the order they should be picked up;
@@ -316,16 +301,14 @@ second. The backend's notes say which, and a caller that gets the second form ru
 operation once per row of `## Categories`.
 
 The third form is `none`, for a tracker that carries no labels at all. An entry that prints the `## Categories`
-labels back is not a substitute: it passes whatever the tracker holds, and records no decision
-that the tracker has no labels. Only an explicit `none` takes this path - a `list-categories`
+labels back is not a substitute. Only an explicit `none` takes this path - a `list-categories`
 left undefined is still a stop.
 
 Under `none`, `## Categories` stays required: `file-issue` still picks a row per finding.
 `create` receives an empty `<category>`; as with `pr-create`, each `create` entry substituting
 it says in its notes what an empty value drops.
 
-`<path>` is always a file. A tracker CLI that takes body text on the command line mangles
-backticks and fenced blocks through the shell, so an operation that cannot read a file
+`<path>` is always a file. An operation that cannot read a file
 needs a wrapper that does.
 
 ## Example
@@ -409,8 +392,7 @@ A backend is done when every row passes.
 
 ## Tools an unattended run needs
 
-A cloud session can have the `mcp__github__*` tools and no `gh`, which is why the shipped
-defaults run through those tools. A cloud run whose `## Launcher` entry's `allowed_tools`
+A cloud session can have the `mcp__github__*` tools and no `gh`. A cloud run whose `## Launcher` entry's `allowed_tools`
 held only `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep` and `Skill` loaded `ToolSearch`
 and the GitHub MCP tools it needed, and called them with no permission denial.
 
