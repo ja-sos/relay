@@ -187,7 +187,8 @@ Where `request-reviewer` is not `none`, start the external review first:
 
 Then run the first `code-review` round below. Its output does not wait on the reviewer.
 
-A turn resuming from a stop after item 2 ran does not run `request-reviewer` again.
+A turn resuming from a stop after item 2 ran runs neither item again: it keeps the copy and
+the start it recorded.
 
 ### The first round
 
@@ -235,9 +236,10 @@ Each round runs, over the findings its `code-review` call returned:
 3. Where this round returned no Critical finding, or this is the third round: commit what item
    1 applied, on the review branch, and end the loop. Those last fixes go unreviewed, and the
    Run report says so.
-4. Otherwise run `code-review` again, with an empty `<target>` and the same `<locator>`, while
-   this round's fixes are still uncommitted: it reviews those fixes alone. Once it returns,
-   commit them on the review branch. Its findings are the next round's.
+4. Otherwise run `code-review` again, with an empty `<target>` and an empty `<locator>`, while
+   this round's fixes are still uncommitted: it reviews those fixes alone, and an entry that
+   checks acceptance criteria checked them against the whole change in the first round. Once it
+   returns, commit them on the review branch. Its findings are the next round's.
 
 Never commit a round's fixes before item 4's `code-review` returns: an empty `<target>` is the
 working tree, and a committed tree hands the review an empty diff.

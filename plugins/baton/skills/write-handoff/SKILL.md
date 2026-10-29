@@ -197,7 +197,7 @@ An undefined `## Assets`, a missing or unusable `root`, an invalid path, or a pa
 does not find is a stop for this handoff alone, naming every path that failed; the other
 handoffs of the same investigation are unaffected. Check `root` before any path.
 
-Assets are read-only to the run (`implement-handoff`, "What this run may do unasked"). Name
+Assets are read-only to the run (`reference/handoff-assets.md`, "May not do"). Name
 what the run should read out of an asset, never what it should do to it.
 
 ## Step 3 - Body
