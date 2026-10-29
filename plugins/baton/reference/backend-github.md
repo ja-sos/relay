@@ -312,10 +312,8 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
   `<repo root>` is the root of the checkout of the repository the handoff's `repo` line names.
   Where that is the repository this session is in, it is the current checkout's root,
   `git rev-parse --show-toplevel`. Where it is another repository, it is that repository's
-  `## Repositories` path; a missing row stops this launch (`defining-backends.md`). The map
-  applies to the placeholder, so a `## Launcher` restated in `.claude/baton.md` or
-  `~/.claude/baton.md` before baton 0.1.11 picks it up unchanged: its `local` entry still reads `cd <repo root>`, and only
-  what fills the placeholder has moved. The ignore check above takes the same root, since the
+  `## Repositories` path; a missing row stops this launch (`defining-backends.md`). The ignore
+  check above takes the same root, since the
   worktree Step 2 creates lands in the repository being launched rather than this one.
   `--bg` and `--print` conflict, because `--print` leaves no session for
   `claude attach <id>` to open. The command returns a short id taken by
@@ -372,7 +370,8 @@ the example.
 `verify` is `repo-tests` (`defining-backends.md`): GitHub says nothing about how a project is
 built.
 
-`request-reviewer` is `none`. Either form below turns on `implement-handoff` Step 6; both
+`request-reviewer` is `none`. Either form below turns on `review-handoff` Step 3's external
+review, which requests the reviewer and waits up to `review-wait` minutes for it; both
 routes read this `## Workflow`, so pick the form your sessions can run:
 
 - `tool: mcp__github__request_copilot_review {"owner": "<owner>", "repo": "<repo>", "pullNumber": <id>}`

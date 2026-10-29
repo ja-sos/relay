@@ -139,8 +139,7 @@ answers confidently about the wrong repository rather than failing.
 `issue` names every issue this handoff's pull request settles, separated by spaces, and
 `closes` carries one value per issue in the same order: `issue: 15 16 17` pairs with
 `closes: yes no yes`. Space separation is the `next` line's, below. One value in each is a
-handoff naming one issue - every handoff written before baton 0.1.12, and what a run does with
-it is unchanged. Every entry names an issue in the repository this handoff is posted in,
+handoff naming one issue. Every entry names an issue in the repository this handoff is posted in,
 which is where `post-handoff` puts the pointers too - not necessarily the `repo` line's
 repository, which names where the work goes.
 
@@ -193,8 +192,7 @@ stands for, so such a handoff carries neither line.
 `assets` names files the work needs that live outside every repository, in the one folder the
 backend's `## Assets` section roots. Write each path relative to that root, separated by
 spaces as `issue` and `next` are; each may name a file or a directory. Omit the line wherever
-the work needs nothing outside the checkout, which is most handoffs and every one written
-before baton 0.1.15 - a handoff with no `assets` line needs no `## Assets` section anywhere,
+the work needs nothing outside the checkout, which is most handoffs - a handoff with no `assets` line needs no `## Assets` section anywhere,
 and nothing below runs for it.
 
 A path is valid only where **every character is a letter, a digit, `.`, `-`, `_` or `/`**, it

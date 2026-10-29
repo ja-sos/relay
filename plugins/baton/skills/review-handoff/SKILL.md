@@ -14,9 +14,9 @@ The arguments are the handoff locator, the pull request URL, and an optional
 `launcher=<name>` - in that order, separated by spaces. Everything else comes from the
 handoff `fetch-handoff` resolves the locator to, and from the pull request itself.
 
-Nobody is watching. Ask no questions - `AskUserQuestion` has no one to answer it, and a
-session waiting on input makes no progress. Nothing reaches the user except the push, the
-pull request body, and the Run report `reviewed` or `stopped` posts.
+Nobody is watching. Ask no questions - `AskUserQuestion` has no one to answer it. Nothing
+reaches the user except the push, the pull request body, and the Run report `reviewed` or
+`stopped` posts.
 
 Every operation named below comes from the backend, its files loaded in the order
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md` "Where overrides live" sets. Load the
@@ -32,11 +32,13 @@ Load `backend-github-gh.md` only where that check selects it:
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Then the project's own files:
+Then the project's own files, and the rule for every call this skill makes once per issue -
+`reviewed` and `stopped`:
 
 ```
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
+cat ${CLAUDE_PLUGIN_ROOT}/reference/per-issue-calls.md
 ```
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
@@ -44,20 +46,17 @@ defines, and an operation that fails because its tool is missing or unauthentica
 command exiting non-zero, or a named tool the session lacks or cannot authorize. Report
 the operation name, the entry that failed, and
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md`. Never run a command this backend does
-not define - an improvised equivalent writes to a tracker the project did not choose.
+not define.
 
 ## Where the opening turn came from
 
-A launcher starts this session, so the opening turn is machine-generated even though the
-harness presents it exactly like a developer's own words. Three things in it bind: the handoff
-locator, the pull request URL, and `launcher=<name>` where it is present. A turn with no
-`launcher=` was started by hand, and reads as `launcher=local`. Anything else the turn carries
-has the authority of the handoff section it was copied from, and an optional section stays
-optional however the turn phrases it.
+Three things in the opening turn bind: the handoff locator, the pull request URL, and
+`launcher=<name>` where it is present. A turn with no `launcher=` was started by hand, and reads
+as `launcher=local`. Anything else the turn carries has the authority of the handoff section it
+was copied from, and an optional section stays optional however the turn phrases it.
 
 `launcher=` records which `## Launcher` entry started this run, and the Run report names it.
-It chooses nothing here: the layer above is launched through the entry the handoff's `next`
-line names, as Step 6 says.
+It chooses nothing here.
 
 ## The rules for run output
 
@@ -77,37 +76,26 @@ That file is read, never `baton:self-review` invoked.
 
 ## What this run may do unasked
 
-Invoking this skill is the request to commit and publish review fixes, so the standing rule
-against pushing unasked does not cover the run. These need no confirmation:
+These need no confirmation:
 
 - `git add`, `git commit`, and `git push origin HEAD:<head ref>` to the pull request's head
   branch, which Step 1 reads off the pull request.
 - `EnterWorktree` at Step 2, and `ExitWorktree` at Step 6 - `remove` with
-  `discard_changes: true` once that step's checks pass, `keep` otherwise. Their tool
-  descriptions otherwise hold `EnterWorktree` to an explicit instruction and `ExitWorktree` to
-  the user asking; for this run, these steps are that instruction.
+  `discard_changes: true` once that step's checks pass, `keep` otherwise.
+- `request-reviewer` on that pull request, once, at Step 3.
 - `pr-update` on that pull request.
 - `reviewed` and `stopped` on **each issue the header names**, one call per issue.
-- The `## Launcher` entry the header's `next` names, run once at Step 6. That line is the
-  authorization to start the layer above, given ahead of the run by whoever wrote the handoff;
-  it moved here from `implement-handoff` so the layer above branches from the reviewed tip.
-- Reading the files the header's `assets` line names, under the `root` the backend's
-  `## Assets` section gives, resolved at Step 1. The handoff's commands run after every fix,
-  and a command that reads an asset needs the file the implementation run read.
 - Dispatching the subagents its review needs - Step 4's claim audit, and a reviewer an
   `agent:` entry in `code-review` names. They read and report; nothing they return reaches the
   tracker or the forge except through a step above.
 
-Everything else is a stop rather than a judgement call, because an unattended run cannot obtain
-the ask that would authorize it:
+Everything else is a stop rather than a judgement call:
 
 - Force-push, in any form - `--force`, `--force-with-lease`, a `+` refspec.
 - Pushing to any branch but the pull request's head branch.
-- Merging the pull request, marking a draft ready, closing it, requesting a reviewer, or
-  writing to a review thread or a pull request comment.
+- Merging the pull request, marking a draft ready, closing it, adding a reviewer beyond what
+  `request-reviewer` names, or writing to a review thread or a pull request comment.
 - `started` or `published` on any issue.
-- Writing, moving or deleting anything under the `## Assets` `root`, and copying an asset into
-  the worktree or a commit.
 
 Those are actions. A judgement this run can make on the evidence - whether a finding holds,
 which fix the code supports - is one it must make rather than end the turn over.
@@ -119,7 +107,8 @@ prompts for it.
 
 Run `fetch-handoff` on the locator, deriving `<id>` and `<comment-id>` as the backend's notes on
 `fetch-handoff` say. Read the header as `implement-handoff` Step 1 does, including its stop on
-`issue` and `closes` lists of different lengths.
+`issue` and `closes` lists of different lengths, and load the reference files its table names
+for the header's lines. Each file's `review-handoff` section adds to the steps it names.
 
 A fetched comment carrying the handoff marker but **no fenced header** is a pointer, not a
 handoff, and is a stop naming the issue and locator the pointer carries.
@@ -140,20 +129,12 @@ Three answers are stops: a pull request that is not open, one whose head reposit
 `origin`'s - its owner differing from `<head-owner>`, ignoring case - since this run pushes to
 `origin` alone, and a URL naming a repository other than `verify-checkout`'s answer.
 
-Note whether the head ref equals the header's `branch`; Step 6 holds `next` back where it
-differs.
-
 Then resolve, against the loaded backend files and before `EnterWorktree`, every operation this
-run calls: `review-threads`, `code-review`, `verify`, `pr-update`, `reviewed` and `stopped`.
+run calls: `review-threads`, `code-review`, `verify`, `request-reviewer`, `review-wait`,
+`review-list`, `pr-comments`, `pr-update`, `reviewed` and `stopped`. `review-wait`,
+`review-list` and `pr-comments` need resolving only where `request-reviewer` is not `none`.
 Find the subagent dispatch tool - `Agent` in some harness builds, `Task` in others - in this
-session's tools. Any of these missing is a stop here: the same stop reached after
-`EnterWorktree` leaves a worktree standing.
-
-Where the header carries `next`, resolve the `## Launcher` entry its first value names as well,
-and stop where no loaded file defines it.
-
-Where the header carries `assets`, resolve every path it lists, before `EnterWorktree`, with
-the checks and stops of `implement-handoff` Step 1's `assets` section.
+session's tools. Any of these missing is a stop here.
 
 ## Step 2 - Worktree
 
@@ -169,16 +150,13 @@ git rev-parse --show-toplevel
 git merge-base --is-ancestor <reviewed head> HEAD
 ```
 
-All three are needed. A person's own linked worktree can carry the reviewed head too, and
-taking that for a resume would edit their checkout.
+All three are needed: a person's own linked worktree can carry the reviewed head too.
 
 Any other differing pair is a session a launcher started in a worktree of its own: skip
 `EnterWorktree` alone and run the rest of this step there.
-Otherwise give the run a worktree of its own: a `local` launch starts this session in the
-person's own checkout, and the review must not edit that working tree. Call `EnterWorktree`
-with a `name` of `<issue>-review-<6 hex>`, where `<issue>` is the primary issue and the six
-characters are what `od -An -N3 -tx1 /dev/urandom | tr -d ' \n'` prints. Then, before the first
-edit:
+Otherwise give the run a worktree of its own. Call `EnterWorktree` with a `name` of
+`<issue>-review-<6 hex>`, where `<issue>` is the primary issue and the six characters are what
+`od -An -N3 -tx1 /dev/urandom | tr -d ' \n'` prints. Then, before the first edit:
 
 ```
 git status --porcelain --untracked-files=no
@@ -186,13 +164,8 @@ git fetch origin <head ref>:refs/remotes/origin/<head ref>
 git rev-parse origin/<head ref>
 ```
 
-The first must print nothing: the reset below discards changes to tracked files, and a
-worktree already holding some was not this run's to discard, so output there is a stop.
-Untracked files are left out of the question because the reset leaves them alone, and a
-project's `.worktreeinclude` puts some there on purpose. The third must print the reviewed
-head; anything else is a stop, because another push landed after Step 1 read the pull request
-and this review would judge a tree nobody pushed. Then put the worktree's branch on that
-commit:
+The first must print nothing, or the run stops. The third must print the reviewed head;
+anything else is a stop. Then put the worktree's branch on that commit:
 
 ```
 git reset --hard <reviewed head>
@@ -204,39 +177,79 @@ own name; Step 5 pushes its commits to the head ref.
 
 ## Step 3 - Review loop
 
-Collect the pull request's threads as the reference's "Collecting the review threads" says.
+### The external reviewer
+
+Where `request-reviewer` is not `none`, start the external review first:
+
+1. Run `review-list` and `pr-comments`, and keep their combined output.
+2. Run `request-reviewer` with the pull request number as `<id>`, and record `date +%s` as the
+   wait's start.
+
+Then run the first `code-review` round below. Its output does not wait on the reviewer.
+
+### The first round
 
 Run `code-review` with the pull request number as `<target>` and the handoff locator as
-`<locator>`. Then check each collected thread as the reference's "Checking the threads" says: a
-thread whose finding stands joins the findings, and every thread keeps its own disposition for
-the Run report. Classify every finding against the reference's "Severity" section.
+`<locator>`.
+
+Where `request-reviewer` is not `none`, wait out what remains of the wait once that call
+returns: until a successful run of `review-list` and `pr-comments` returns output different from
+the kept copy, or until `review-wait` minutes have passed since the wait's start, capped at 60
+(`defining-backends.md`, `## Operations`). The wait takes one of two forms, picked by how this
+backend defines `review-list` and `pr-comments`:
+
+- **Both a single shell command.** Run a POSIX `sh` loop through Bash with
+  `run_in_background`: it runs both every 30 seconds and exits when the output differs or when
+  the wait runs out, counted in iterations so it needs no `timeout` binary.
+- **Anything else** - a `tool:` entry, a nested list, an `op:`. Run `sleep 60` through Bash with
+  `run_in_background`. On its notification run both operations in their defined form and
+  compare with the kept copy: output that differs goes to the check below, output that matches
+  sleeps again. The wait runs out when `date +%s` exceeds the start by the wait's minutes times
+  60, however many sleeps that took.
+
+A foreground `sleep` is neither form - the harness blocks a standalone one. `Monitor` does the
+first form's job where the backend allows that tool, with `timeout_ms` set to what remains of the
+wait in milliseconds, but it stays armed to its timeout after the event that matters, so the loop
+is the default.
+
+When the new output holds no review by the reviewer `request-reviewer` named, keep it as the
+copy and wait again for what is left. On timeout, carry on: the Run report says the reviewer
+was requested and no review arrived. A review arriving later is `baton:address-review`'s.
+
+Then collect the pull request's threads as the reference's "Collecting the review threads"
+says - after the review arrived or the wait ran out, where a reviewer was requested. Check each
+collected thread as the reference's "Checking the threads" says: a thread whose finding stands
+joins the round's findings, and every thread keeps its own disposition for the Run report.
+Classify every finding against the reference's "Severity" section.
 
 ### The loop
 
+Each round runs, over the findings its `code-review` call returned:
+
 1. Apply every Critical and Important finding the run can fix. Apply a Minor one only where
    the fix is smaller than the paragraph explaining why it was left.
-2. Run the handoff's commands and then `verify`, as `implement-handoff` Step 3 runs them. A
-   failure of either is a stop, at every turn of the loop.
-3. Commit what item 1 applied, on the review branch.
-4. Run `code-review` again, with the review branch as `<target>` and the same `<locator>`.
+2. Run the handoff's commands. A failure is a stop, at every turn of the loop. `verify` waits
+   for Step 4.
+3. Where this round returned no Critical finding, or this is the third round: commit what item
+   1 applied, on the review branch, and end the loop. Those last fixes go unreviewed, and the
+   Run report says so.
+4. Otherwise run `code-review` again, with an empty `<target>` and the same `<locator>`, while
+   this round's fixes are still uncommitted: it reviews those fixes alone. Once it returns,
+   commit them on the review branch. Its findings are the next round's.
 
-The loop ends when a round leaves no Critical or Important finding the run can fix, or when
-three `code-review` rounds have run, whichever comes first; the opening run above is the first.
-The cap ends the reviewing, not the fixing: the third round's findings still go through items
-1 to 3, and the Run report says the last fixes went unreviewed.
+Never commit a round's fixes before item 4's `code-review` returns: an empty `<target>` is the
+working tree, and a committed tree hands the review an empty diff.
 
-A round that applies nothing skips items 2 and 3. A run whose loop applied nothing at all has
-nothing to push: Step 4's checks and Step 5's push are skipped, and Steps 4 and 5 say what
-still runs for the findings it left standing.
+A round whose item 1 applies nothing ends the loop there, skipping items 2 to 4: there is
+nothing for another round to review. A run whose loop applied nothing at all has nothing to
+push: Step 4's checks and Step 5's push are skipped, and Steps 4 and 5 say what still runs for
+the findings it left standing.
 
 A finding the run cannot fix is one whose fix falls outside the handoff's scope, contradicts a
 decision the handoff recorded, or needs an answer nobody here can give. Say which. A finding in
-code the pull request's own diff does not change is outside the handoff's scope, and that
-includes the layer below on a stacked pull request: from the second round the target is a
-branch, which a review engine may compare with the default branch rather than with the
-pull request's base, and so shows that layer's commits as well. Each
-finding, from `code-review` or from a thread, ends with one of the dispositions in the
-reference's "Dispositions" section, applied on the review branch.
+code the pull request's own diff does not change is outside the handoff's scope. Each finding,
+from `code-review` or from a thread, ends with one of the dispositions in the reference's
+"Dispositions" section, applied on the review branch.
 
 A finding the run cannot decide is `unresolved`, never dropped. Keep every round's findings,
 with severity and disposition: the Run report names all of them, applied ones included.
@@ -246,11 +259,9 @@ with severity and disposition: the Run report names all of them, applied ones in
 The checks below are skipped where the loop applied nothing, and the audit wherever Step 5
 writes no body - a loop that applied nothing and left no finding standing.
 
-Over the tip of the review branch, with nothing uncommitted, the handoff's commands and then
-`verify` must both have passed after the last fix - item 2 of the loop's last applying round
-ran them, and a fix committed after that run is one they never saw, so run both again where
-one was. A failure is a stop. The push in Step 5 never carries a tree these checks did not
-pass on.
+Over the tip of the review branch, with nothing uncommitted, run the handoff's commands and
+then `verify`. A failure is a stop. The push in Step 5 never carries a tree these checks did
+not pass on.
 
 Then dispatch a fresh subagent with the dispatch tool Step 1 found, and give it the instruction
 to run `baton:claim-audit` - naming the **resolved absolute path** of
@@ -260,7 +271,7 @@ change: what the fixes do, what the checks returned, each finding left standing 
 Carry the provenance rule into the prompt as well.
 
 The audit's verdict decides what the body may say, by the verdict table in `implement-handoff`
-Step 4, "The claim audit". A dispatch that fails is a stop.
+Step 4. A dispatch that fails is a stop.
 
 ## Step 5 - Push and update the pull request
 
@@ -277,22 +288,21 @@ git fetch origin <head ref>:refs/remotes/origin/<head ref>
 git rev-parse origin/<head ref>
 ```
 
-Anything but the reviewed head is a stop: another push landed while this review ran, and
-pushing over it - or merging it in, or describing it - publishes a tree nobody reviewed. Then,
+Anything but the reviewed head is a stop: another push landed while this review ran. Then,
 where the loop applied fixes:
 
 ```
 git push origin HEAD:<head ref>
 ```
 
-Never with force. A rejected push is a stop too, for the same reason.
+Never with force. A rejected push is a stop too.
 
-Then run `pr-update` with the pull request number as `<id>` and a body written under
-`baton:write-deliverables`, as a **PR description**, to a file in the scratchpad directory.
-Start from the body Step 1 read, and make it describe what the code does now, as though the
-final diff were the only version that ever existed: delete what the diff no longer supports,
-state each claim Step 4's audit ruled on in the form its verdict gave, and never narrate the
-review.
+Then run `pr-update` with the pull request number as `<id>` and a body written on
+`baton:write-deliverables`' short path, as a **PR description**, to a file in the scratchpad
+directory. Start from the body Step 1 read, and make it describe what the code does now, as
+though the final diff were the only version that ever existed: delete what the diff no longer
+supports, state each claim Step 4's audit ruled on in the form its verdict gave, and never
+narrate the review.
 
 Carry every issue reference line across unchanged (`defining-backends.md`, `pr-update`): "what
 the diff no longer supports" is about claims, never about these lines. Add each claim Step 4's
@@ -314,63 +324,41 @@ git rev-parse origin/<head ref>
 ```
 
 No output from the first and two equal revisions from the last two: call `ExitWorktree` with
-`action: "remove"` and `discard_changes: true`. These checks stand in for the confirmation
-`remove` otherwise asks for. Either failing: call `ExitWorktree` with `action: "keep"`, and the
-Run report names `.claude/worktrees/<name>` and which check failed. Where a launcher started
-the session in a worktree of its own - Step 2 skipped `EnterWorktree` alone - the call is `keep`
-and nothing further is asked: that worktree is the launcher's to remove.
+`action: "remove"` and `discard_changes: true`. Either failing: call `ExitWorktree` with
+`action: "keep"`, and the Run report names `.claude/worktrees/<name>` and which check failed.
+Where a launcher started the session in a worktree of its own - Step 2 skipped `EnterWorktree`
+alone - the call is `keep` and nothing further is asked: that worktree is the launcher's to
+remove.
 
-Then launch the layer above, where the header carries `next` and nothing holds it back. Split
-the line at its space: the first value is the `## Launcher` entry Step 1 resolved, run with
-`implement-handoff` as its `<skill>` and the second value as its `<args>`. Run it **once, with
-no retry**, whatever it returns: two runs on one branch race. A launch that fails is reported
-rather than repeated.
-
-Two things hold it back, and neither is a stop:
-
-- **`HEAD` and `origin/<head ref>` differ.** `origin` does not hold the reviewed tip, so the
-  run above would branch from a `pr-base` missing the commits it builds on. Output from
-  `git status --porcelain` alone decides the worktree, not this launch.
-- **The head ref differs from the header's `branch`.** The next layer's `pr-base` names
-  `branch`, which holds somebody else's work; launching would stack the layer above onto the
-  wrong history.
-
-Then run `reviewed` once per issue the header names, in header order, each with that issue's id
-as `<id>`, the pull request URL as `<pr-url>`, and the same one file as `<path>`, written under
-`baton:write-deliverables` as a **Run report**. It says:
+Then run `reviewed` on each issue the header names, as `per-issue-calls.md` walks it, each with
+that issue's id as `<id>`, the pull request URL as `<pr-url>`, and the same one file as
+`<path>`, written on `baton:write-deliverables`' short path as a **Run report**. It says:
 
 - the pull request URL, its head ref, and the `launcher=` value this run received;
 - the commit this run pushed, or that it pushed nothing because no fix was applied;
 - how the handoff's commands and `verify` came out over the pushed tip, or that they did not run
   because nothing was pushed;
+- whether an external reviewer was requested, and whether a review arrived or the wait ran
+  out - or that `request-reviewer` is `none`;
 - every finding every round collected, each with its severity and its disposition, and every
   thread with its disposition and the evidence that settled it;
-- whether the loop ended on the round cap, leaving the last fixes unreviewed;
+- that the loop's last fixes went unreviewed, where its last round applied any;
 - whether the pull request body carries `## Not verified here` or `## Unverified claims`,
   pointing to each heading present without repeating its entries;
-- that this run carries the handoff's `next`, and what became of it: the entry run and what it
-  returned, or which condition held it back and the locator that went unlaunched, or that the
-  header carries no `next`;
 - after a `keep`, the worktree path and which check failed.
-
-Where the header named more than one issue, the file names them all.
 
 **A Run report from this run never carries `<!-- claude-handoff -->`, not even quoted.**
 
-The findings, their dispositions, the thread dispositions and what became of `next` are
-required content whatever contract **Run report** resolves to. A report missing an unresolved
-finding reads as a clean review under any contract.
-
-A `reviewed` that fails part-way through the list is a stop: the report names the operation,
-the issue it failed on, and every issue after it as not reached.
+The findings, their dispositions, the thread dispositions and the external review's outcome are
+required content whatever contract **Run report** resolves to.
 
 ## Stopping
 
 Every stop takes one of two shapes, set by whether Step 5 has changed the pull request - by
-its push, or by a `pr-update` where nothing was pushed. Both write one file
-under `baton:write-deliverables` as a **Run report**, carrying no handoff marker, and run
-`stopped` with it **once per issue the header names**, in header order, each with that issue's
-id - never `reviewed`.
+its push, or by a `pr-update` where nothing was pushed. Both write one file on
+`baton:write-deliverables`' short path as a **Run report**, carrying no handoff marker, and run
+`stopped` with it on each issue the header names, as `per-issue-calls.md` walks it - never
+`reviewed`.
 
 - Before that: push nothing and leave the pull request as it was. The file names the step,
   what stopped it, and the pull request URL.
@@ -379,28 +367,12 @@ id - never `reviewed`.
   step and what stopped it. A stop in `pr-update` after a push leaves a body describing the diff
   before those fixes, and the file says so.
 
-One exception, inside Step 6's own `reviewed` sequence: skip the issues it already reached, and
-run `stopped` on the issue `reviewed` failed on and the ones after it, naming the ones that did
-get their `reviewed`.
-
-A `stopped` that itself fails part-way through the list ends the run there, naming the
-operation, the issue it failed on, and every issue after it as not reached. Nothing retries
-it. A stop before the header parsed has no list to walk: run `stopped` on the primary alone
-where only that parsed, on nothing where `fetch-handoff` itself failed, and say which issues
-went unnamed.
-
 **The file carries the review as far as it got.** Every finding judged so far takes its
 disposition, and every finding collected but never judged is unresolved, with "run stopped" as
 what blocks the call. A fix not on `origin` is not applied, whether uncommitted or committed on
 the review branch: mark it unresolved with what stopped the run. A stop before Step 3 has
 collected no findings and says nothing about them. This is required content under any
 contract, the same as Step 6's.
-
-**A stop before Step 6's launch never launches `next`, and the file quotes the locator it did
-not launch**, saying the layer above was not started - this file is the only place that locator
-reaches anyone. **A stop after the launch ran** - a failed `reviewed` - names the entry run and
-what it returned, and does not present the locator as unlaunched: starting that layer again
-puts two runs on one branch.
 
 No stop calls `ExitWorktree`. The file names `.claude/worktrees/<name>` and the review branch
 wherever the worktree still stands: whatever was not pushed is in that directory.
@@ -410,6 +382,6 @@ Then end the turn.
 ## Done
 
 Report the pull request URL, the head ref, the commit pushed or that nothing was, how the
-handoff's commands and `verify` came out, and what became of `next` - or the blocker, the step
-it stopped at, and whether the push had run. Name every issue the header carried and whether
-`reviewed` or `stopped` reached it.
+handoff's commands and `verify` came out, and whether an external review arrived - or the
+blocker, the step it stopped at, and whether the push had run. Name every issue the header
+carried and whether `reviewed` or `stopped` reached it.

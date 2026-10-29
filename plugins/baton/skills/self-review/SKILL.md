@@ -88,7 +88,7 @@ item:
 This step closes every one before the gate rather than carrying it to the next reader.
 
 Standing findings sit under no fixed heading: collect them by content - a severity and the
-reason it stands (`implement-handoff` Step 5) - wherever in the body they appear. A standing
+reason it stands (`review-handoff` Step 5) - wherever in the body they appear. A standing
 finding that Step 1's `code-review` also returned - the same failure, at the same file and an
 overlapping line range at the reviewed head - is one item, not two: it
 is ruled on here and listed only in this step's group at the gate. Where either differs, they

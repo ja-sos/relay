@@ -17,7 +17,7 @@ Never put a mandated heading through Step 3 and never drop one as redundant: an 
 section is a signal to its reader, not padding.
 
 Content works the same way as sections. Where a skill requires something by name in a document
-it mandates - `baton:implement-handoff`'s review findings and their dispositions - that skill
+it mandates - `baton:review-handoff`'s review findings and their dispositions - that skill
 owns whether it is present. Never put mandated content through Step 3, never cut it under
 Step 4's Delete on sight or any Step 5 gate row, and never drop it because a contract's
 must-not-include reaches it. What a reader could look up elsewhere is exactly what a mandated
@@ -33,6 +33,13 @@ skill never ran: say so in one line and let the user decide, rather than reworki
 **One run per document.** Having run this skill earlier in the session buys nothing for the
 next one. Re-read these steps rather than recalling them - a half-remembered checklist is the
 failure this skill exists to prevent.
+
+**The short path is for skill-mandated run documents alone.** `baton:implement-handoff` and
+`baton:review-handoff` name it wherever they write a pull request body or a Run report - the
+no-change and stop reports included - and it covers those documents and nothing else. On it,
+run Step 1, draft the document in the file, then run Step 5 over gate rows G1, G3, G8 and G11
+only, restarting at G1 over those four on any FAIL. Steps 2 to 4 and the other eight rows do not
+run. Every other document takes every step.
 
 ## Step 1 - Contract
 
@@ -197,6 +204,9 @@ it feels solid:
 - a scope claim - "no other callers", "only", "always", "nothing else"
 - a version, identifier, path, flag or config string
 - a behavioural claim about code you did not run
+
+**A claim already audited is exempt.** Where a `baton:claim-audit` dispatched earlier in the
+same run already ruled on a claim, its verdict form stands and the claim is not audited again.
 
 ### Keeping flagged text
 

@@ -1,8 +1,8 @@
 # Reviewing run output
 
 The rules a review follows when the branch under it was written by an unattended
-`baton:implement-handoff` run, and the severity and disposition scales that run and its
-reviewer share. Each skill that loads this file says at which of its steps each section below
+`baton:implement-handoff` run, and the severity and disposition scales its reviewers classify
+findings with. Each skill that loads this file says at which of its steps each section below
 applies, and none changes what a section says.
 
 ## Whose code this is
