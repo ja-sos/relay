@@ -1,6 +1,6 @@
 # Per-issue calls
 
-`implement-handoff` and `review-handoff` load this file at Step 1. It governs every tracker
+`implement-handoff` and `review-handoff` load this file before Step 1. It governs every tracker
 call they make once per issue: `started`, `published`, `reviewed` and `stopped`.
 
 ## The walk

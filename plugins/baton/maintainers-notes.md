@@ -162,6 +162,9 @@ Reference lines come from the header because a merged `closes` shuts an issue wh
 outstanding. They name the issue's repository, which is not the pull request's wherever the
 handoff was recorded for a repository other than the issue's.
 
+An issue whose reference line goes missing from the body is unlinked on merge. Nothing errors -
+the pull request is valid without it, and the ticket never moves.
+
 A failed later call in `pr-create` is a stop after Step 5 because, taken for a stop before Step
 5, it leaves an open pull request the issue never hears of.
 
@@ -194,6 +197,9 @@ A stop after Step 5 puts the pull request URL in the `stopped` file because only
 The no-change exit settles its own worktree because a stop is where work sits unpushed, and
 that exit wrote none. No stop calls `ExitWorktree`, because Step 6's two checks are the only
 thing that establishes the work is pushed.
+
+Done names every issue the header carried because an issue the report leaves out is one nobody
+knows to check.
 
 A relaunch in the same clone takes a new name at Step 2 rather than the branch a stopped run
 built on.
@@ -777,6 +783,8 @@ Every finding carries its severity because an unresolved Critical and a Minor le
 
 ## reference/per-issue-calls.md
 
+Moved from `implement-handoff` Step 1 and Stopping, and `review-handoff` Step 6 and Stopping.
+
 A stop inside the `published` or `reviewed` sequence skips the issues already reached because
 they have been told the pull request shipped or was reviewed, and a `stopped` behind that says
 the opposite of the call before it on the same ticket.
@@ -785,6 +793,9 @@ The list of issues not reached is what tells a person which tickets are still th
 hand.
 
 ## reference/stacked-handoff.md
+
+Moved from `implement-handoff` Steps 1, 2, 3, 6 and Stopping, and `review-handoff` Steps 1, 3, 6
+and Stopping.
 
 `implement-handoff` Step 1 runs a different checkout pair on a stacked handoff because `base` is
 then a commit on the layer below, which is unmerged by definition, so it is not an ancestor of
@@ -815,10 +826,16 @@ it, and that file is the only place the locator reaches anyone; it is how a pers
 stack by hand. A stop after the reviewer launched does not quote it as unlaunched because the
 reviewer carries it, and a person who starts that layer as well puts two runs on one branch.
 
+`review-handoff` holds `next` back where the head ref differs from the header's `branch` because
+launching would stack the layer above onto the wrong history.
+
 `review-handoff` launches `next` rather than `implement-handoff` so the layer above branches
 from the reviewed tip.
 
 ## reference/handoff-assets.md
+
+Moved from `implement-handoff` Step 1 (`assets`) and `review-handoff`, What this run may do
+unasked.
 
 Assets are read-only because the folder is shared across every repository on the machine, and
 some of what it holds is not cleared to live in one.

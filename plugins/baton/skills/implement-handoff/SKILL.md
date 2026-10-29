@@ -1,6 +1,6 @@
 ---
 name: implement-handoff
-description: Use when a handoff describes work that is ready to build - launched as "/baton:implement-handoff <handoff locator>", usually by a session that investigate-issue started. Turns one handoff into a reviewed pull request and runs unattended.
+description: Use when a handoff describes work that is ready to build - launched as "/baton:implement-handoff <handoff locator>", usually by a session that investigate-issue started. Turns one handoff into a draft pull request, launches review-handoff on it, and runs unattended.
 ---
 
 # Implement handoff
