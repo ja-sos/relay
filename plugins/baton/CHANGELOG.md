@@ -6,10 +6,10 @@ written for an earlier version has to account for. Newest first.
 ## 0.3.1
 
 - The `cloud` entry of `backend-github.md`'s `## Launcher` no longer claims that a
-  `claude --cloud` session arrives with an uploaded copy of the checkout and no remote, and no
-  longer calls `sources` required: whether a routine without it still gets a clone is untested.
-  A `## Launcher` restated in `.claude/baton.md` or `~/.claude/baton.md` that still carries
-  the `--cloud` sentence can drop it; no update to this plugin reaches those copies.
+  `claude --cloud` session arrives with an uploaded copy of the checkout and no remote, or that
+  a routine without `sources` gets no repository. A `cloud` entry restated in
+  `.claude/baton.md` or `~/.claude/baton.md` from an earlier version keeps the old wording, and
+  no update to this plugin reaches it: copy the shipped entry again.
 
 ## 0.3.0
 
