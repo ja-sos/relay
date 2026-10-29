@@ -36,7 +36,8 @@ next one. Re-read these steps rather than recalling them.
 no-change and stop reports included - and it covers those documents and nothing else. On it,
 run Step 1, draft the document in the file, then run Step 5 over gate rows G1, G3, G8 and G11
 only, restarting at G1 over those four on any FAIL. Steps 2 to 4 and the other eight rows do not
-run. Every other document takes every step.
+run, so G1 and G3 take GOAL and READER from the contract Step 1 loaded. Every other document
+takes every step.
 
 ## Step 1 - Contract
 

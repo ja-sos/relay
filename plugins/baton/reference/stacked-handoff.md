@@ -80,11 +80,11 @@ defines it or this session cannot launch through it, checked as `implement-hando
 checks its own launcher.
 
 **Step 3.** On a pull request whose header carries `pr-base`, a finding in the layer below is
-outside the handoff's scope. A review engine given a branch may compare it with the default
+outside the handoff's scope. A review engine given a branch or the working tree may compare it with the default
 branch rather than with the pull request's base, and show that layer's commits as well.
 
 **Step 6.** Where the header carries `next`, launch the layer above once the worktree is
-settled. Split the line at its space: the first value is the `## Launcher` entry Step 1
+settled, before `reviewed`. Split the line at its space: the first value is the `## Launcher` entry Step 1
 resolved, run with `implement-handoff` as its `<skill>` and the second value as its `<args>`.
 Run it **once, with no retry**, whatever it returns: two runs on one branch race. A launch that
 fails is reported rather than repeated.

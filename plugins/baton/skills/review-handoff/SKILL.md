@@ -187,6 +187,8 @@ Where `request-reviewer` is not `none`, start the external review first:
 
 Then run the first `code-review` round below. Its output does not wait on the reviewer.
 
+A turn resuming from a stop after item 2 ran does not run `request-reviewer` again.
+
 ### The first round
 
 Run `code-review` with the pull request number as `<target>` and the handoff locator as
@@ -259,9 +261,9 @@ with severity and disposition: the Run report names all of them, applied ones in
 The checks below are skipped where the loop applied nothing, and the audit wherever Step 5
 writes no body - a loop that applied nothing and left no finding standing.
 
-Over the tip of the review branch, with nothing uncommitted, run the handoff's commands and
-then `verify`. A failure is a stop. The push in Step 5 never carries a tree these checks did
-not pass on.
+Over the tip of the review branch, with nothing uncommitted, run `verify`, commit on the review
+branch any file it rewrote, then run the handoff's commands. A failure is a stop. The push in
+Step 5 never carries a tree these checks did not pass on.
 
 Then dispatch a fresh subagent with the dispatch tool Step 1 found, and give it the instruction
 to run `baton:claim-audit` - naming the **resolved absolute path** of
