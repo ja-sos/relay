@@ -38,12 +38,17 @@ Stopping section:
 
 ## The branch's diff
 
-The file list these commands print together, run in the worktree:
+The file list the last two of these commands print together, run in the worktree:
 
 ```
-git diff --name-only $(git merge-base HEAD <branch point>)
+git merge-base HEAD <branch point>
+git diff --name-only <merge base>
 git ls-files --others --exclude-standard
 ```
+
+`<merge base>` is the commit the first command prints. Run it on its own line, never inside
+`$(...)`: a substitution drops its exit status, and `git diff --name-only` with no revision
+exits zero.
 
 `<branch point>` is the header's `base`, or `origin/<pr-base>` where the header carries
 `pr-base`. Where it is `origin/<pr-base>`, fetch it first, naming both sides of the refspec:
