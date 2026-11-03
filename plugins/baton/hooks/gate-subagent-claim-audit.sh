@@ -31,6 +31,8 @@ cat >/dev/null 2>&1
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." 2>/dev/null && pwd) || exit 0
 skill="$root/skills/claim-audit/SKILL.md"
 [ -f "$skill" ] || exit 0
+# The sed below escapes only backslash and quote; a control character would break the JSON.
+case $skill in *[[:cntrl:]]*) exit 0 ;; esac
 
 esc=$(printf '%s' "$skill" | sed 's/\\/\\\\/g; s/"/\\"/g') || exit 0
 

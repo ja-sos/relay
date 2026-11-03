@@ -1,8 +1,10 @@
 #!/bin/sh
 # Checks the claim-audit hook (#59): SubagentStart registration, its output, its fail-open path,
-# no interpreter, no leftover PreToolUse wording, and the 0.3.3 release. Run from the repo root:
+# no interpreter, no leftover PreToolUse wording, and the 0.3.3 release. Runs from any directory:
 #   sh tests/gate-subagent-claim-audit.test.sh
 # Needs python3 to parse JSON; the hook itself does not.
+
+cd "$(dirname -- "$0")/.." || exit 1
 
 fail=0
 check() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1"; echo "  want: $3"; echo "  got:  $2"; fail=1; fi; }
@@ -20,7 +22,7 @@ out=$(printf '{"agent_id":"a1","agent_type":"general-purpose"}' | sh "$script");
 check "exit code" "$rc" 0
 got=$(printf '%s' "$out" | python3 -c 'import json,sys; o=json.load(sys.stdin)["hookSpecificOutput"]; print(o["hookEventName"], "claim-audit checklist" in o["additionalContext"], sys.argv[1] in o["additionalContext"])' "$root/plugins/baton/skills/claim-audit/SKILL.md" 2>&1)
 check "output" "$got" "SubagentStart True True"
-check "one line" "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" 1
+check "one line" "$(printf '%s' "$out" | grep -c '')" 1
 
 # 3. With SKILL.md absent beside the hooks directory: no output, exit 0.
 d=$(mktemp -d)
