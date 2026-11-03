@@ -4,8 +4,9 @@ Why the baton skills and reference files say what they say. A run never reads th
 note below explains a rule its source states, and removing the note from the source changed no
 action a run takes. Before changing a rule, read its note here.
 
-Headings name the source file and the step or section the note came from, by the name it has
-in that file now.
+Headings name the source file, by its path under `plugins/baton/`, and the step or section the
+note came from, by the name it has in that file now. This file sits outside `plugins/baton/`,
+so it does not ship with the plugin.
 
 ## skills/implement-handoff/SKILL.md
 
