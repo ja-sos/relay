@@ -37,7 +37,7 @@ Each is invocable as `/baton:<name>`, and each also fires on its own description
 ## Hooks
 
 Two non-blocking POSIX `sh` hooks ship: `remind-deliverable-skill` (`UserPromptSubmit`) and
-`gate-subagent-claim-audit` (`PreToolUse` on the subagent dispatch tool). Each script's header,
+`gate-subagent-claim-audit` (`SubagentStart`, every subagent at start). Each script's header,
 under `hooks/`, says what it adds. `claude plugin disable baton` stops both.
 
 ## Pointing it at a different tracker

@@ -315,8 +315,6 @@ context did not write this code - and give it:
   commands and `verify` with their results, what the change covers and what it leaves alone,
   and each deviation and its evidence.
 
-Name `claim-audit` in that prompt, so `hooks/gate-subagent-claim-audit.sh` stands down.
-
 The audit's verdict on each claim decides what the body may say:
 
 | Verdict | In the body |

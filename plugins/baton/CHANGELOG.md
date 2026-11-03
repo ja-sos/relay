@@ -3,6 +3,16 @@
 What changed in each baton version that a backend file, a restated section or a handoff
 written for an earlier version has to account for. Newest first.
 
+## 0.3.3
+
+- The claim-audit hook, `hooks/gate-subagent-claim-audit.sh`, runs on `SubagentStart` and
+  returns its instruction as `additionalContext`, which lands in the subagent's own context. It
+  no longer runs on `PreToolUse` and no longer rewrites the `Agent` call's input through
+  `updatedInput`, which auto mode refused on Claude Code 2.1.317 (#59). It needs no python,
+  python3 or node.
+- A dispatch prompt naming `claim-audit` no longer suppresses the hook: `SubagentStart` input
+  carries no prompt to test, so such a dispatch receives the instruction twice.
+
 ## 0.3.2
 
 - `implement-handoff` and `review-handoff` now fix a failing check and re-run it, under the new
