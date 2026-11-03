@@ -3,6 +3,21 @@
 What changed in each baton version that a backend file, a restated section or a handoff
 written for an earlier version has to account for. Newest first.
 
+## 0.3.4
+
+- The `cloud` entry of `backend-github.md`'s `## Launcher` starts a cloud session directly,
+  with `create_session`, or with `claude --cloud` where the session has no `create_session`. It
+  no longer lists, creates, updates or fires the `implement <owner>/<repo>` and
+  `review <owner>/<repo>` routines. A run whose session has neither tool stops at Step 1 of
+  `implement-handoff`, or of `review-handoff` where the header carries `next`, instead of
+  reaching a routine. The routines stay on claude.ai/code/routines until
+  deleted there.
+- The entry looks for `create_session` among the session's loaded tools before `ToolSearch`,
+  which does not return a loaded tool.
+- A `cloud` entry restated in `.claude/baton.md` or `~/.claude/baton.md` keeps its routine
+  routes until it is deleted or the shipped entry is copied in again. A restatement that only
+  pins a routine's `environment_id` has nothing left to pin: delete it.
+
 ## 0.3.2
 
 - `implement-handoff` and `review-handoff` now fix a failing check and re-run it, under the new
