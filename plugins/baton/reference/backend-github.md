@@ -249,8 +249,9 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
     3. Where it exists and its `created_via` is not `http_api`, one
        `fire_trigger {"trigger_id": "<its id>", "text": "<args> launcher=cloud"}`.
 
-    Every other case is a failed launch. Where the routine is absent, the report says to create
-    it from a session that carries `RemoteTrigger`. Where its `created_via` is `http_api`, the
+    Every other case is a failed launch. Where the routine is absent, the report says to launch
+    again from a session that carries `create_session` or `RemoteTrigger`, the two routes that
+    need no routine `fire_trigger` will accept. Where its `created_via` is `http_api`, the
     report names that value and says to run the routine by hand: `fire_trigger` refuses a
     routine an agent did not create.
 

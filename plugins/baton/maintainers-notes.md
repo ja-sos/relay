@@ -894,6 +894,10 @@ test already failing on the base a stop.
 The branch's diff is computed in the worktree from `<branch point>` rather than read from the
 pull request, because `pr-view` cannot supply a base ref: the `gh` route's `pr-view` returns
 none. The untracked-files listing adds the files a fix created that nothing has committed yet.
+It diffs against the merge-base with `<branch point>`, not against `<branch point>` itself,
+because `origin/<pr-base>` can move after this layer was cut, and a plain diff would then list
+the files the layer below changed since. `review-handoff` Step 2 fetches only the head ref, so
+the reference file fetches `<pr-base>` itself.
 
 A fix may not edit a failing test's assertions, because that makes the test agree with the code
 rather than the code with the test.

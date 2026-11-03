@@ -399,7 +399,8 @@ disposition, and every finding collected but never judged is unresolved, with "r
 what blocks the call. A fix not on `origin` is not applied, whether uncommitted or committed on
 the review branch: mark it unresolved with what stopped the run. A stop before Step 3 has
 collected no findings and says nothing about them. It also names each check failure and each
-fix attempt made so far, as `fixing-check-failures.md` records them. This is required content
+fix attempt made so far, as `fixing-check-failures.md` records them, and whether `origin` holds
+each fix. This is required content
 under any contract, the same as Step 6's.
 
 No stop calls `ExitWorktree`. The file names `.claude/worktrees/<name>` and the review branch

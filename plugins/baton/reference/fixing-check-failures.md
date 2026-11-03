@@ -12,7 +12,7 @@ Each sequence restarts from its own first step:
 |---|---|---|
 | `review-handoff` loop item 2 | the handoff's commands | the handoff's first command |
 | `review-handoff` Step 4 | `verify`, commit any file it rewrote, then the handoff's commands | `verify` |
-| `implement-handoff` Step 3 | the handoff's commands, then `verify` | the handoff's first command |
+| `implement-handoff` Step 3 | the handoff's commands, then `verify` | the handoff's first command, or `verify` where the handoff names no commands |
 
 ## The bound
 
@@ -41,13 +41,19 @@ Stopping section:
 The file list these commands print together, run in the worktree:
 
 ```
-git diff --name-only <branch point>
+git diff --name-only $(git merge-base HEAD <branch point>)
 git ls-files --others --exclude-standard
 ```
 
 `<branch point>` is the header's `base`, or `origin/<pr-base>` where the header carries
-`pr-base`. In `review-handoff` this set covers the pull request's own changes and the review's
-fixes alike.
+`pr-base`. Where it is `origin/<pr-base>`, fetch it first, naming both sides of the refspec:
+
+```
+git fetch origin <pr-base>:refs/remotes/origin/<pr-base>
+```
+
+Any of these commands exiting non-zero is a stop. In `review-handoff` this set covers the pull
+request's own changes and the review's fixes alike.
 
 ## Where each site's fixes go
 
