@@ -32,13 +32,14 @@ Load `backend-github-gh.md` only where that check selects it:
 cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 ```
 
-Then the project's own files, and the rule for every call this skill makes once per issue -
-`reviewed` and `stopped`:
+Then the project's own files, the rule for every call this skill makes once per issue -
+`reviewed` and `stopped` - and the rule for a check that fails:
 
 ```
 cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
 cat ${CLAUDE_PLUGIN_ROOT}/reference/per-issue-calls.md
+cat ${CLAUDE_PLUGIN_ROOT}/reference/fixing-check-failures.md
 ```
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
@@ -244,10 +245,11 @@ round the threads whose findings stand:
 
 1. Apply every Critical and Important finding the run can fix. Apply a Minor one only where
    the fix is smaller than the paragraph explaining why it was left.
-2. Run the handoff's commands. A failure is a stop, at every turn of the loop. `verify` waits
-   for Step 4.
+2. Run the handoff's commands. A failure is fixed and the commands re-run, at every turn of
+   the loop, as `${CLAUDE_PLUGIN_ROOT}/reference/fixing-check-failures.md` bounds it; what that
+   file makes a stop is one. `verify` waits for Step 4.
 3. Where this round's findings hold no Critical one, or this is the third round: commit what
-   item 1 applied, on the review branch, and end the loop. Those last fixes go unreviewed, and
+   items 1 and 2 applied, on the review branch, and end the loop. Those last fixes go unreviewed, and
    the Run report says so.
 4. Otherwise run `code-review` again, with an empty `<target>` and an empty `<locator>`, while
    this round's fixes are still uncommitted and every file they created is marked with
@@ -278,7 +280,9 @@ The checks below are skipped where the loop applied nothing, and the audit where
 writes no body - a loop that applied nothing and left no finding standing.
 
 Over the tip of the review branch, with nothing uncommitted, run `verify`, commit on the review
-branch any file it rewrote, then run the handoff's commands. A failure is a stop. The push in
+branch any file it rewrote, then run the handoff's commands. A failure is fixed and the sequence
+re-run from `verify`, as `${CLAUDE_PLUGIN_ROOT}/reference/fixing-check-failures.md` bounds it;
+what that file makes a stop is one. The push in
 Step 5 never carries a tree these checks did not pass on.
 
 Then dispatch a fresh subagent with the dispatch tool Step 1 found, and give it the instruction
@@ -360,16 +364,20 @@ that issue's id as `<id>`, the pull request URL as `<pr-url>`, and the same one 
   out - or that `request-reviewer` is `none`;
 - every finding every round collected, each with its severity and its disposition, and every
   thread with its disposition and the evidence that settled it;
+- each check failure, in the loop or in Step 4, and the fix applied for it, as
+  `fixing-check-failures.md` records them;
 - that the loop's last fixes went unreviewed, where its last round applied any, and so did any
-  file `verify` rewrote in Step 4;
+  file `verify` rewrote in Step 4 and every check fix no later round covered, as
+  `fixing-check-failures.md` sets that;
 - whether the pull request body carries `## Not verified here` or `## Unverified claims`,
   pointing to each heading present without repeating its entries;
 - after a `keep`, the worktree path and which check failed.
 
 **A Run report from this run never carries `<!-- claude-handoff -->`, not even quoted.**
 
-The findings, their dispositions, the thread dispositions and the external review's outcome are
-required content whatever contract **Run report** resolves to.
+The findings, their dispositions, the thread dispositions, the check failures with their fixes
+and the external review's outcome are required content whatever contract **Run report**
+resolves to.
 
 ## Stopping
 
@@ -390,8 +398,9 @@ its push, or by a `pr-update` where nothing was pushed. Both write one file on
 disposition, and every finding collected but never judged is unresolved, with "run stopped" as
 what blocks the call. A fix not on `origin` is not applied, whether uncommitted or committed on
 the review branch: mark it unresolved with what stopped the run. A stop before Step 3 has
-collected no findings and says nothing about them. This is required content under any
-contract, the same as Step 6's.
+collected no findings and says nothing about them. It also names each check failure and each
+fix attempt made so far, as `fixing-check-failures.md` records them. This is required content
+under any contract, the same as Step 6's.
 
 No stop calls `ExitWorktree`. The file names `.claude/worktrees/<name>` and the review branch
 wherever the worktree still stands: whatever was not pushed is in that directory.
