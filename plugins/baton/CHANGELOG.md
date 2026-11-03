@@ -8,9 +8,9 @@ written for an earlier version has to account for. Newest first.
 - `implement-handoff` and `review-handoff` now fix a failing check and re-run it, under the new
   `reference/fixing-check-failures.md`, which both load before Step 1. A failing check sequence
   gets 3 fix attempts each time it runs, each re-running the sequence from its first step. A
-  failure stays a stop where it is reported in a file the branch's diff does not change, where
-  its fix would edit such a file or a failing test's assertions, or where no fix is found. Run
-  reports and Stopping files name each failure and the fix applied for it.
+  failure stays a stop where it also occurs at the branch's merge-base, where its fix would edit
+  a file the branch's diff does not change or a failing test's assertions, or where no fix is
+  found. Run reports and Stopping files name each failure and the fix applied for it.
 - The `cloud` entry of `backend-github.md`'s `## Launcher` tries `create_session` first, with no
   `list_triggers` call, then `RemoteTrigger`, then `list_triggers` with `fire_trigger`. The
   `fire_trigger` route and the launch check exclude a routine whose `created_via` is `http_api`,

@@ -29,26 +29,38 @@ item 2 with 3 attempts of its own.
 These hold whatever attempts remain. Each is a stop at the site, under the skill's own
 Stopping section:
 
-1. A failure reported in a file outside the branch's diff.
+1. A failure that also occurs at `<merge base>` (below), such as a test already failing on the
+   base. Where the failure itself does not settle that, run the failing check once in a
+   detached worktree at `<merge base>` - `git worktree add --detach <path> <merge base>` - and
+   remove it afterwards with `git worktree remove <path>`.
 2. A fix that would edit a file outside the branch's diff.
 3. A fix that would edit a failing test's assertions to match the code. That holds for a test
    this run wrote as much as for one already on the branch: a test `implement-handoff` wrote
    in Step 3 failing on its own assertion is a stop.
 4. A failure for which the run finds no fix within those limits.
 
+Where a failure is reported - in a file inside the branch's diff, in one outside it, or in no
+file at all, as with a command printing the wrong output or exiting non-zero with no location -
+does not decide whether it is fixed. A failure the branch's change caused in an unchanged test
+file is fixed in the changed files, and stops 2 to 4 bound every fix alike.
+
 ## The branch's diff
 
 The file list the last two of these commands print together, run in the worktree:
 
 ```
+[ "$(git rev-parse --is-shallow-repository)" = false ] || git fetch --unshallow origin
 git merge-base HEAD <branch point>
 git diff --name-only <merge base>
 git ls-files --others --exclude-standard
 ```
 
-`<merge base>` is the commit the first command prints. Run it on its own line, never inside
-`$(...)`: a substitution drops its exit status, and `git diff --name-only` with no revision
-exits zero.
+The first line deepens a shallow clone, whose history may stop short of `<branch point>`: there
+`git merge-base` finds no such commit and exits non-zero.
+
+`<merge base>` is the commit the `git merge-base` command prints. Run it on its own line,
+never inside `$(...)`: a substitution drops its exit status, and `git diff --name-only` with no
+revision exits zero.
 
 `<branch point>` is the header's `base`, or `origin/<pr-base>` where the header carries
 `pr-base`. Where it is `origin/<pr-base>`, fetch it first, naming both sides of the refspec:

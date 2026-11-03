@@ -239,8 +239,8 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
     4. One `action: "run"` on it, with the body `{"text": "<args> launcher=cloud"}`.
 
   - **`list_triggers` with `fire_trigger`**, the `claude-code-remote` server's tools, found with
-    `ToolSearch +remote list_triggers fire_trigger`, where neither route above loaded. Call them
-    by the name the search returns, as above. Each launch runs, in order:
+    `ToolSearch +remote list_triggers fire_trigger update_trigger`, where neither route above
+    loaded. Call them by the name the search returns, as above. Each launch runs, in order:
 
     1. `list_triggers {"limit": 100}`, finding the routine by `name`.
     2. Where it exists and its `created_via` is not `http_api`, and its stored `model` differs

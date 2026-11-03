@@ -887,9 +887,18 @@ and a fix the formatter has not seen is unchecked.
 There is no backend attribute for the bound because it covers the handoff's own commands as well
 as `verify`, and a `verify` attribute cannot reach them.
 
-Scope is per file: a failure is in scope only where the file it is reported in is one the
-branch's diff changes, and a fix edits only such files. That admits the CA1859 case and keeps a
-test already failing on the base a stop.
+Scope is set by cause and by the files a fix edits, not by where a failure is reported. A
+failure that also occurs at the merge-base is a stop, because the branch did not cause it: that
+is the issue's "a test already failing on the base". Any other failure is fixed, and a fix edits
+only files the branch's diff changes. Keying scope on the reported file instead would make the
+commonest failure - the change breaking an existing test in a file it did not touch - a stop
+with no attempt, and would leave a failure that names no file, such as a `grep -c` check
+printing the wrong count, with no rule at all. The CA1859 case is admitted either way.
+
+The branch's diff deepens a shallow clone first because `review-handoff` Step 2 fetches only the
+head ref and a `create_session` clone carries 50 commits by default, so `<branch point>` can lie
+outside the clone's history, where `git merge-base` exits non-zero and every check failure would
+be a stop.
 
 The branch's diff is computed in the worktree from `<branch point>` rather than read from the
 pull request, because `pr-view` cannot supply a base ref: the `gh` route's `pr-view` returns
