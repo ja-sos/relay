@@ -208,113 +208,59 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
 `defining-backends.md`, `## Sections`.
 
-- **cloud:** a launch tries three routes, in this order, and uses the first whose tools load:
-  `create_session`, then `RemoteTrigger`, then `list_triggers` with `fire_trigger`. The last two
-  run on two routines per repository, each holding a fixed prompt, reused for every launch.
-  `<skill>` picks the routine: `implement <owner>/<repo>` for `implement-handoff`,
-  `review <owner>/<repo>` for `review-handoff`.
+- **cloud:** starts one cloud session on `<owner>/<repo>` whose opening prompt runs
+  `baton:<skill>` with `<args>`. No routine takes part: a launch lists, creates, updates and
+  fires none, through `RemoteTrigger`, `list_triggers`, `fire_trigger` or any other tool.
 
-  - **`create_session`**, the `claude-code-remote` server's tool, found with
-    `ToolSearch +remote create_session`. A session carries it under `mcp__claude-code-remote__`
-    or `mcp__Claude_Code_Remote__`, by harness build; call it by the name the search returns.
-    Each launch is one `create_session` call, with no `list_triggers` call before it:
+  The opening prompt, with `<skill>` and `<args>` filled in:
+
+  ```
+  This is a cloud run. Invoke the `baton:<skill>` skill with the text of the launch-payload below, verbatim, as its arguments.
+  <launch-payload>
+  <args> launcher=cloud
+  </launch-payload>
+  ```
+
+  Start the session with `create_session` where this session has it, and with `claude --cloud`
+  where it does not:
+
+  - **`create_session`**, the `claude-code-remote` server's tool, named
+    `mcp__claude-code-remote__create_session` or `mcp__Claude_Code_Remote__create_session` by
+    harness build. Look for it in the tools this session already carries first: a loaded tool
+    is not deferred, so `ToolSearch +remote create_session` does not return it. Search only
+    where it is not already loaded. One call:
 
     ```json
     {"source_url": "https://github.com/<owner>/<repo>",
      "model": "<the model this session is running>",
      "title": "<implement or review> <owner>/<repo>",
-     "prompt": "<the stored prompt below>\n<routine-fire-payload>\n<args> launcher=cloud\n</routine-fire-payload>"}
+     "prompt": "<the opening prompt above>"}
     ```
 
-    `create_trigger` is not a substitute: it takes no `sources`, so it cannot name the
-    repository.
+  - **`claude --cloud`**, run from `<repo root>`, whose `origin` names the repository the
+    session starts on. Run from the Bash tool, `--cloud` exits with `Error: --cloud requires an
+    interactive terminal.`, so write the command to a script and run that under `script`:
 
-  - **`RemoteTrigger`**, loaded with `ToolSearch select:RemoteTrigger`, where `create_session`
-    did not load. Each launch runs, in order:
+    ```
+    cat > <scratch dir>/launch.sh <<'LAUNCH'
+    #!/bin/sh
+    cd <repo root> && claude --cloud '<the opening prompt above>' --model <the model this session is running>
+    LAUNCH
+    chmod +x <scratch dir>/launch.sh
+    timeout 90 script -qec <scratch dir>/launch.sh /dev/null
+    ```
 
-    1. `action: "list"`, finding the routine by that name.
-    2. Where it is absent, `action: "create"` with the body below.
-    3. Where it exists and its stored `model` differs from the model this session is running,
-       `action: "update"` with the body's `model`.
-    4. One `action: "run"` on it, with the body `{"text": "<args> launcher=cloud"}`.
+    The prompt follows `--cloud` directly, as its argument; a flag in that place fails with
+    `Error: --cloud requires a description.` Single quotes keep the shell from expanding the
+    prompt's backticks. A launch prints `Created cloud session: <title>` and a
+    `View: https://claude.ai/code/session_...` line, and that URL is what the launch returns.
 
-  - **`list_triggers` with `fire_trigger`**, the `claude-code-remote` server's tools, found with
-    `ToolSearch +remote list_triggers fire_trigger update_trigger`, where neither route above
-    loaded. Call them by the name the search returns, as above. Each launch runs, in order:
+  `<repo root>` is resolved as the `local` entry resolves it.
 
-    1. `list_triggers {"limit": 100}`, finding the routine by `name`.
-    2. Where it exists and its `created_via` is not `http_api`, and its stored `model` differs
-       from the model this session is running,
-       `update_trigger {"trigger_id": "<its id>", "model": "<that model>"}`.
-    3. Where it exists and its `created_via` is not `http_api`, one
-       `fire_trigger {"trigger_id": "<its id>", "text": "<args> launcher=cloud"}`.
-
-    Every other case is a failed launch. Where the routine is absent, the report says to launch
-    again from a session that carries `create_session` or `RemoteTrigger`, the two routes that
-    need no routine `fire_trigger` will accept. Where its `created_via` is `http_api`, the
-    report names that value and says to run the routine by hand: `fire_trigger` refuses a
-    routine an agent did not create.
-
-  A session can launch through this entry where `create_session` loads, or `RemoteTrigger`
-  loads, or `fire_trigger` loads and `list_triggers` returns the routine with a `created_via`
-  other than `http_api`. Step 1 of `implement-handoff`, and of `review-handoff` where the header
-  carries `next`, checks that with `ToolSearch` and `list_triggers` alone, and stops where it
-  does not hold.
-
-  The routine body `RemoteTrigger` creates:
-
-```json
-{"name": "<implement or review> <owner>/<repo>",
- "enabled": false,
- "job_config": {"ccr": {
-   "environment_id": "<from the schedule skill's environment list>",
-   "session_context": {
-     "model": "<the model this session is running>",
-     "sources": [{"git_repository": {"url": "https://github.com/<owner>/<repo>"}}],
-     "allowed_tools": ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "Skill",
-                       "Agent", "Task", "EnterWorktree", "ExitWorktree",
-                       "RemoteTrigger"]},
-   "events": [{"data": {
-     "uuid": "<fresh lowercase v4 uuid>", "session_id": "", "type": "user",
-     "parent_tool_use_id": null,
-     "message": {"role": "user", "content": "This is a cloud run. Invoke the `baton:<skill>` skill with the text of the routine-fire-payload below, verbatim, as its arguments. If there is no routine-fire-payload, or it is empty, end the turn without doing anything."}}}]}}}
-```
-
-  The stored prompt never changes between launches; the arguments ride in the `run` or
-  `fire_trigger` payload.
-  A `run` carrying `{"text": ...}` delivers the text to the run as a second user turn, wrapped
-  in `<routine-fire-payload>` and marked as data to follow only where the stored prompt says
-  to - which this one does - and a run given a stored prompt naming a skill invokes it with the
-  payload verbatim as its arguments. A run with no payload ends in one turn. A `run` that
-  passes `job_config.ccr.events`, `events` or `prompt` instead gets HTTP 200 and the stored
-  prompt alone. That is why each launch is one call: re-pointing one routine with `update` and
-  then firing it with `run` lets two interleaved launches both run the second launch's prompt.
-
-  The routines are created disabled and stay disabled. `run` starts a disabled routine and
-  delivers its payload, so no launch toggles `enabled`, and with no schedule there is no
-  pending slot to add a duplicate run. Nothing deletes a routine except
-  claude.ai/code/routines. `action: "list_runs"` returns a run's session URL;
-  `action: "get_run_log"` reads the run, permission denials included.
-
-  Step 3 is the one place two launches can still interleave: two launches
-  from sessions on different models at the same moment can each run under the other's.
-
-  `sources` names the repository the routine's sessions start with.
-
-  `EnterWorktree` and `ExitWorktree` are on the list per `defining-backends.md`,
-  `## Tools an unattended run needs`.
-
-  `Agent` and `Task` are on the list per the same section. Routine creation keeps a name the
-  build does not carry, and the session ignores it: a cloud run whose list held `Agent`, `Task`
-  and a made-up name started, carried only `Agent`, and dispatched through it. That run also
-  carried tools its list did not name, such as `ToolSearch`, so whether a list naming neither
-  still gets `Agent` is untested.
-
-  `RemoteTrigger` is on both routines' lists per the same section. A session a routine starts
-  also carries the `claude-code-remote` tools whether or not its list names them.
-
-  `<owner>` and `<repo>` are the handoff's `repo` line (`defining-backends.md`); `name` takes
-  it too.
+  A session can launch through this entry where it carries `create_session`, loaded or found
+  by `ToolSearch`, or where `command -v claude` succeeds. Step 1 of `implement-handoff`, and of
+  `review-handoff` where the header carries `next`, checks that and stops where neither holds.
+  A launch that fails is reported, naming both tools, and is never retried through a routine.
 
   **A handoff with an `assets` line stops under this entry** (`implement-handoff` Step 1);
   launch it with `local`.

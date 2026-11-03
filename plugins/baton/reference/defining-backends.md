@@ -408,14 +408,14 @@ A `## Launcher` entry that names `allowed_tools` at all names `EnterWorktree` an
 `ExitWorktree`, which both runs call - an entry that starts the session in a worktree already,
 `claude --worktree` among them, included.
 
-A `cloud` entry adds whatever tools it itself is written with. The shipped one runs on the
-`claude-code-remote` server's `create_session` first, then on `RemoteTrigger` where that does
-not load, then on the same server's `list_triggers` and `fire_trigger` where neither does
-(`backend-github.md`). **Every** cloud
-`implement-handoff` run needs one of those sets, not only a stacked one, and so does a cloud
+A `cloud` entry adds whatever tools it itself is written with. The shipped one starts the
+session with the `claude-code-remote` server's `create_session`, or with `claude --cloud`
+through `Bash` where the session has no `create_session` (`backend-github.md`). **Every** cloud
+`implement-handoff` run needs one of those, not only a stacked one, and so does a cloud
 `review-handoff` run carrying `next`: both launch through this entry from inside the run
-(`implement-handoff` Step 6, `review-handoff` Step 6). A cloud session does not always carry
-`RemoteTrigger`, so an entry written on it alone fails there, and the run finds out at Step 1.
+(`implement-handoff` Step 6, `review-handoff` Step 6). A cloud session can carry
+`create_session` already loaded, and `ToolSearch` does not return a loaded tool, so an entry
+that finds it by search alone reports it missing there.
 
 A `local` entry needs nothing beyond `Bash`, but it starts a session on the machine the
 launching run is on, and that is the constraint a stack's `next` has to be written around.

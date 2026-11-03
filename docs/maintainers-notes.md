@@ -4,8 +4,9 @@ Why the baton skills and reference files say what they say. A run never reads th
 note below explains a rule its source states, and removing the note from the source changed no
 action a run takes. Before changing a rule, read its note here.
 
-Headings name the source file and the step or section the note came from, by the name it has
-in that file now.
+Headings name the source file, by its path under `plugins/baton/`, and the step or section the
+note came from, by the name it has in that file now. This file sits outside `plugins/baton/`,
+so it does not ship with the plugin.
 
 ## skills/implement-handoff/SKILL.md
 
@@ -722,11 +723,7 @@ GitHub documents the cross-repository form `<owner>/<repo>#<id>` for closing key
 
 ### Launcher
 
-The `cloud` launcher's Step 3 updates `model` because an investigation formed under one model does not hand its plan to a weaker one, and a launch from a session on another model would otherwise run under the routine's stored one.
-
-A cloud run has a disposable clone to itself and isolates from nothing, and the cost of putting `EnterWorktree` and `ExitWorktree` on its list anyway is accepted rather than made conditional.
-
-The routine's `name` takes the handoff's `repo` line too, keeping each repository's routines apart.
+The `cloud` launcher passes the launching session's model, as `create_session`'s `model` or `claude --cloud`'s `--model`, because an investigation formed under one model does not hand its plan to a weaker one.
 
 The `local` launcher's ignore check takes the same root because the worktree Step 2 creates lands in the repository being launched rather than this one.
 
@@ -924,28 +921,34 @@ and `review-handoff`'s first round reviews the whole pull request.
 
 ## reference/backend-github.md, `## Launcher`, `cloud`
 
-The `claude-code-remote` route exists because a cloud `implement-handoff` run on 2026-10-29
-(issue #53) had no `RemoteTrigger` tool - `ToolSearch select:RemoteTrigger` found nothing - and
-so opened its pull request without launching `review-handoff`. The same session carried
-`mcp__Claude_Code_Remote__list_triggers`, `fire_trigger` and `create_session`; the review session
-then started for it carried `mcp__claude-code-remote__list_triggers` and `fire_trigger` but no
-`create_session`. That is why the entry names the tools by search rather than by prefix, and why
-`list_triggers` with `fire_trigger` stays as a route of its own.
+The `cloud` entry starts a cloud session directly and has no routine route, as a fallback or
+otherwise. The `implement <owner>/<repo>` and `review <owner>/<repo>` routines were a
+workaround for cloud sessions that did not clone the repository properly. A session started
+directly now arrives with it: on 2026-11-03 a `claude --cloud` session cloned `ja-sos/relay`,
+with `origin` at `https://github.com/ja-sos/relay` and `HEAD` at `95ca8da`, before its first
+turn. Keeping a routine as a fallback kept the workaround in use. That day the #57 run's
+reviewer launch went to `review ja-sos/relay` through `fire_trigger` and was refused, and the
+#59 launch fired `implement ja-sos/relay` through a `~/.claude/baton.md` restating 0.3.1's
+route order. 0.3.2's own `RemoteTrigger` route would have fired it from the same local session,
+which carried no `create_session`. Do not add a routine route back; a session that can start no
+cloud session fails at Step 1 instead.
 
-`create_session` comes first because on 2026-11-03 `fire_trigger` on `implement ja-sos/relay`
-returned: "this routine was created via \"http_api\", not by an agent. Agents can only fire
-routines they created (via create_trigger)." `list_triggers` reports `"created_via": "http_api"`
-for both of this repository's routines, and the repository's owner chose `create_session` as the
-default that day. `RemoteTrigger` stays second so a session carrying it and no `create_session`
-can still launch.
+`create_session` is looked for among the session's loaded tools before `ToolSearch`. A cloud
+session started by `claude --cloud` on 2026-11-03 carried
+`mcp__claude-code-remote__create_session` already loaded, and `ToolSearch +remote create_session`
+returned no such tool, since the search returns deferred tools only. An entry that finds it by
+search alone reports a session that has it as one without it.
 
-The `fire_trigger` route and the launch check both exclude `created_via: http_api` rather than
-requiring a named value, because nothing in this repository records the value `create_trigger`
-writes. The launch check applies the same exclusion because a route that passes the check and
-then fails at Step 6 leaves a pull request with no reviewer.
+`claude --cloud` is the second tool because a local CLI session can carry no
+`claude-code-remote` tools: on 2026-11-03, `ToolSearch +remote create_session list_triggers
+fire_trigger` in a local 2.1.317 session returned `RemoteTrigger` and nothing from that server.
+The command runs under `script` because, from the Bash tool, it exits with `Error: --cloud
+requires an interactive terminal.` Its prompt sits directly after `--cloud` because a flag there
+fails with `Error: --cloud requires a description.`, and `--model` after the prompt took effect:
+a session launched with `--model claude-sonnet-5-5` reported `init: model=claude-sonnet-5-5`.
 
-`create_session` with `source_url` started that review session with the repository attached.
-`create_trigger` was passed over because it takes no `sources`.
+`create_session` with `source_url` started a review session with the repository attached on
+2026-10-29 (issue #53). `create_trigger` was passed over because it takes no `sources`.
 
 ## skills/implement-handoff/SKILL.md, Step 1, the launcher check
 
