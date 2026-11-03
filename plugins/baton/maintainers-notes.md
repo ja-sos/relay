@@ -271,6 +271,9 @@ The ending round's fixes are still applied because the cap ends the reviewing, n
 The handoff's commands run after each fixing round and `verify` once before the push, because
 `verify` checks the whole repository rather than the change.
 
+A check fix made at item 2 stays uncommitted with the round's other fixes because item 4 reviews
+only the working tree: committing it early hands that review an empty diff.
+
 ### Step 5 - Push and update the pull request
 
 A push landing while the review ran is a stop because pushing over it - or merging it in, or
@@ -864,6 +867,61 @@ A `closes` line on an issue the bundle leaves open shuts it on merge whatever re
 it, and the run has no way to reopen it. An issue whose line goes missing from the body is
 unlinked on merge, and nothing errors.
 
+## reference/fixing-check-failures.md
+
+A failing check used to end both unattended runs outright. Issue #57 records a `review-handoff`
+run on a .NET repository whose `verify` ran cleanup, then tests and lint: lint failed on
+analyzer warning CA1859, on a field in a test file one of the review's own fixes had edited, and
+the run stopped at Step 4 and pushed none of its three fixes for want of a one-line type change.
+
+The rule has one file of its own, loaded by both skills, so the bound and the scope rule have one
+owner. `reviewing-run-output.md` was ruled out as its home: `self-review` loads it and
+`implement-handoff` does not, and its provenance section addresses a reviewer of an unattended
+run's branch rather than the run writing it. A paragraph in each skill would have given the rule
+two owners.
+
+The bound is 3 to match `review-handoff`'s three-round loop cap. Each attempt re-runs the whole
+sequence from its first step because a sequence that rewrites files does so before its checks,
+and a fix the formatter has not seen is unchecked.
+
+There is no backend attribute for the bound because it covers the handoff's own commands as well
+as `verify`, and a `verify` attribute cannot reach them.
+
+Scope is set by cause and by the files a fix edits, not by where a failure is reported. A
+failure that also occurs at the merge-base is a stop, because the branch did not cause it: that
+is the issue's "a test already failing on the base". Any other failure is fixed, and a fix edits
+only files the branch's diff changes. Keying scope on the reported file instead would make the
+commonest failure - the change breaking an existing test in a file it did not touch - a stop
+with no attempt, and would leave a failure that names no file, such as a `grep -c` check
+printing the wrong count, with no rule at all. The CA1859 case is admitted either way.
+
+The branch's diff deepens a shallow clone first because `review-handoff` Step 2 fetches only the
+head ref and a `create_session` clone carries 50 commits by default, so `<branch point>` can lie
+outside the clone's history, where `git merge-base` exits non-zero and every check failure would
+be a stop.
+
+The branch's diff is computed in the worktree from `<branch point>` rather than read from the
+pull request, because `pr-view` cannot supply a base ref: the `gh` route's `pr-view` returns
+none. The untracked-files listing adds the files a fix created that nothing has committed yet.
+It diffs against the merge-base with `<branch point>`, not against `<branch point>` itself,
+because `origin/<pr-base>` can move after this layer was cut, and a plain diff would then list
+the files the layer below changed since. `review-handoff` Step 2 fetches only the head ref, so
+the reference file fetches `<pr-base>` itself.
+
+A fix may not edit a failing test's assertions, because that makes the test agree with the code
+rather than the code with the test.
+
+A loop fix in `review-handoff` counts as reviewed when the next round's item 4 reviewed it,
+since item 4 reviews the uncommitted tree that holds it. Only the fixes no later round covered -
+Step 4's, and item 2's in the round that ends the loop - go unreviewed. This narrows the issue's
+wording ("reach no code-review round") to what actually runs.
+
+Step 4's fixes are committed before each re-run because Step 4 runs with nothing uncommitted;
+otherwise the re-run checks a tree Step 5 will not push.
+
+`implement-handoff` marks none of its check fixes unreviewed because that run reviews nothing,
+and `review-handoff`'s first round reviews the whole pull request.
+
 ## reference/backend-github.md, `## Launcher`, `cloud`
 
 The `claude-code-remote` route exists because a cloud `implement-handoff` run on 2026-10-29
@@ -872,7 +930,19 @@ so opened its pull request without launching `review-handoff`. The same session 
 `mcp__Claude_Code_Remote__list_triggers`, `fire_trigger` and `create_session`; the review session
 then started for it carried `mcp__claude-code-remote__list_triggers` and `fire_trigger` but no
 `create_session`. That is why the entry names the tools by search rather than by prefix, and why
-`create_session` is only the fallback for a missing routine.
+`list_triggers` with `fire_trigger` stays as a route of its own.
+
+`create_session` comes first because on 2026-11-03 `fire_trigger` on `implement ja-sos/relay`
+returned: "this routine was created via \"http_api\", not by an agent. Agents can only fire
+routines they created (via create_trigger)." `list_triggers` reports `"created_via": "http_api"`
+for both of this repository's routines, and the repository's owner chose `create_session` as the
+default that day. `RemoteTrigger` stays second so a session carrying it and no `create_session`
+can still launch.
+
+The `fire_trigger` route and the launch check both exclude `created_via: http_api` rather than
+requiring a named value, because nothing in this repository records the value `create_trigger`
+writes. The launch check applies the same exclusion because a route that passes the check and
+then fails at Step 6 leaves a pull request with no reviewer.
 
 `create_session` with `source_url` started that review session with the repository attached.
 `create_trigger` was passed over because it takes no `sources`.

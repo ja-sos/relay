@@ -408,9 +408,10 @@ A `## Launcher` entry that names `allowed_tools` at all names `EnterWorktree` an
 `ExitWorktree`, which both runs call - an entry that starts the session in a worktree already,
 `claude --worktree` among them, included.
 
-A `cloud` entry adds whatever tools it itself is written with. The shipped one runs on
-`RemoteTrigger`, or on the `claude-code-remote` server's `list_triggers`, `fire_trigger` and
-`create_session` where `RemoteTrigger` does not load (`backend-github.md`). **Every** cloud
+A `cloud` entry adds whatever tools it itself is written with. The shipped one runs on the
+`claude-code-remote` server's `create_session` first, then on `RemoteTrigger` where that does
+not load, then on the same server's `list_triggers` and `fire_trigger` where neither does
+(`backend-github.md`). **Every** cloud
 `implement-handoff` run needs one of those sets, not only a stacked one, and so does a cloud
 `review-handoff` run carrying `next`: both launch through this entry from inside the run
 (`implement-handoff` Step 6, `review-handoff` Step 6). A cloud session does not always carry

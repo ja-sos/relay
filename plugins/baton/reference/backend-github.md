@@ -208,13 +208,29 @@ keep the reviews with a non-empty `body` whose author's `login` does not end in 
 Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
 `defining-backends.md`, `## Sections`.
 
-- **cloud:** two routines per repository, each holding a fixed prompt, reused for every
-  launch. `<skill>` picks the routine: `implement <owner>/<repo>` for `implement-handoff`,
-  `review <owner>/<repo>` for `review-handoff`. Two tool sets can run it, and a launch uses the
-  first that loads:
+- **cloud:** a launch tries three routes, in this order, and uses the first whose tools load:
+  `create_session`, then `RemoteTrigger`, then `list_triggers` with `fire_trigger`. The last two
+  run on two routines per repository, each holding a fixed prompt, reused for every launch.
+  `<skill>` picks the routine: `implement <owner>/<repo>` for `implement-handoff`,
+  `review <owner>/<repo>` for `review-handoff`.
 
-  - **`RemoteTrigger`**, loaded with `ToolSearch select:RemoteTrigger`. Each launch runs, in
-    order:
+  - **`create_session`**, the `claude-code-remote` server's tool, found with
+    `ToolSearch +remote create_session`. A session carries it under `mcp__claude-code-remote__`
+    or `mcp__Claude_Code_Remote__`, by harness build; call it by the name the search returns.
+    Each launch is one `create_session` call, with no `list_triggers` call before it:
+
+    ```json
+    {"source_url": "https://github.com/<owner>/<repo>",
+     "model": "<the model this session is running>",
+     "title": "<implement or review> <owner>/<repo>",
+     "prompt": "<the stored prompt below>\n<routine-fire-payload>\n<args> launcher=cloud\n</routine-fire-payload>"}
+    ```
+
+    `create_trigger` is not a substitute: it takes no `sources`, so it cannot name the
+    repository.
+
+  - **`RemoteTrigger`**, loaded with `ToolSearch select:RemoteTrigger`, where `create_session`
+    did not load. Each launch runs, in order:
 
     1. `action: "list"`, finding the routine by that name.
     2. Where it is absent, `action: "create"` with the body below.
@@ -222,33 +238,28 @@ Each entry takes `<skill>` and `<args>` and appends `launcher=<entry name>`, per
        `action: "update"` with the body's `model`.
     4. One `action: "run"` on it, with the body `{"text": "<args> launcher=cloud"}`.
 
-  - **The `claude-code-remote` server's tools**, found with
-    `ToolSearch +remote list_triggers fire_trigger create_session`. A session carries them
-    under `mcp__claude-code-remote__` or `mcp__Claude_Code_Remote__`, by harness build; call
-    them by the name the search returns. Each launch runs, in order:
+  - **`list_triggers` with `fire_trigger`**, the `claude-code-remote` server's tools, found with
+    `ToolSearch +remote list_triggers fire_trigger update_trigger`, where neither route above
+    loaded. Call them by the name the search returns, as above. Each launch runs, in order:
 
     1. `list_triggers {"limit": 100}`, finding the routine by `name`.
-    2. Where it exists and its stored `model` differs from the model this session is running,
+    2. Where it exists and its `created_via` is not `http_api`, and its stored `model` differs
+       from the model this session is running,
        `update_trigger {"trigger_id": "<its id>", "model": "<that model>"}`.
-    3. Where it exists, one `fire_trigger {"trigger_id": "<its id>", "text": "<args> launcher=cloud"}`.
-    4. Where it is absent, one `create_session` call instead, where that tool loaded:
+    3. Where it exists and its `created_via` is not `http_api`, one
+       `fire_trigger {"trigger_id": "<its id>", "text": "<args> launcher=cloud"}`.
 
-       ```json
-       {"source_url": "https://github.com/<owner>/<repo>",
-        "model": "<the model this session is running>",
-        "title": "<implement or review> <owner>/<repo>",
-        "prompt": "<the stored prompt below>\n<routine-fire-payload>\n<args> launcher=cloud\n</routine-fire-payload>"}
-       ```
+    Every other case is a failed launch. Where the routine is absent, the report says to launch
+    again from a session that carries `create_session` or `RemoteTrigger`, the two routes that
+    need no routine `fire_trigger` will accept. Where its `created_via` is `http_api`, the
+    report names that value and says to run the routine by hand: `fire_trigger` refuses a
+    routine an agent did not create.
 
-       `create_trigger` is not a substitute: it takes no `sources`, so it cannot name the
-       repository. Where the routine is absent and `create_session` did not load, the launch
-       fails, and the report says to create the routine from a session that carries
-       `RemoteTrigger`.
-
-  A session can launch through this entry where `RemoteTrigger` loads, or where `list_triggers`
-  and `fire_trigger` load and either `list_triggers` returns the routine or `create_session`
-  loads. Step 1 of `implement-handoff`, and of `review-handoff` where the header carries `next`,
-  checks that with `ToolSearch` and `list_triggers` alone, and stops where it does not hold.
+  A session can launch through this entry where `create_session` loads, or `RemoteTrigger`
+  loads, or `fire_trigger` loads and `list_triggers` returns the routine with a `created_via`
+  other than `http_api`. Step 1 of `implement-handoff`, and of `review-handoff` where the header
+  carries `next`, checks that with `ToolSearch` and `list_triggers` alone, and stops where it
+  does not hold.
 
   The routine body `RemoteTrigger` creates:
 

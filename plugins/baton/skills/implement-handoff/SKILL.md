@@ -37,10 +37,11 @@ cat ~/.claude/baton.md 2>/dev/null
 ```
 
 Then load the rule for every call this skill makes once per issue - `started`, `published` and
-`stopped`:
+`stopped` - and the rule for a check that fails:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/per-issue-calls.md
+cat ${CLAUDE_PLUGIN_ROOT}/reference/fixing-check-failures.md
 ```
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file
@@ -295,7 +296,9 @@ Then run two checks, in this order:
 1. The commands the handoff names beside its acceptance criteria.
 2. `verify`, in the form `defining-backends.md`, `## Operations`, gives its value.
 
-A failure of either is a stop. Nothing is committed until both pass.
+A failure of either is fixed and the sequence re-run, as
+`${CLAUDE_PLUGIN_ROOT}/reference/fixing-check-failures.md` bounds it; what that file makes a
+stop is one. Nothing is committed until both pass.
 
 A handoff naming neither is run with `verify` alone. A handoff naming one and not the other
 runs what it names; Step 5's body records which of the two the run had.
@@ -402,6 +405,8 @@ with that issue's id, the pull request URL from Step 5, and the same one file wr
 - the URL, and the branch - beside the name the handoff asked for, where Step 2 cut
   `<branch>-<6 hex>` instead;
 - how the handoff's commands and `verify` came out, and any deviation Step 2 recorded;
+- each check failure Step 3 hit and the fix applied for it, as `fixing-check-failures.md`
+  records them;
 - the reviewer launch: the entry run and what it returned, or which of the two checks above
   held it back;
 - after a `keep`, the worktree path `.claude/worktrees/<name>` and which of the two checks
@@ -412,8 +417,8 @@ wait there for a person to run; where it carries `## Unverified claims`, that cl
 for a person to probe. Each of those statements points to its heading without repeating the
 entries under it.
 
-The reviewer launch and the pointer to each of those headings are required content whatever
-contract **Run report** resolves to.
+The reviewer launch, the check failures with their fixes, and the pointer to each of those
+headings are required content whatever contract **Run report** resolves to.
 
 ## Stopping
 
@@ -425,6 +430,10 @@ Both files are written on `baton:write-deliverables`' short path as a **Run repo
 - After it, in Step 5's remaining `pr-create` calls or Step 6: push nothing further and leave
   the pull request open. Run `stopped` with one file naming the step, what stopped it, and the
   pull request URL.
+
+Either file also names each check failure Step 3 hit and each fix attempt made so far, as
+`fixing-check-failures.md` records them - required content whatever contract **Run report**
+resolves to.
 
 Either shape runs `stopped` on each issue the header names, as `per-issue-calls.md` walks it,
 with its exceptions for a stop inside the `published` sequence and for a stop before the
