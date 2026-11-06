@@ -293,8 +293,10 @@ nothing and left nothing standing, and a reviewer whose every finding was reject
 the rejections. They run after the worktree checks so an `applied` reply names a commit `origin`
 holds. A failed reply is not a stop because by then the push and the body have landed, and a
 stop would only turn `reviewed` into `stopped` while losing nothing it could save. The reviewer's
-login is matched with `[bot]` removed and case ignored because whether either route's
-`review-threads` returns a bot author with the suffix REST logins carry was not probed.
+login is matched with `[bot]` removed and case ignored because a bot's two logins differ: on both
+routes `review-threads` returns a Copilot thread author as `copilot-pull-request-reviewer`, while
+`review-list` returns its review as `copilot-pull-request-reviewer[bot]`. Matching exactly would
+answer no bot thread.
 
 The worktree checks stand in for the confirmation `remove` otherwise asks for. A report missing
 an unresolved finding reads as a clean review under any contract, which is why the findings are

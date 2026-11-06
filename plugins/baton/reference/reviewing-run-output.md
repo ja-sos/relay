@@ -40,9 +40,8 @@ user's are indistinguishable by author.
 Write down five facts per thread:
 
 - the finding - the thread's first comment;
-- that first comment's id, in the form `thread-reply` takes as `<comment-id>`: on the shipped
-  MCP route the number after `#discussion_r` in its `html_url`, on the `gh` route its
-  `databaseId`;
+- that first comment's id, in the form `thread-reply` takes as `<comment-id>`, derived as the
+  backend's `## Review` notes say;
 - that first comment's author's login, or `unknown` where the backend returns none;
 - what the code at the reviewed head does now at that thread's path;
 - what the latest reply claimed, or `no reply`.

@@ -388,15 +388,13 @@ each such thread as unanswered for that reason.
   is posted.
 
 Each reply is its own file in the scratchpad directory, written on `baton:write-deliverables`'
-short path as a **Review reply**, in the form the backend's entry reads it - the backend's notes
-say where that is a JSON payload, as the `gh` route's `thread-reply` takes `{"body": "<text>"}`.
-No reply carries a marker.
+short path as a **Review reply**, in the form the backend's entry reads it - a JSON payload
+where the backend's notes say so. No reply carries a marker.
 
 **A failed reply is not a stop**, an exception to the stop rule at the top of this skill: record
 the operation, the thread or comment it answered and the error, go on to the next reply, then to
 `reviewed`. By here the push and the body have landed, and a stop would only turn `reviewed`
-into `stopped`. An undefined `thread-reply` or `pr-comment` is still a stop, at Step 1. A turn
-resuming from a stop after the replies began posts none that the stop's file names as posted.
+into `stopped`. An undefined `thread-reply` or `pr-comment` is still a stop, at Step 1.
 
 Then run `reviewed` on each issue the header names, as `per-issue-calls.md` walks it, each with
 that issue's id as `<id>`, the pull request URL as `<pr-url>`, and the same one file as
