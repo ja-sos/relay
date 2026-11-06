@@ -89,6 +89,8 @@ listed. Add or replace types in `.claude/doc-types.md` or `~/.claude/doc-types.m
   sets them. An `implement-handoff` run reviews nothing and reports no findings.
 - A review that timed out waiting for an external reviewer, or stopped part-way, said as that
   rather than left silent.
+- From a `review-handoff` run, each reply it posted to the requested reviewer's findings and
+  each that failed, with its error - or that it posted none.
 - What is left for a person to do, and where. Left out, not filled, where there is nothing
   true to state.
 
@@ -98,3 +100,23 @@ listed. Add or replace types in `.claude/doc-types.md` or `~/.claude/doc-types.m
 - A narrative of the run: what was tried, what order things happened in, or which round
   raised a finding where its disposition already says what became of it.
 - Commands and their raw output where a one-line result answers the reader.
+
+---
+
+## Review reply
+
+- **READER:** the reviewer who raised the finding, and the person who reads the thread after.
+- **GOAL:** know what became of the finding, and be able to check it.
+- **ALREADY HAS:** the finding, and the pull request diff.
+
+**Must include**
+- The finding's disposition.
+- Its evidence: the commit that carries a fix, or the reason the finding was not fixed - why
+  it does not hold, what it waits on, or what blocks the call.
+- In one reply answering several findings, a short pointer to each - a few words or a link -
+  so the reader can tell which disposition is whose.
+
+**Must not include**
+- The finding restated.
+- Agreement or thanks.
+- A narrative of the run or of how the fix was reached.

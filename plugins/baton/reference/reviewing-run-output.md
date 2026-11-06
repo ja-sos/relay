@@ -37,14 +37,17 @@ No resolved-state filter. No author filter either: the run commits under the use
 identity and replies through the credentials `reachable` resolves to, so its replies and the
 user's are indistinguishable by author.
 
-Write down three facts per thread:
+Write down five facts per thread:
 
 - the finding - the thread's first comment;
+- that first comment's id, in the form `thread-reply` takes as `<comment-id>`, derived as the
+  backend's `## Review` notes say;
+- that first comment's author's login, or `unknown` where the backend returns none;
 - what the code at the reviewed head does now at that thread's path;
 - what the latest reply claimed, or `no reply`.
 
-The thread comment's numeric id is not among them: nothing a review here does writes back to
-a thread.
+A caller that replies to a thread takes the id and the author from here; one that writes
+nothing back carries them unused.
 
 Where there is no pull request, or it carries no threads, this collects nothing and the review
 covers the diff alone.
@@ -52,7 +55,7 @@ covers the diff alone.
 ## Checking the threads
 
 The collected threads stay out of the `code-review` call, whose inputs `defining-backends.md`
-fixes. Once it returns, check each thread yourself against its three facts, by its latest reply:
+fixes. Once it returns, check each thread yourself against its five facts, by its latest reply:
 
 - A reply claiming a fix: check the claim against the diff. Where the diff contains the fix,
   the thread is fixed as claimed.

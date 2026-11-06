@@ -15,8 +15,8 @@ The arguments are the handoff locator, the pull request URL, and an optional
 handoff `fetch-handoff` resolves the locator to, and from the pull request itself.
 
 Nobody is watching. Ask no questions - `AskUserQuestion` has no one to answer it. Nothing
-reaches the user except the push, the pull request body, and the Run report `reviewed` or
-`stopped` posts.
+reaches the user except the push, the pull request body, the replies Step 6 posts to the
+requested reviewer's findings, and the Run report `reviewed` or `stopped` posts.
 
 Every operation named below comes from the backend, its files loaded in the order
 `${CLAUDE_PLUGIN_ROOT}/reference/defining-backends.md` "Where overrides live" sets. Load the
@@ -85,6 +85,10 @@ These need no confirmation:
   `discard_changes: true` once that step's checks pass, `keep` otherwise.
 - `request-reviewer` on that pull request, once, at Step 3.
 - `pr-update` on that pull request.
+- `thread-reply` on each review thread of that pull request whose first comment the reviewer
+  `request-reviewer` named wrote, and one `pr-comment` on that pull request answering that
+  reviewer's findings from `review-bodies` and `pr-comments` - both at Step 6, and only where
+  that reviewer left findings.
 - `reviewed` and `stopped` on **each issue the header names**, one call per issue.
 - Dispatching the subagents its review needs - Step 4's claim audit, and a reviewer an
   `agent:` entry in `code-review` names. They read and report; nothing they return reaches the
@@ -94,8 +98,10 @@ Everything else is a stop rather than a judgement call:
 
 - Force-push, in any form - `--force`, `--force-with-lease`, a `+` refspec.
 - Pushing to any branch but the pull request's head branch.
-- Merging the pull request, marking a draft ready, closing it, adding a reviewer beyond what
-  `request-reviewer` names, or writing to a review thread or a pull request comment.
+- Merging the pull request, marking a draft ready, closing it, or adding a reviewer beyond what
+  `request-reviewer` names.
+- Writing to a review thread or a pull request comment, except the replies to the requested
+  reviewer's findings listed above. A thread anyone else opened gets no reply.
 - `started` or `published` on any issue.
 
 Those are actions. A judgement this run can make on the evidence - whether a finding holds,
@@ -139,9 +145,10 @@ Three answers are stops: a pull request that is not open, one whose head reposit
 
 Then resolve, against the loaded backend files and before `EnterWorktree`, every operation this
 run calls: `review-threads`, `code-review`, `verify`, `request-reviewer`, `review-wait`,
-`review-list`, `review-bodies`, `pr-comments`, `pr-update`, `reviewed` and `stopped`.
-`review-wait`, `review-list`, `review-bodies` and `pr-comments` need resolving only where
-`request-reviewer` is not `none`.
+`review-list`, `review-bodies`, `pr-comments`, `thread-reply`, `pr-comment`, `pr-update`,
+`reviewed` and `stopped`. `review-wait`, `review-list`, `review-bodies`, `pr-comments`,
+`thread-reply` and `pr-comment` need resolving only where `request-reviewer` is not `none`;
+where it is `none`, `thread-reply` and `pr-comment` are not resolved and no reply is posted.
 Find the subagent dispatch tool - `Agent` in some harness builds, `Task` in others - in this
 session's tools. Any of these missing is a stop here.
 
@@ -352,6 +359,43 @@ Where a launcher started the session in a worktree of its own - Step 2 skipped `
 alone - the call is `keep` and nothing further is asked: that worktree is the launcher's to
 remove.
 
+**Replies to the requested reviewer.** Then answer the reviewer `request-reviewer` named, before `reviewed` and before any `next`
+launch `stacked-handoff.md` adds to this step. This runs only where `request-reviewer` is not
+`none` and that reviewer's review arrived within Step 3's wait and left at least one finding: a
+wait that timed out posts nothing, and a review arriving later is `baton:address-review`'s. It
+runs whether or not Step 5 did - a reviewer whose every finding was rejected is still owed the
+rejections.
+
+The reviewer's login is the author login on the review Step 3's wait took as that reviewer's
+arrival - a review in `review-list` that the copy kept before `request-reviewer` ran does not
+hold. Where the reviews that arrived during the wait carry more than one author and none can be
+told to be that reviewer's, post no reply and say so in the Run report. A login matches the
+reviewer's where the two are equal ignoring case, once a trailing `[bot]` is removed from each.
+A thread whose first comment's author is `unknown` matches nothing, and the Run report names
+each such thread as unanswered for that reason.
+
+- **Each thread whose first comment's author matches** gets exactly one `thread-reply`, with
+  the pull request number as `<id>` and the first comment's id, as "Collecting the review
+  threads" recorded it, as `<comment-id>`. A thread whose finding stood takes the finding's
+  disposition from the reference's "Dispositions": `applied` names the commit among those Step 5
+  pushed that carries that fix, and
+  `rejected`, `deferred` and `unresolved` give the reason that disposition carries. A thread
+  whose finding did not stand takes its thread disposition from "Checking the threads", with
+  the evidence that settled it.
+- **That reviewer's findings from `review-bodies` and `pr-comments`** get one `pr-comment`
+  between them, with the pull request number as `<id>`, each finding with its disposition and
+  that disposition's evidence as above. Where that reviewer left none there, no `pr-comment`
+  is posted.
+
+Each reply is its own file in the scratchpad directory, written on `baton:write-deliverables`'
+short path as a **Review reply**, in the form the backend's entry reads it - a JSON payload
+where the backend's notes say so. No reply carries a marker.
+
+**A failed reply is not a stop**, an exception to the stop rule at the top of this skill: record
+the operation, the thread or comment it answered and the error, go on to the next reply, then to
+`reviewed`. By here the push and the body have landed, and a stop would only turn `reviewed`
+into `stopped`. An undefined `thread-reply` or `pr-comment` is still a stop, at Step 1.
+
 Then run `reviewed` on each issue the header names, as `per-issue-calls.md` walks it, each with
 that issue's id as `<id>`, the pull request URL as `<pr-url>`, and the same one file as
 `<path>`, written on `baton:write-deliverables`' short path as a **Run report**. It says:
@@ -362,6 +406,8 @@ that issue's id as `<id>`, the pull request URL as `<pr-url>`, and the same one 
   because nothing was pushed;
 - whether an external reviewer was requested, and whether a review arrived or the wait ran
   out - or that `request-reviewer` is `none`;
+- each reply posted to the requested reviewer's findings, and each that failed with its error -
+  or that none was posted, and why;
 - every finding every round collected, each with its severity and its disposition, and every
   thread with its disposition and the evidence that settled it;
 - each check failure, in the loop or in Step 4, and the fix applied for it, as
@@ -375,14 +421,14 @@ that issue's id as `<id>`, the pull request URL as `<pr-url>`, and the same one 
 
 **A Run report from this run never carries `<!-- claude-handoff -->`, not even quoted.**
 
-The findings, their dispositions, the thread dispositions, the check failures with their fixes
-and the external review's outcome are required content whatever contract **Run report**
-resolves to.
+The findings, their dispositions, the thread dispositions, the check failures with their fixes,
+the external review's outcome and the replies posted or failed are required content whatever
+contract **Run report** resolves to.
 
 ## Stopping
 
-Every stop takes one of two shapes, set by whether Step 5 has changed the pull request - by
-its push, or by a `pr-update` where nothing was pushed. Both write one file on
+Every stop takes one of two shapes, set by whether this run has changed the pull request - by
+Step 5's push, by a `pr-update` where nothing was pushed, or by a reply Step 6 posted. Both write one file on
 `baton:write-deliverables`' short path as a **Run report**, carrying no handoff marker, and run
 `stopped` with it on each issue the header names, as `per-issue-calls.md` walks it - never
 `reviewed`.
@@ -390,7 +436,8 @@ its push, or by a `pr-update` where nothing was pushed. Both write one file on
 - Before that: push nothing and leave the pull request as it was. The file names the step,
   what stopped it, and the pull request URL.
 - After it, in `pr-update` or Step 6: push nothing further. The file says what is on the pull
-  request - the fixes and the commit that carries them, the rewritten body, or both - then the
+  request - the fixes and the commit that carries them, the rewritten body, the replies posted,
+  or any of these together - then the
   step and what stopped it. A stop in `pr-update` after a push leaves a body describing the diff
   before those fixes, and the file says so.
 
@@ -400,8 +447,8 @@ what blocks the call. A fix not on `origin` is not applied, whether uncommitted 
 the review branch: mark it unresolved with what stopped the run. A stop before Step 3 has
 collected no findings and says nothing about them. It also names each check failure and each
 fix attempt made so far, as `fixing-check-failures.md` records them, and whether `origin` holds
-each fix. This is required content
-under any contract, the same as Step 6's.
+each fix. A stop before Step 6's replies says no reply was posted; a stop after they began names
+each reply that posted. This is required content under any contract, the same as Step 6's.
 
 No stop calls `ExitWorktree`. The file names `.claude/worktrees/<name>` and the review branch
 wherever the worktree still stands: whatever was not pushed is in that directory.

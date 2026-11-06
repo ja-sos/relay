@@ -85,7 +85,7 @@ with the default branch rather than with the pull request's base, and show that 
 as well.
 
 **Step 6.** Where the header carries `next`, launch the layer above once the worktree is
-settled, before `reviewed`. Split the line at its space: the first value is the `## Launcher`
+settled and the replies to the requested reviewer have run, before `reviewed`. Split the line at its space: the first value is the `## Launcher`
 entry Step 1 resolved, run with `implement-handoff` as its `<skill>` and the second value as its `<args>`.
 Run it **once, with no retry**, whatever it returns: two runs on one branch race. A launch that
 fails is reported rather than repeated.
