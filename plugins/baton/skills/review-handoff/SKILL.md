@@ -101,7 +101,7 @@ Everything else is a stop rather than a judgement call:
 - Merging the pull request, marking a draft ready, closing it, or adding a reviewer beyond what
   `request-reviewer` names.
 - Writing to a review thread or a pull request comment, except the replies to the requested
-  reviewer's findings listed above. A thread a person opened gets no reply.
+  reviewer's findings listed above. A thread anyone else opened gets no reply.
 - `started` or `published` on any issue.
 
 Those are actions. A judgement this run can make on the evidence - whether a finding holds,
@@ -366,14 +366,19 @@ wait that timed out posts nothing, and a review arriving later is `baton:address
 runs whether or not Step 5 did - a reviewer whose every finding was rejected is still owed the
 rejections.
 
-The reviewer's login is the author login on that reviewer's review in `review-list`. A login
-matches it where the two are equal ignoring case, once a trailing `[bot]` is removed from each.
-A thread whose first comment's author is `unknown` matches nothing.
+The reviewer's login is the author login on the review Step 3's wait took as that reviewer's
+arrival - a review in `review-list` that the copy kept before `request-reviewer` ran does not
+hold. Where the reviews that arrived during the wait carry more than one author and none can be
+told to be that reviewer's, post no reply and say so in the Run report. A login matches the
+reviewer's where the two are equal ignoring case, once a trailing `[bot]` is removed from each.
+A thread whose first comment's author is `unknown` matches nothing, and the Run report names
+each such thread as unanswered for that reason.
 
 - **Each thread whose first comment's author matches** gets exactly one `thread-reply`, with
   the pull request number as `<id>` and the first comment's id, as "Collecting the review
   threads" recorded it, as `<comment-id>`. A thread whose finding stood takes the finding's
-  disposition from the reference's "Dispositions": `applied` names the commit Step 5 pushed, and
+  disposition from the reference's "Dispositions": `applied` names the commit among those Step 5
+  pushed that carries that fix, and
   `rejected`, `deferred` and `unresolved` give the reason that disposition carries. A thread
   whose finding did not stand takes its thread disposition from "Checking the threads", with
   the evidence that settled it.
@@ -390,7 +395,8 @@ No reply carries a marker.
 **A failed reply is not a stop**, an exception to the stop rule at the top of this skill: record
 the operation, the thread or comment it answered and the error, go on to the next reply, then to
 `reviewed`. By here the push and the body have landed, and a stop would only turn `reviewed`
-into `stopped`. An undefined `thread-reply` or `pr-comment` is still a stop, at Step 1.
+into `stopped`. An undefined `thread-reply` or `pr-comment` is still a stop, at Step 1. A turn
+resuming from a stop after the replies began posts none that the stop's file names as posted.
 
 Then run `reviewed` on each issue the header names, as `per-issue-calls.md` walks it, each with
 that issue's id as `<id>`, the pull request URL as `<pr-url>`, and the same one file as
@@ -423,8 +429,8 @@ contract **Run report** resolves to.
 
 ## Stopping
 
-Every stop takes one of two shapes, set by whether Step 5 has changed the pull request - by
-its push, or by a `pr-update` where nothing was pushed. Both write one file on
+Every stop takes one of two shapes, set by whether this run has changed the pull request - by
+Step 5's push, by a `pr-update` where nothing was pushed, or by a reply Step 6 posted. Both write one file on
 `baton:write-deliverables`' short path as a **Run report**, carrying no handoff marker, and run
 `stopped` with it on each issue the header names, as `per-issue-calls.md` walks it - never
 `reviewed`.
@@ -432,7 +438,8 @@ its push, or by a `pr-update` where nothing was pushed. Both write one file on
 - Before that: push nothing and leave the pull request as it was. The file names the step,
   what stopped it, and the pull request URL.
 - After it, in `pr-update` or Step 6: push nothing further. The file says what is on the pull
-  request - the fixes and the commit that carries them, the rewritten body, or both - then the
+  request - the fixes and the commit that carries them, the rewritten body, the replies posted,
+  or any of these together - then the
   step and what stopped it. A stop in `pr-update` after a push leaves a body describing the diff
   before those fixes, and the file says so.
 

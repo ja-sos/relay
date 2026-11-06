@@ -231,7 +231,7 @@ arrives while this run can still act on it: requesting it at `implement-handoff`
 wait would leave a review this run collects before it lands.
 
 Only the reviewer `request-reviewer` named gets a reply because that reviewer was asked in by
-the project's own configuration and is owed an answer; a reply in a thread a person opened
+the project's own configuration and is owed an answer; a reply in a thread anyone else opened
 would answer that person on the developer's behalf, with text nobody approved (#62). There is
 no `## Workflow` switch for the replies: `request-reviewer` already ships as `none`, and with
 `none` there is nobody to answer, so a second switch would gate the same thing twice.
