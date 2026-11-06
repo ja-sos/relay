@@ -230,6 +230,12 @@ unattended run cannot obtain the ask that would authorize.
 arrives while this run can still act on it: requesting it at `implement-handoff` Step 5 with no
 wait would leave a review this run collects before it lands.
 
+Only the reviewer `request-reviewer` named gets a reply because that reviewer was asked in by
+the project's own configuration and is owed an answer; a reply in a thread a person opened
+would answer that person on the developer's behalf, with text nobody approved (#62). There is
+no `## Workflow` switch for the replies: `request-reviewer` already ships as `none`, and with
+`none` there is nobody to answer, so a second switch would gate the same thing twice.
+
 ### Step 1 - Load
 
 Every operation is resolved before `EnterWorktree` because the same stop reached after it
@@ -281,6 +287,14 @@ A push landing while the review ran is a stop because pushing over it - or mergi
 describing it - publishes a tree nobody reviewed. A rejected push is a stop for the same reason.
 
 ### Step 6 - Report
+
+The replies run in Step 6 rather than Step 5 because Step 5 is skipped when the loop applied
+nothing and left nothing standing, and a reviewer whose every finding was rejected is still owed
+the rejections. They run after the worktree checks so an `applied` reply names a commit `origin`
+holds. A failed reply is not a stop because by then the push and the body have landed, and a
+stop would only turn `reviewed` into `stopped` while losing nothing it could save. The reviewer's
+login is matched with `[bot]` removed and case ignored because whether either route's
+`review-threads` returns a bot author with the suffix REST logins carry was not probed.
 
 The worktree checks stand in for the confirmation `remove` otherwise asks for. A report missing
 an unresolved finding reads as a clean review under any contract, which is why the findings are
@@ -779,6 +793,10 @@ Each artifact the run produced is an unverified assertion by an agent whose reas
 ### Collecting the review threads
 
 There is no resolved-state filter because, unlike in `address-review`, a resolved thread here records an agent's claim and nothing more.
+
+The first comment's id and author are kept because `review-handoff` Step 6 replies in the threads
+the requested reviewer opened, and the collected threads are the only place it can find either.
+`self-review` writes back to no thread and carries them unused.
 
 ### Dispositions
 

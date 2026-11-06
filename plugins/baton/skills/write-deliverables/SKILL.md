@@ -33,7 +33,8 @@ next one. Re-read these steps rather than recalling them.
 
 **The short path is for skill-mandated run documents alone.** `baton:implement-handoff` and
 `baton:review-handoff` name it wherever they write a pull request body or a Run report - the
-no-change and stop reports included - and it covers those documents and nothing else. On it,
+no-change and stop reports included - and `baton:review-handoff` names it for the Review replies
+it posts to the requested reviewer's findings. It covers those documents and nothing else. On it,
 run Step 1, draft the document in the file, then run Step 5 over gate rows G1, G3, G8 and G11
 only, restarting at G1 over those four on any FAIL. Steps 2 to 4 and the other eight rows do not
 run, so G1 and G3 take GOAL and READER from the contract Step 1 loaded. Every other document

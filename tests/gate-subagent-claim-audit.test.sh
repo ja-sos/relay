@@ -39,9 +39,9 @@ check "no interpreter" "$(grep -cE 'python|node' "$script")" 0
 check "no PreToolUse wording" "$(grep -rlE 'PreToolUse|updatedInput' --exclude=CHANGELOG.md plugins/baton)" ""
 check "no stand-down" "$(grep -c 'stands down' plugins/baton/skills/implement-handoff/SKILL.md)" 0
 
-# 6. Version 0.3.3 in both manifests; CHANGELOG opens with ## 0.3.3.
-check "plugin.json" "$(python3 -c 'import json; print(json.load(open("plugins/baton/.claude-plugin/plugin.json"))["version"])')" 0.3.3
-check "marketplace.json" "$(python3 -c 'import json; print([p["version"] for p in json.load(open(".claude-plugin/marketplace.json"))["plugins"] if p["name"]=="baton"][0])')" 0.3.3
-check "changelog" "$(sed -n '/^## /{p;q}' plugins/baton/CHANGELOG.md)" "## 0.3.3"
+# 6. Version 0.3.5 in both manifests; CHANGELOG opens with ## 0.3.5.
+check "plugin.json" "$(python3 -c 'import json; print(json.load(open("plugins/baton/.claude-plugin/plugin.json"))["version"])')" 0.3.5
+check "marketplace.json" "$(python3 -c 'import json; print([p["version"] for p in json.load(open(".claude-plugin/marketplace.json"))["plugins"] if p["name"]=="baton"][0])')" 0.3.5
+check "changelog" "$(sed -n '/^## /{p;q}' plugins/baton/CHANGELOG.md)" "## 0.3.5"
 
 exit $fail

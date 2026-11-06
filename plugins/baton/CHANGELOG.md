@@ -3,6 +3,21 @@
 What changed in each baton version that a backend file, a restated section or a handoff
 written for an earlier version has to account for. Newest first.
 
+## 0.3.5
+
+- `review-handoff` replies to the findings of the reviewer `request-reviewer` named, at Step 6
+  before `reviewed`: one `thread-reply` in each review thread that reviewer opened, and one
+  `pr-comment` for that reviewer's findings from `review-bodies` and `pr-comments`, each giving
+  the finding's disposition and its evidence. Nothing is posted where `request-reviewer` is
+  `none`, where the wait timed out, or to a thread a person opened. A failed reply is recorded
+  in the Run report and does not stop the run (#62).
+- A backend restating `## Review` without `thread-reply` or `pr-comment` now stops
+  `review-handoff` at Step 1 wherever `request-reviewer` is not `none`.
+- `reviewing-run-output.md` records each thread's first-comment id and author, five facts
+  per thread instead of three.
+- `write-deliverables` gains a **Review reply** document type, which `address-review`'s replies
+  are written under as well.
+
 ## 0.3.4
 
 - The `cloud` entry of `backend-github.md`'s `## Launcher` starts a cloud session directly,
