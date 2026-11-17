@@ -3,6 +3,25 @@
 What changed in each baton version that a backend file, a restated section or a handoff
 written for an earlier version has to account for. Newest first.
 
+## 0.3.6
+
+- A new optional `## References` backend section, in `~/.claude/baton.md`, routes an issue to
+  specification documents by repository and by label or component (`*` for every issue). A
+  Document is a file, or a folder and a file-name pattern resolved to the file that sorts last
+  under `sort -V`, subfolders excluded. A backend without the section runs as before (#64).
+- `investigate-issue` gains `Step 4 - Requirements`, which reads the matching documents -
+  anything but `.md` or `.txt` through `pandoc -t gfm` - and stops, naming the row, where a
+  matching row resolves to nothing, cannot be read, or needs `pandoc` the machine lacks.
+  Approach, Record and Launch are now Steps 5, 6 and 7; a note or project file citing them by
+  number needs the new numbers.
+- Step 5 - Approach cites each clause it relies on by document file name, section heading and
+  quoted clause, and puts any contradiction between the issue and a document, or a requirement
+  a document adds, to the user.
+- `write-handoff` Step 3 admits those citations in a handoff body and still bans the document's
+  path.
+- `setup` writes `## References` on request, alone or with `## Repositories` and `## Assets` in
+  one pass, and checks each row resolves and that `pandoc` exists where a row names a `.docx`.
+
 ## 0.3.5
 
 - `review-handoff` replies to the findings of the reviewer `request-reviewer` named, at Step 6

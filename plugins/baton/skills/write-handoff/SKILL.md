@@ -219,6 +219,12 @@ and hostnames stay banned, an asset's among them.
 **Call it an asset where you name it.** Write "the asset `config/prod.yaml`", or name it under a heading that
 says so. Only paths the `assets` line lists may be named this way.
 
+**A reference document is cited, never pointed at.** Where the investigation read documents
+through the backend's `## References` section (`investigate-issue` Step 4), quote each clause
+the approach relies on beside the step or criterion it governs, naming the document by its file
+name and the clause by the heading of the section it sits under. The document's path stays
+banned with every other path on this machine: the run reads the handoff, not the drive.
+
 Up to four sections beyond that contract turn the body into a spec the implementing session
 can check itself against - three always, and a fourth where the change needs one. They
 belong to this collapsed implementation handoff and never to the update Step 4 writes above

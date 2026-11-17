@@ -25,7 +25,8 @@ routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 |---|---|
 | The request is for `## Repositories` alone, whether or not a backend file exists | Add or replace that one section in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Repositories` checks and Step 4's `## Repositories` checks, then stop. |
 | The request is for `## Assets` alone, whether or not a backend file exists | The same, for that section: add or replace it in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Assets` checks, then stop. |
-| The request is for `## Repositories` and `## Assets` together, whether or not a backend file exists | Both rows above, in one pass over `~/.claude/baton.md`: write each section and run each one's checks. |
+| The request is for `## References` alone, whether or not a backend file exists | The same, for that section: add or replace it in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's `## References` checks, then stop. |
+| The request is for any two or all three of `## Repositories`, `## Assets` and `## References`, whether or not a backend file exists | The rows above for each section named, in one pass over `~/.claude/baton.md`: write each section and run each one's checks. |
 | No backend file; route 1 or 2 selected | Stop, and tell the user the shipped defaults already apply, so there is no backend file to write. |
 | No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
@@ -131,6 +132,50 @@ case "$root" in /*) test -d "$root" && echo "ok $root" || echo "FAIL not a direc
 - PASS: `ok` and the path.
 - FAIL: either message. `FAIL not absolute:` with nothing after the colon is the section
   carrying no `root` entry at all. Fix the entry before stopping.
+
+`## References` is the ninth section and the fourth optional one. It stays out of
+`.claude/baton.md`: write it in `~/.claude/baton.md`, and only on request. Its rows take the
+`Repository | Match | Document` form the "Sections" part of `defining-backends.md` gives for
+`## References`.
+
+```
+grep -c '^## References$' ~/.claude/baton.md 2>/dev/null
+```
+
+- PASS: `1` where the user asked for the section; `0`, or no output at all, where they did not.
+  `grep` prints nothing and exits 2 when the file does not exist, which is the usual case.
+- FAIL: more than 1. Keep one heading.
+
+The checks below run only where the check above found the section. Skip them where the user
+did not ask for `## References`.
+
+Every row's Document must be absolute, and must resolve - a file row to a file that exists, a
+pattern row to the path its `find` command prints. Run this for each row's Document:
+
+```
+doc='<document>'
+case "$doc" in
+  /*) case "${doc##*/}" in
+        *[*?]*) f=$(find "${doc%/*}" -maxdepth 1 -type f -name "${doc##*/}" | sort -V | tail -1)
+                test -n "$f" && echo "ok $f" || echo "FAIL selects nothing: $doc";;
+        *) test -f "$doc" && echo "ok $doc" || echo "FAIL no such file: $doc";;
+      esac;;
+  *) echo "FAIL not absolute: $doc";;
+esac
+```
+
+- PASS: `ok` and the path, for every row.
+- FAIL: any message. Fix the row before stopping.
+
+Where any row's Document ends `.docx`, `investigate-issue` reads it through `pandoc`:
+
+```
+command -v pandoc
+```
+
+- PASS: a path.
+- FAIL: no output. Tell the user `pandoc` must be installed before `investigate-issue` can read
+  those documents; a missing `pandoc` stops the investigation that needs it.
 
 ## Step 4 - Verify by running
 
