@@ -121,8 +121,8 @@ issues carrying that customer's label:
 document is read as it stands; any other is read with `pandoc -t gfm "<file>"`, so a `.docx`
 needs `pandoc` on the machine. A backend with no `## References`, or none of whose rows match,
 leaves the step with nothing to do. A matching row whose document does not exist, whose pattern
-selects nothing, or whose read fails - `pandoc` missing among the causes - stops the
-investigation, naming the row.
+selects nothing, or whose read fails stops the investigation, naming the row; a session without
+`pandoc` stops it naming the document that needs it.
 
 A handoff cites what it relies on by document file name, section heading and quoted clause,
 never by path (`write-handoff` Step 3).
