@@ -320,15 +320,43 @@ A line number located in the wrong clone is worse than no line number at all.
 
 ### Step 2 - Verify
 
-Step 5 writes one handoff per repository and every handoff's `base` is its own repository's HEAD, so a HEAD not recorded here is a `base` guessed later.
+Step 6 writes one handoff per repository and every handoff's `base` is its own repository's HEAD, so a HEAD not recorded here is a `base` guessed later.
 
-### Step 4 - Approach
+### Step 4 - Requirements
+
+A requirement the specification states and the issue omits never reached the approach before this step, so it was missing from the handoff and from the pull request built on it (#64).
+
+The routing is a backend section rather than prose in `CLAUDE.md` or `AGENTS.md` because prose gives the skill no way to tell a routing that matched nothing from a project with no documents, and an issue would reach the approach without its specification with nothing reporting it.
+
+It is not a `## Workflow` `agent:` entry because that hands `.docx` reading and file selection to a reader the project writes, so the skill could promise neither, and adding the entry means restating every other `## Workflow` entry.
+
+A non-Markdown document goes through `pandoc -t gfm` and a missing `pandoc` stops the investigation, because skipping the document is the failure this step exists to prevent.
+
+A pattern row picks the file sorting last under `sort -V` and ignores modification times, because copying or saving a file on a shared drive changes its time without changing its version.
+
+`-maxdepth 1` is there so an `archive/` subfolder's older versions never win the sort.
+
+A matching row that resolves to nothing stops rather than being skipped for the same reason a missing `pandoc` does.
+
+A section none of whose rows match says so, because a mistyped Repository or a renamed label otherwise sends the issue to the approach without its specification as silently as prose routing would.
+
+A document is read by heading rather than whole because a base specification matched by `*` is read on every investigation, and its full text spends the context the approach needs for the code.
+
+Matching and resolution are stated once, in `defining-backends.md`, so `setup` Step 3 and this step cannot resolve a row two different ways.
+
+The step sits between Cause and Approach because the approach is what the documents constrain, and the cause is found in the code without them.
+
+### Step 5 - Approach
 
 Where the work removes an arrangement, what the code needs today is a product of that arrangement.
 
 Stating the question plainly is also what exposes a mis-framed one - a decision resting on a misread comment dissolves once it is in words.
 
-### Step 5 - Record
+A conflict between the issue and a document goes to the user because either may be the one that is wrong, and only the user can say which.
+
+An issue the approach bundles selects documents by its own labels too, because the pull request settles it, and a requirement routed to it binds that pull request as the primary issue's do.
+
+### Step 6 - Record
 
 This issue stays first because it drove the investigation and it keeps the handoff.
 
@@ -342,7 +370,7 @@ Posting a held handoff now works because nothing here asks for a `base` that doe
 
 Every handoff but the last gets `closes: no` so the issue stays open while work on it remains.
 
-### Step 6 - Launch
+### Step 7 - Launch
 
 A held handoff's run would build against an upstream version that does not exist, and the report is what the developer relaunching it later works from.
 
@@ -414,6 +442,10 @@ A bare relative path reads as a repo-relative citation like every other one in t
 
 A path that is not on the `assets` line is a path the run will not have.
 
+A reference document is named by file name and section heading, never by path, because the run reads the handoff and not the drive, and a pattern-selected file name carries its version, which is what tells a reader which version the clause came from.
+
+A reference document is called one where it is named because a bare file name reads as a file in the checkout, as a bare asset path does.
+
 Acceptance criteria cover every part of the approach since a part no row names is a part nothing checks.
 
 Commands are headless because the implementation run is unattended, so a command opening a window or waiting on a keypress hangs it with nobody there to answer.
@@ -452,7 +484,7 @@ For a `## Repositories`-only request, the full Step 3 counts and the Step 4 chec
 
 For an `## Assets`-only request, the section defines no operation, so Step 4 has nothing of it to run.
 
-`## Repositories` and `## Assets` are the two optional per-machine sections and neither overrides a shipped operation, so a request for both is still not the duplicate the no-backend-file rows refuse.
+`## Repositories`, `## Assets` and `## References` are the three optional per-machine sections and none overrides a shipped operation, so a request for any of them, alone or together, is still not the duplicate the no-backend-file rows refuse. One row covers every combination of them so a fourth such section does not need a row per pairing.
 
 With no backend file on route 1 or 2, a copy of the shipped defaults is a second file to keep in sync.
 
@@ -469,6 +501,8 @@ A relative `## Repositories` path resolves against whatever directory a launcher
 The `## Assets` root check is skipped where the user did not ask for the section because the file carries no `root`, and running it there prints a failure about an entry nobody meant to write.
 
 A relative `root` resolves against whatever directory the run happens to start in.
+
+The `## References` checks resolve every row, file and pattern alike, and convert every resolved file that is not `.md` or `.txt`, because a row that resolves to nothing or that `pandoc` cannot read stops every investigation it matches, and that is better found while configuring than mid-investigation. Converting the file, rather than testing `command -v pandoc`, also fails a format `pandoc` has no reader for, `.pdf` among them, and decides by the resolved file's extension as `investigate-issue` does. The Document is read through a quoted heredoc because a path on a shared drive can hold an apostrophe, which a single-quoted assignment cannot.
 
 ### Step 4 - Verify by running
 
@@ -661,6 +695,8 @@ A backend an unattended run must use goes in `.claude/baton.md` because a cloud 
 `## Assets` belongs in `~/.claude/baton.md` rather than the committed `.claude/baton.md` because the root differs per machine, for the reason `## Repositories` does.
 
 The `cloud` launcher cannot resolve `## Assets` because it clones the repository and never sees a home directory.
+
+`## References` belongs in `~/.claude/baton.md` because its paths name one machine's shared drive. The `cloud` launcher never needs it: only `investigate-issue` reads it, and the runs it starts read the clauses the handoff quotes.
 
 ### Operations
 

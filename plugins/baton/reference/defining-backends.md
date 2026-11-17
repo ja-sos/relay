@@ -35,6 +35,7 @@ unattended run must use goes in `.claude/baton.md`.
 | `## Workflow` | the steps the skills run around the work: posting and finding handoffs, reviewing, publishing |
 | `## Repositories` | local paths of the repositories one change spans. Optional |
 | `## Assets` | the local root of the one folder outside every repository that a handoff's `assets` line names paths under. Optional |
+| `## References` | the specification documents `investigate-issue` reads for an issue, chosen by its repository and its labels or components. Optional |
 
 Every `## Launcher` entry launches one of two skills, and takes two placeholders: `<skill>`,
 `implement-handoff` or `review-handoff`, and `<args>`, what that skill is started with - the
@@ -88,6 +89,46 @@ The `cloud` launcher cannot resolve the section. A handoff carrying `assets` bel
 project's own that starts the run on the machine whose `~/.claude/baton.md` defines the root.
 
 Runs treat the folder as read-only (`handoff-assets.md`, `## May not do`).
+
+`## References` is optional too. It routes an issue to the specification documents
+`investigate-issue` Step 4 reads before choosing an approach - a base requirements
+specification that governs every issue, say, and a per-customer addendum that governs only the
+issues carrying that customer's label:
+
+| Repository | Match | Document |
+|---|---|---|
+| `owner/product` | `*` | `/srv/specs/base/SRS_*.docx` |
+| `owner/product` | `customer-acme` | `/srv/specs/acme/Addendum.docx` |
+
+- **Repository** is `owner/repo`, compared ignoring case. A row applies to an issue in that
+  repository: the locator's repository where a handoff is in play, `verify-checkout`'s answer
+  otherwise - the issue rule in the placeholder table under `## Operations`.
+- **Match** is `*`, which applies to every issue, or a value compared, ignoring case, with each
+  label `view` prints for the issue, and with each component where the tracker's `view` prints
+  components.
+- **Document** is an absolute path. Where its last segment holds `*` or `?`, it is a folder
+  and a file-name pattern, resolved to the one file this prints:
+
+  ```
+  find "<folder>" -maxdepth 1 -type f -name '<pattern>' | sort -V | tail -1
+  ```
+
+  `-maxdepth 1` keeps files in subfolders, an `archive/` among them, out of the selection, so a
+  new version saved into the folder needs no routing edit. Empty output means the row resolved
+  to nothing.
+
+How a matched document is read, and which rows stop the investigation, is `investigate-issue`
+Step 4's. A Document that resolves to anything but a `.md` or `.txt` file - a `.docx`, say -
+needs `pandoc` on the machine; `setup` Step 3 checks that every row resolves and that `pandoc`
+can read what it resolves to.
+
+A handoff cites what it relies on by document file name, section heading and quoted clause,
+never by path (`write-handoff` Step 3).
+
+The section belongs in `~/.claude/baton.md` rather than the committed `.claude/baton.md`:
+its paths name one machine's drive. The `cloud` launcher never reads it, and need not: only
+`investigate-issue` reads the section, and the runs it launches read the handoff's citations
+instead.
 
 ## Operations
 

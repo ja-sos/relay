@@ -48,13 +48,17 @@ under `hooks/`, says what it adds. `claude plugin disable baton` stops both.
 Entries can be a shell command, tool, skill, subagent or another operation
 (`reference/defining-backends.md`, "Operations").
 
-Three sections are optional, each defined in `reference/defining-backends.md`:
+Four sections are optional, each defined in `reference/defining-backends.md`:
 
 - `## Workflow` holds the steps around the work.
 - `## Repositories`, in `~/.claude/baton.md`, maps the repositories a change spans to local
   paths.
 - `## Assets`, in `~/.claude/baton.md`, names a folder outside every repository that handoffs
   may name files in. Cloud runs cannot read it.
+- `## References`, in `~/.claude/baton.md`, routes an issue by its repository and its labels or
+  components to the specification documents `investigate-issue` reads before choosing an
+  approach. A `.docx` is read through `pandoc`. Cloud runs never read it; the handoff carries
+  the clauses it cites.
 
 ## Document contracts
 

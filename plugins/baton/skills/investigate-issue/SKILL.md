@@ -1,6 +1,6 @@
 ---
 name: investigate-issue
-description: Use when a tracker issue needs a cause and an approach before any code is written - taking an issue off the backlog, "investigate #12", an invocation naming no issue at all, or checking whether a filed finding still holds. Verifies the finding at current HEAD, names the cause, picks an approach against the issue's constraints, records it as a handoff on the issue, and starts the implementation run the user picks.
+description: Use when a tracker issue needs a cause and an approach before any code is written - taking an issue off the backlog, "investigate #12", an invocation naming no issue at all, or checking whether a filed finding still holds. Verifies the finding at current HEAD, names the cause, reads the specification documents the backend routes the issue to, picks an approach against the issue's constraints and those documents, records it as a handoff on the issue, and starts the implementation run the user picks.
 ---
 
 # Investigate issue
@@ -115,7 +115,7 @@ Each stop's `none` test reads only its own operation. Where `close-fixed` is `no
 the close belongs to the tracker's own process.
 
 Either stop ends the investigation, so run `wrap-up` as the last action of the run, with the
-arguments Step 6 gives it.
+arguments Step 7 gives it.
 
 ## Step 3 - Cause
 
@@ -123,7 +123,48 @@ Name the cause at `file:line` at HEAD. The cause accounts for every symptom the 
 lists. One that accounts for only some means a second defect is present: report that
 separately and keep it out of this investigation.
 
-## Step 4 - Approach
+## Step 4 - Requirements
+
+Read the specification documents the backend routes this issue to, so that Step 5 chooses
+against them as well as against the issue text. The routing is the backend's `## References`
+section, taken from the backend files already loaded (`defining-backends.md`, `## Sections`).
+
+**A backend with no `## References` section leaves this step with nothing to do.** Go on to
+Step 5; no other step depends on this one.
+
+Select the rows that match this issue, and resolve each one's Document to a file, by the rules
+`defining-backends.md` gives for `## References` under `## Sections`: Repository against the
+issue's repository, Match against the labels and components `view` printed in Step 1, and a
+pattern Document through its `find ... | sort -V | tail -1` command. Read every document a
+matching row names, and no document of a row that does not match.
+
+**Where the section exists and no row matches, say so.** Tell the user in one line that no
+`## References` row matched, naming the issue's repository, labels and components, then go on
+to Step 5.
+
+Read each document by its extension:
+
+- `.md` or `.txt`: the file itself.
+- Any other extension: convert it with `pandoc -t gfm "<file>" -o "<scratch dir>/<file name>.md"`,
+  outside every checkout, and read the file it writes. Where `command -v pandoc` fails, stop
+  the investigation and name the document; never skip it.
+
+List that file's headings with `grep -n '^#' "<file>"` first, then read the sections that bear
+on the issue and on the change Step 5 chooses, not the whole document. Where it lists no
+headings, read the file whole.
+
+**A matching row whose file does not exist, whose pattern selects nothing, or whose read is
+denied or fails stops the investigation**, naming the row as the section writes it. Report it
+to the user rather than choosing an approach without the specification.
+
+A stop here, the missing-`pandoc` one included, ends the investigation as Step 2's stops do:
+run `wrap-up` as the last action of the run, with the arguments Step 7 gives it.
+
+Keep, for Step 5, each document's file name - the last segment of the resolved path, which for
+a pattern row carries the version it selected - and the sections it reads. Its path stays here:
+the handoff never names it (`write-handoff` Step 3).
+
+## Step 5 - Approach
 
 Decide against the constraints the issue names. Its `Fix`, `Proposal` or `Correction`
 section lists alternatives so that this step chooses between them rather than inventing a
@@ -138,20 +179,34 @@ part that looks genuinely unnecessary gets one sentence saying so, and stays in 
 
 Settle any decision the user must make here, while the code is in front of you.
 
+**Put any conflict between the issue and a document Step 4 read to the user.** Where the issue
+contradicts a document, or a document requires of the change being chosen something the issue
+does not state, quote both to the user, take their answer, and fold it into the approach. Never
+settle either on your own judgement.
+
+**Where the approach settles other issues in the same pull request** (Step 6), match their
+labels and components against the `## References` rows too. Read each further document a match
+selects as Step 4 reads its own, stops included, before settling the approach; the rule above
+and the citation rule below cover those documents as well.
+
+**Where Step 4 read documents, each part of the approach cites the clause it relies on**: the
+document's file name, the heading of the section the clause sits under, and the clause quoted.
+The handoff carries each citation (`write-handoff` Step 3). Never cite the document's path.
+
 **Decide which repositories change, and in what order.** A change spanning repositories that
 depend on one another splits by repository, one handoff each. For every repository, name what
 its change needs from the repositories below it:
 
 | The change needs | The handoff is |
 |---|---|
-| nothing another repository has yet to publish | **unheld** - Step 6 launches it |
-| another repository's next *published* version - a release, not a branch | **held** - Step 6 reports it, and a person launches it once that release exists |
+| nothing another repository has yet to publish | **unheld** - Step 7 launches it |
+| another repository's next *published* version - a release, not a branch | **held** - Step 7 reports it, and a person launches it once that release exists |
 
 The dependency is between repositories, so a stack does not express it (`write-handoff` Step 2,
 "Both lines are single-repository").
 
 Order the repositories by that dependency: contracts before what is built on them. That order
-is what Step 5 puts `closes: yes` at the end of and what Step 6 reports.
+is what Step 6 puts `closes: yes` at the end of and what Step 7 reports.
 
 Check whether work already exists before proposing any:
 
@@ -159,7 +214,7 @@ Check whether work already exists before proposing any:
 git branch -a --list '*<n>*'
 ```
 
-## Step 5 - Record
+## Step 6 - Record
 
 Write the handoff under `baton:write-handoff`, which posts it to this issue and takes the
 body through `baton:write-deliverables`.
@@ -184,38 +239,38 @@ have, and one read here that the plan has already extracted everything from is n
 List the paths relative to that root, and list only what the implementation needs. Omit the line where the work needs nothing outside the
 repository, which is the usual case.
 
-**One handoff per affected repository.** Where Step 4 named more than one, post one handoff
+**One handoff per affected repository.** Where Step 5 named more than one, post one handoff
 for each, held and unheld alike, in this same investigation. Each handoff's `repo` names its
 own repository, and its `base` is that repository's HEAD from Step 2, so a held handoff is
 posted now rather than written later.
 The accepted cost is that a held plan can go stale before it is launched, and what it waits on
 is recorded so its reader can tell.
 
-`closes: yes` goes on the one handoff launched last - the top of Step 4's dependency order,
+`closes: yes` goes on the one handoff launched last - the top of Step 5's dependency order,
 whose pull request finishes the issue - and every other handoff gets `closes: no`.
 
-Where Step 4 split the work into a stack of pull requests, each layer is its own handoff. Post
+Where Step 5 split the work into a stack of pull requests, each layer is its own handoff. Post
 the layers top first, as `write-handoff` `## Done` requires, with `next` and `pr-base` as its
 Step 2 defines them. Where any layer of the stack carries `assets`, `write-handoff` Step 2
 constrains the launcher; say so when reporting the entries below.
 
 A `next` line also names the `## Launcher` entry that starts the layer above, so **for a
-stack, ask which launcher here** rather than at Step 6 - the answer is written into every
-layer but the top before any of them is posted. Report what each entry would do, as Step 6
+stack, ask which launcher here** rather than at Step 7 - the answer is written into every
+layer but the top before any of them is posted. Report what each entry would do, as Step 7
 does. An answer of none of them is not a stack without launchers: it means no `next` lines
 and no launch, so every layer has to be started by hand, in order. Say that before taking the
-answer. Step 6 then starts the bottom layer through the entry already chosen, and asks
+answer. Step 7 then starts the bottom layer through the entry already chosen, and asks
 nothing further.
 
-## Step 6 - Launch
+## Step 7 - Launch
 
 Implementation belongs in its own session against its own checkout. Ask which of the
 backend's `## Launcher` entries to use, and start only what the answer names. Report what
-each would do and create nothing when the answer is none of them. Where Step 5 posted a
+each would do and create nothing when the answer is none of them. Where Step 6 posted a
 stack, that question was already asked and answered there; use that answer and ask again for
 nothing.
 
-The entry takes `<skill>` and `<args>`: launch `implement-handoff`, with the locator Step 5
+The entry takes `<skill>` and `<args>`: launch `implement-handoff`, with the locator Step 6
 returned as `<args>`. The run launches its reviewer through the same entry
 (`defining-backends.md` `## Sections`), so the answer also chooses where the reviewer runs.
 
@@ -225,7 +280,7 @@ entry of the project's own that starts the run on a machine defining the root, a
 answer is `cloud` all the same, say what will happen before taking it. A handoff with no
 `assets` line is unaffected and launches under either.
 
-**Launch the unheld handoffs; report the held ones.** Start every handoff Step 4 called unheld,
+**Launch the unheld handoffs; report the held ones.** Start every handoff Step 5 called unheld,
 each through the chosen entry and each with its own locator. Then report each held handoff in
 the order it is to be launched: its locator, the repository it belongs to, and what it waits
 on, named as the upstream repository and the release. Launch none of them.
