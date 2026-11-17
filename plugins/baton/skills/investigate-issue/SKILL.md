@@ -134,8 +134,8 @@ this step with nothing to do.** Go on to Step 5; no other step depends on this o
 
 A row matches where both hold:
 
-- Its **Repository** equals the issue's repository: the locator's repository where a handoff
-  is in play, `verify-checkout`'s answer otherwise.
+- Its **Repository** equals, ignoring case, the issue's repository: the locator's repository
+  where a handoff is in play, `verify-checkout`'s answer otherwise.
 - Its **Match** is `*`, or equals, ignoring case, one of the labels `view` printed for the
   issue in Step 1, or one of its components where the tracker's `view` prints components.
 
@@ -165,6 +165,9 @@ Then read it by its extension:
 denied or fails stops the investigation**, naming the row as the section writes it. Report it
 to the user rather than choosing an approach without the specification.
 
+A stop here, the missing-`pandoc` one included, ends the investigation as Step 2's stops do:
+run `wrap-up` as the last action of the run, with the arguments Step 7 gives it.
+
 Keep, for Step 5, each document's file name - the last segment of the resolved path, which for
 a pattern row carries the version it selected - and the sections it reads. Its path stays here:
 the handoff never names it (`write-handoff` Step 3).
@@ -185,9 +188,9 @@ part that looks genuinely unnecessary gets one sentence saying so, and stays in 
 Settle any decision the user must make here, while the code is in front of you.
 
 **Put any conflict between the issue and a document Step 4 read to the user.** Where the issue
-contradicts a document, or a document requires something the issue does not state, quote both
-to the user, take their answer, and fold it into the approach. Never settle either on your own
-judgement.
+contradicts a document, or a document requires of the change being chosen something the issue
+does not state, quote both to the user, take their answer, and fold it into the approach. Never
+settle either on your own judgement.
 
 **Where Step 4 read documents, each part of the approach cites the clause it relies on**: the
 document's file name, the heading of the section the clause sits under, and the clause quoted.

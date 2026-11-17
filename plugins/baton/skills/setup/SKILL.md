@@ -167,7 +167,8 @@ esac
 - PASS: `ok` and the path, for every row.
 - FAIL: any message. Fix the row before stopping.
 
-Where any row's Document ends `.docx`, `investigate-issue` reads it through `pandoc`:
+Where any row's Document ends in anything but `.md` or `.txt` - a `.docx`, say -
+`investigate-issue` reads it through `pandoc`:
 
 ```
 command -v pandoc

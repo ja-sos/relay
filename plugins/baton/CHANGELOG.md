@@ -20,7 +20,8 @@ written for an earlier version has to account for. Newest first.
 - `write-handoff` Step 3 admits those citations in a handoff body and still bans the document's
   path.
 - `setup` writes `## References` on request, alone or with `## Repositories` and `## Assets` in
-  one pass, and checks each row resolves and that `pandoc` exists where a row names a `.docx`.
+  one pass, and checks each row resolves and that `pandoc` exists where a row names anything but
+  a `.md` or `.txt`.
 
 ## 0.3.5
 

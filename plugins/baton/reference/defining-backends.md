@@ -100,9 +100,9 @@ issues carrying that customer's label:
 | `owner/product` | `*` | `/srv/specs/base/SRS_*.docx` |
 | `owner/product` | `customer-acme` | `/srv/specs/acme/Addendum.docx` |
 
-- **Repository** is `owner/repo`. A row applies to an issue in that repository: the locator's
-  repository where a handoff is in play, `verify-checkout`'s answer otherwise - the issue rule
-  in the placeholder table under `## Operations`.
+- **Repository** is `owner/repo`, compared ignoring case. A row applies to an issue in that
+  repository: the locator's repository where a handoff is in play, `verify-checkout`'s answer
+  otherwise - the issue rule in the placeholder table under `## Operations`.
 - **Match** is `*`, which applies to every issue, or a value compared, ignoring case, with each
   label `view` prints for the issue, and with each component where the tracker's `view` prints
   components.
