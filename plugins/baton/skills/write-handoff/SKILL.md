@@ -225,6 +225,9 @@ the approach relies on beside the step or criterion it governs, naming the docum
 name and the clause by the heading of the section it sits under. The document's path stays
 banned with every other path on this machine: the run reads the handoff, not the drive.
 
+**Call it a reference document where you name it**, as an asset is called one: write "the
+reference document `SRS_v3.docx`, section 4.2 Interfaces".
+
 Up to four sections beyond that contract turn the body into a spec the implementing session
 can check itself against - three always, and a fourth where the change needs one. They
 belong to this collapsed implementation handoff and never to the update Step 4 writes above

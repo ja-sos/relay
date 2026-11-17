@@ -117,12 +117,10 @@ issues carrying that customer's label:
   new version saved into the folder needs no routing edit. Empty output means the row resolved
   to nothing.
 
-`investigate-issue` reads every document whose row matches and no other. A `.md` or `.txt`
-document is read as it stands; any other is read with `pandoc -t gfm "<file>"`, so a `.docx`
-needs `pandoc` on the machine. A backend with no `## References`, or none of whose rows match,
-leaves the step with nothing to do. A matching row whose document does not exist, whose pattern
-selects nothing, or whose read fails stops the investigation, naming the row; a session without
-`pandoc` stops it naming the document that needs it.
+How a matched document is read, and which rows stop the investigation, is `investigate-issue`
+Step 4's. A Document that resolves to anything but a `.md` or `.txt` file - a `.docx`, say -
+needs `pandoc` on the machine; `setup` Step 3 checks that every row resolves and that `pandoc`
+can read what it resolves to.
 
 A handoff cites what it relies on by document file name, section heading and quoted clause,
 never by path (`write-handoff` Step 3).

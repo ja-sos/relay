@@ -129,37 +129,29 @@ Read the specification documents the backend routes this issue to, so that Step 
 against them as well as against the issue text. The routing is the backend's `## References`
 section, taken from the backend files already loaded (`defining-backends.md`, `## Sections`).
 
-**A backend with no `## References` section, or none of whose rows match this issue, leaves
-this step with nothing to do.** Go on to Step 5; no other step depends on this one.
+**A backend with no `## References` section leaves this step with nothing to do.** Go on to
+Step 5; no other step depends on this one.
 
-A row matches where both hold:
+Select the rows that match this issue, and resolve each one's Document to a file, by the rules
+`defining-backends.md` gives for `## References` under `## Sections`: Repository against the
+issue's repository, Match against the labels and components `view` printed in Step 1, and a
+pattern Document through its `find ... | sort -V | tail -1` command. Read every document a
+matching row names, and no document of a row that does not match.
 
-- Its **Repository** equals, ignoring case, the issue's repository: the locator's repository
-  where a handoff is in play, `verify-checkout`'s answer otherwise.
-- Its **Match** is `*`, or equals, ignoring case, one of the labels `view` printed for the
-  issue in Step 1, or one of its components where the tracker's `view` prints components.
+**Where the section exists and no row matches, say so.** Tell the user in one line that no
+`## References` row matched, naming the issue's repository, labels and components, then go on
+to Step 5.
 
-Read every document a matching row names, and no document of a row that does not match.
+Read each document by its extension:
 
-Resolve each matching row's **Document**:
+- `.md` or `.txt`: the file itself.
+- Any other extension: convert it with `pandoc -t gfm "<file>" -o "<scratch dir>/<file name>.md"`,
+  outside every checkout, and read the file it writes. Where `command -v pandoc` fails, stop
+  the investigation and name the document; never skip it.
 
-- Where its last path segment holds no `*` or `?`, it names one file. `test -f "<document>"`
-  must pass.
-- Where it does, the segments before it are a folder and the last one a file-name pattern.
-  The document is the one file this prints:
-
-  ```
-  find "<folder>" -maxdepth 1 -type f -name '<pattern>' | sort -V | tail -1
-  ```
-
-  `-maxdepth 1` keeps every file in a subfolder - an `archive/` among them - out of the
-  selection. Modification times play no part. Empty output means the row resolved to nothing.
-
-Then read it by its extension:
-
-- `.md` or `.txt`: read the file as it stands.
-- Any other extension: `pandoc -t gfm "<file>"`. Where `command -v pandoc` fails, stop the
-  investigation and name the document; never skip it.
+List that file's headings with `grep -n '^#' "<file>"` first, then read the sections that bear
+on the issue and on the change Step 5 chooses, not the whole document. Where it lists no
+headings, read the file whole.
 
 **A matching row whose file does not exist, whose pattern selects nothing, or whose read is
 denied or fails stops the investigation**, naming the row as the section writes it. Report it
@@ -191,6 +183,11 @@ Settle any decision the user must make here, while the code is in front of you.
 contradicts a document, or a document requires of the change being chosen something the issue
 does not state, quote both to the user, take their answer, and fold it into the approach. Never
 settle either on your own judgement.
+
+**Where the approach settles other issues in the same pull request** (Step 6), match their
+labels and components against the `## References` rows too. Read each further document a match
+selects as Step 4 reads its own, stops included, before settling the approach; the rule above
+and the citation rule below cover those documents as well.
 
 **Where Step 4 read documents, each part of the approach cites the clause it relies on**: the
 document's file name, the heading of the section the clause sits under, and the clause quoted.

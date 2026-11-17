@@ -9,19 +9,21 @@ written for an earlier version has to account for. Newest first.
   specification documents by repository and by label or component (`*` for every issue). A
   Document is a file, or a folder and a file-name pattern resolved to the file that sorts last
   under `sort -V`, subfolders excluded. A backend without the section runs as before (#64).
-- `investigate-issue` gains `Step 4 - Requirements`, which reads the matching documents -
-  anything but `.md` or `.txt` through `pandoc -t gfm` - and stops, naming the row, where a
-  matching row resolves to nothing, cannot be read, or needs `pandoc` the machine lacks.
-  Approach, Record and Launch are now Steps 5, 6 and 7; a note or project file citing them by
-  number needs the new numbers.
+- `investigate-issue` gains `Step 4 - Requirements`, which reads the matching documents by
+  heading - anything but `.md` or `.txt` converted through `pandoc -t gfm` first - and stops,
+  naming the row, where a matching row resolves to nothing, cannot be read, or needs `pandoc`
+  the machine lacks. Where the section exists and no row matches, it says so. Approach, Record
+  and Launch are now Steps 5, 6 and 7; a note or project file citing them by number needs the
+  new numbers.
 - Step 5 - Approach cites each clause it relies on by document file name, section heading and
   quoted clause, and puts any contradiction between the issue and a document, or a requirement
-  a document adds, to the user.
-- `write-handoff` Step 3 admits those citations in a handoff body and still bans the document's
-  path.
+  a document places on the change, to the user. The labels of every issue the approach bundles
+  select documents too.
+- `write-handoff` Step 3 admits those citations in a handoff body, calls each document "the
+  reference document" where it names it, and still bans the document's path.
 - `setup` writes `## References` on request, alone or with `## Repositories` and `## Assets` in
-  one pass, and checks each row resolves and that `pandoc` exists where a row names anything but
-  a `.md` or `.txt`.
+  one pass. It checks that each row resolves, and that `pandoc` reads each resolved file that is
+  not `.md` or `.txt`; a `.pdf`, which `pandoc` has no reader for, fails that check.
 
 ## 0.3.5
 

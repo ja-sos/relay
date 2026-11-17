@@ -338,6 +338,12 @@ A pattern row picks the file sorting last under `sort -V` and ignores modificati
 
 A matching row that resolves to nothing stops rather than being skipped for the same reason a missing `pandoc` does.
 
+A section none of whose rows match says so, because a mistyped Repository or a renamed label otherwise sends the issue to the approach without its specification as silently as prose routing would.
+
+A document is read by heading rather than whole because a base specification matched by `*` is read on every investigation, and its full text spends the context the approach needs for the code.
+
+Matching and resolution are stated once, in `defining-backends.md`, so `setup` Step 3 and this step cannot resolve a row two different ways.
+
 The step sits between Cause and Approach because the approach is what the documents constrain, and the cause is found in the code without them.
 
 ### Step 5 - Approach
@@ -347,6 +353,8 @@ Where the work removes an arrangement, what the code needs today is a product of
 Stating the question plainly is also what exposes a mis-framed one - a decision resting on a misread comment dissolves once it is in words.
 
 A conflict between the issue and a document goes to the user because either may be the one that is wrong, and only the user can say which.
+
+An issue the approach bundles selects documents by its own labels too, because the pull request settles it, and a requirement routed to it binds that pull request as the primary issue's do.
 
 ### Step 6 - Record
 
@@ -436,6 +444,8 @@ A path that is not on the `assets` line is a path the run will not have.
 
 A reference document is named by file name and section heading, never by path, because the run reads the handoff and not the drive, and a pattern-selected file name carries its version, which is what tells a reader which version the clause came from.
 
+A reference document is called one where it is named because a bare file name reads as a file in the checkout, as a bare asset path does.
+
 Acceptance criteria cover every part of the approach since a part no row names is a part nothing checks.
 
 Commands are headless because the implementation run is unattended, so a command opening a window or waiting on a keypress hangs it with nobody there to answer.
@@ -492,7 +502,7 @@ The `## Assets` root check is skipped where the user did not ask for the section
 
 A relative `root` resolves against whatever directory the run happens to start in.
 
-The `## References` checks resolve every row, file and pattern alike, because a row that resolves to nothing stops the investigation that matches it, and that is better found while configuring than mid-investigation. `pandoc` is checked for any row whose Document, as written, does not end `.md` or `.txt`, for the same reason. `investigate-issue` decides by the resolved file's extension instead, so the check covers every row it reads through `pandoc`, and also a pattern row that resolves to a `.md` or `.txt` file.
+The `## References` checks resolve every row, file and pattern alike, and convert every resolved file that is not `.md` or `.txt`, because a row that resolves to nothing or that `pandoc` cannot read stops every investigation it matches, and that is better found while configuring than mid-investigation. Converting the file, rather than testing `command -v pandoc`, also fails a format `pandoc` has no reader for, `.pdf` among them, and decides by the resolved file's extension as `investigate-issue` does. The Document is read through a quoted heredoc because a path on a shared drive can hold an apostrophe, which a single-quoted assignment cannot.
 
 ### Step 4 - Verify by running
 

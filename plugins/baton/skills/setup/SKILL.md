@@ -149,34 +149,37 @@ grep -c '^## References$' ~/.claude/baton.md 2>/dev/null
 The checks below run only where the check above found the section. Skip them where the user
 did not ask for `## References`.
 
-Every row's Document must be absolute, and must resolve - a file row to a file that exists, a
-pattern row to the path its `find` command prints. Run this for each row's Document:
+Every row's Document must be absolute and must resolve, by the rules `defining-backends.md`
+gives for `## References`, and `pandoc` must read every resolved file that is not `.md` or
+`.txt`. Run this for each row, with the Document between the `DOC` lines exactly as the row
+writes it - the quoted heredoc keeps an apostrophe in the path from breaking the shell:
 
 ```
-doc='<document>'
+doc=$(cat <<'DOC'
+<document>
+DOC
+)
+f=
 case "$doc" in
   /*) case "${doc##*/}" in
-        *[*?]*) f=$(find "${doc%/*}" -maxdepth 1 -type f -name "${doc##*/}" | sort -V | tail -1)
-                test -n "$f" && echo "ok $f" || echo "FAIL selects nothing: $doc";;
-        *) test -f "$doc" && echo "ok $doc" || echo "FAIL no such file: $doc";;
+        *[*?]*) f=$(find "${doc%/*}/" -maxdepth 1 -type f -name "${doc##*/}" | sort -V | tail -1)
+                test -n "$f" || echo "FAIL selects nothing: $doc";;
+        *) test -f "$doc" && f=$doc || echo "FAIL no such file: $doc";;
       esac;;
   *) echo "FAIL not absolute: $doc";;
+esac
+case "$f" in
+  '') ;;
+  *.md|*.txt) echo "ok $f";;
+  *) pandoc -t gfm "$f" >/dev/null && echo "ok $f" || echo "FAIL pandoc cannot read: $f";;
 esac
 ```
 
 - PASS: `ok` and the path, for every row.
-- FAIL: any message. Fix the row before stopping.
-
-Where any row's Document ends in anything but `.md` or `.txt` - a `.docx`, say -
-`investigate-issue` reads it through `pandoc`:
-
-```
-command -v pandoc
-```
-
-- PASS: a path.
-- FAIL: no output. Tell the user `pandoc` must be installed before `investigate-issue` can read
-  those documents; a missing `pandoc` stops the investigation that needs it.
+- FAIL: any `FAIL` line. Fix the row before stopping. On `FAIL pandoc cannot read:`, run
+  `command -v pandoc`: where it prints nothing, `pandoc` must be installed; where it prints a
+  path, `pandoc` cannot read that file - it has no reader for `.pdf` - and the row must name a
+  document it can read. Either way the row stops every investigation it matches.
 
 ## Step 4 - Verify by running
 
