@@ -492,7 +492,7 @@ The `## Assets` root check is skipped where the user did not ask for the section
 
 A relative `root` resolves against whatever directory the run happens to start in.
 
-The `## References` checks resolve every row, file and pattern alike, because a row that resolves to nothing stops the investigation that matches it, and that is better found while configuring than mid-investigation. `pandoc` is checked for any row not ending `.md` or `.txt` for the same reason, since `investigate-issue` reads every such document through it.
+The `## References` checks resolve every row, file and pattern alike, because a row that resolves to nothing stops the investigation that matches it, and that is better found while configuring than mid-investigation. `pandoc` is checked for any row whose Document, as written, does not end `.md` or `.txt`, for the same reason. `investigate-issue` decides by the resolved file's extension instead, so the check covers every row it reads through `pandoc`, and also a pattern row that resolves to a `.md` or `.txt` file.
 
 ### Step 4 - Verify by running
 
