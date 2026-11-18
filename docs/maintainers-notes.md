@@ -484,7 +484,7 @@ For a `## Repositories`-only request, the full Step 3 counts and the Step 4 chec
 
 For an `## Assets`-only request, the section defines no operation, so Step 4 has nothing of it to run.
 
-`## Repositories`, `## Assets` and `## References` are the three optional per-machine sections and none overrides a shipped operation, so a request for any of them, alone or together, is still not the duplicate the no-backend-file rows refuse. One row covers every combination of them so a fourth such section does not need a row per pairing.
+`## Repositories`, `## Assets` and `## References` are the three optional sections that define no operation and none overrides a shipped operation, so a request for any of them, alone or together, is still not the duplicate the no-backend-file rows refuse. One row covers every combination of them so a fourth such section does not need a row per pairing.
 
 With no backend file on route 1 or 2, a copy of the shipped defaults is a second file to keep in sync.
 
@@ -503,6 +503,12 @@ The `## Assets` root check is skipped where the user did not ask for the section
 A relative `root` resolves against whatever directory the run happens to start in.
 
 The `## References` checks resolve every row, file and pattern alike, and convert every resolved file that is not `.md` or `.txt`, because a row that resolves to nothing or that `pandoc` cannot read stops every investigation it matches, and that is better found while configuring than mid-investigation. Converting the file, rather than testing `command -v pandoc`, also fails a format `pandoc` has no reader for, `.pdf` among them, and decides by the resolved file's extension as `investigate-issue` does. The Document is read through a quoted heredoc because a path on a shared drive can hold an apostrophe, which a single-quoted assignment cannot.
+
+`setup` asks which file to write for an all-relative `## References`, rather than choosing `.claude/baton.md` from the Documents alone, because a committed section hides every contributor's personal `## References` in that project: one user routing a specification for themselves would otherwise change routing for everyone (#67). With any absolute Document there is nothing to ask, since that section is valid only in `~/.claude/baton.md`.
+
+The snippet fails a relative Document with a `..` segment because the path is then no longer bounded by the repository's checkout, and a committed row could reach any file on a contributor's machine. The test reads the path's text, as `write-handoff` Step 2's asset-path rule does, so it is cheap and needs no filesystem state. It fails an absolute Document in `.claude/baton.md` because that row names one machine's drive and resolves to nothing in every other clone (#67).
+
+The snippet joins a relative Document to its root before the shared resolution, because `${doc%/*}` returns the whole Document when it holds no `/`: `SRS_*.md` would otherwise search a folder named `SRS_*.md`.
 
 ### Step 4 - Verify by running
 
@@ -708,7 +714,7 @@ A backend an unattended run must use goes in `.claude/baton.md` because a cloud 
 
 The `cloud` launcher cannot resolve `## Assets` because it clones the repository and never sees a home directory.
 
-`## References` belongs in `~/.claude/baton.md` because its paths name one machine's shared drive. The `cloud` launcher never needs it: only `investigate-issue` reads it, and the runs it starts read the clauses the handoff quotes.
+A `## References` section with any absolute Document stays in `~/.claude/baton.md` because an absolute path names one machine's shared drive. One whose Documents are all relative may sit in `.claude/baton.md` because a relative path resolves under its repository's checkout, the same in every clone (#67). It stays one section rather than a committed-only second one, because two headings differing only in path form would need a rule merging their rows. The `cloud` launcher never needs it: only `investigate-issue` reads it, and the runs it starts read the clauses the handoff quotes.
 
 ### Operations
 

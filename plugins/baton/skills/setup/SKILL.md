@@ -25,8 +25,15 @@ routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 |---|---|
 | The request is for `## Repositories` alone, whether or not a backend file exists | Add or replace that one section in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Repositories` checks and Step 4's `## Repositories` checks, then stop. |
 | The request is for `## Assets` alone, whether or not a backend file exists | The same, for that section: add or replace it in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Assets` checks, then stop. |
-| The request is for `## References` alone, whether or not a backend file exists | The same, for that section: add or replace it in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's `## References` checks, then stop. |
-| The request is for any two or all three of `## Repositories`, `## Assets` and `## References`, whether or not a backend file exists | The rows above for each section named, in one pass over `~/.claude/baton.md`: write each section and run each one's checks. |
+| The request is for `## References` alone, whether or not a backend file exists | The same, for that section, in the file the paragraph below this table picks: add or replace it there, creating the file if absent and leaving every other section as it is. Run only Step 3's `## References` checks, then stop. |
+| The request is for any two or all three of `## Repositories`, `## Assets` and `## References`, whether or not a backend file exists | The rows above for each section named: write each section and run each one's checks. `## Repositories` and `## Assets` go in `~/.claude/baton.md`; `## References` goes in the file the paragraph below this table picks, which may be `.claude/baton.md`. |
+
+Which file takes `## References` turns on its Documents. Where any Document is absolute, write
+`~/.claude/baton.md` without asking. Where every Document is relative, ask the user which of
+`.claude/baton.md` and `~/.claude/baton.md` to write before writing either, and say in the
+question that a `## References` in `.claude/baton.md` hides every contributor's personal
+`## References` in this project (`defining-backends.md`, `## Where overrides live`). Never pick
+`.claude/baton.md` unasked.
 | No backend file; route 1 or 2 selected | Stop, and tell the user the shipped defaults already apply, so there is no backend file to write. |
 | No backend file; route 3 | Step 2. |
 | A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
@@ -133,13 +140,14 @@ case "$root" in /*) test -d "$root" && echo "ok $root" || echo "FAIL not a direc
 - FAIL: either message. `FAIL not absolute:` with nothing after the colon is the section
   carrying no `root` entry at all. Fix the entry before stopping.
 
-`## References` is the ninth section and the fourth optional one. It stays out of
-`.claude/baton.md`: write it in `~/.claude/baton.md`, and only on request. Its rows take the
-`Repository | Match | Document` form the "Sections" part of `defining-backends.md` gives for
-`## References`.
+`## References` is the ninth section and the fourth optional one. Write it only on request,
+in the file Step 1 picks; where it may sit is `defining-backends.md`'s to say, under
+`## References`. Its rows take the `Repository | Match | Document` form the "Sections" part of
+`defining-backends.md` gives for `## References`. Run the checks below against the file
+written, `.claude/baton.md` or `~/.claude/baton.md`, in place of `<file>`.
 
 ```
-grep -c '^## References$' ~/.claude/baton.md 2>/dev/null
+grep -c '^## References$' <file> 2>/dev/null
 ```
 
 - PASS: `1` where the user asked for the section; `0`, or no output at all, where they did not.
@@ -149,24 +157,46 @@ grep -c '^## References$' ~/.claude/baton.md 2>/dev/null
 The checks below run only where the check above found the section. Skip them where the user
 did not ask for `## References`.
 
-Every row's Document must be absolute and must resolve, by the rules `defining-backends.md`
-gives for `## References`, and `pandoc` must read every resolved file that is not `.md` or
-`.txt`. Run this for each row, with the Document between the `DOC` lines exactly as the row
-writes it - the quoted heredoc keeps an apostrophe in the path from breaking the shell:
+Every row's Document must resolve, by the rules `defining-backends.md` gives for
+`## References`, and `pandoc` must read every resolved file that is not `.md` or `.txt`. Run
+this from the checkout for each row, with the Document between the `DOC` lines exactly as the
+row writes it - the quoted heredoc keeps an apostrophe in the path from breaking the shell -
+`repo` set to the row's Repository, `here` to `verify-checkout`'s answer, and `target` to the
+file written:
 
 ```
 doc=$(cat <<'DOC'
 <document>
 DOC
 )
+repo='<repository>'
+here='<verify-checkout answer>'
+target='<.claude/baton.md or ~/.claude/baton.md>'
 f=
 case "$doc" in
-  /*) case "${doc##*/}" in
-        *[*?]*) f=$(find "${doc%/*}/" -maxdepth 1 -type f -name "${doc##*/}" | sort -V | tail -1)
-                test -n "$f" || echo "FAIL selects nothing: $doc";;
-        *) test -f "$doc" && f=$doc || echo "FAIL no such file: $doc";;
+  /*) case "$target" in
+        .claude/baton.md) echo "FAIL absolute Document in .claude/baton.md: $doc"; doc=;;
       esac;;
-  *) echo "FAIL not absolute: $doc";;
+  *) case "/$doc/" in
+       */../*) echo "FAIL .. segment: $doc"; doc=;;
+       *) lc() { printf %s "$1" | tr '[:upper:]' '[:lower:]'; }
+          if [ "$(lc "$repo")" = "$(lc "$here")" ]; then
+            root=$(git rev-parse --show-toplevel)
+          else
+            root=$(awk -F'`' -v r="$(lc "$repo")" 'tolower($2) == r && $4 ~ /^\// {print $4; exit}' ~/.claude/baton.md 2>/dev/null)
+          fi
+          if [ -n "$root" ]; then doc=$root/$doc
+          else echo "FAIL no ## Repositories row for $repo: $doc"; doc=
+          fi;;
+     esac;;
+esac
+case "$doc" in
+  '') ;;
+  *) case "${doc##*/}" in
+       *[*?]*) f=$(find "${doc%/*}/" -maxdepth 1 -type f -name "${doc##*/}" | sort -V | tail -1)
+               test -n "$f" || echo "FAIL selects nothing: $doc";;
+       *) test -f "$doc" && f=$doc || echo "FAIL no such file: $doc";;
+     esac;;
 esac
 case "$f" in
   '') ;;

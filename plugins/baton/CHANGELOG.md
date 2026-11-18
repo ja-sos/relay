@@ -3,6 +3,19 @@
 What changed in each baton version that a backend file, a restated section or a handoff
 written for an earlier version has to account for. Newest first.
 
+## 0.3.8
+
+- A `## References` Document may now be a path relative to the root of its Repository's
+  checkout, as well as an absolute path. A relative Document with a `..` segment, or one whose
+  Repository is another repository with no `## Repositories` row, resolves to nothing (#67).
+- A `## References` section whose Documents are all relative may be committed in
+  `.claude/baton.md`; a section with any absolute Document still belongs in
+  `~/.claude/baton.md`. `setup` asks which file to write for an all-relative section, and its
+  Step 3 check fails an absolute Document written to `.claude/baton.md` (#67).
+- A `## References` committed in `.claude/baton.md` hides every contributor's personal
+  `## References` in that project, as any project section hides the personal one under the
+  same heading (#67).
+
 ## 0.3.7
 
 - The project's `.claude/baton.md` now wins over `~/.claude/baton.md`. Every skill reads the
