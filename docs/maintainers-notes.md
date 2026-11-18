@@ -698,7 +698,7 @@ A project row replaces a personal row with the same `Fact`, rather than the othe
 
 A backend an unattended run must use goes in `.claude/baton.md` because a cloud or CI session clones the repo and never sees your home directory.
 
-`~/.claude/baton.md` is read before `.claude/baton.md`, so the project section of a heading replaces the personal one, because a committed section has to win for every contributor's run, local runs included: otherwise a contributor's personal section silently overrides what the project committed, and only in that contributor's local runs. Claude Code ranks project settings above user settings the same way ([Settings precedence](https://code.claude.com/docs/en/settings#settings-precedence)). The rule is carried by the read order rather than stated beside it so that the skills' "later files overriding earlier" sentences stay true of their own reads (#66).
+`~/.claude/baton.md` is read before `.claude/baton.md`, so the project section of a heading replaces the personal one, because a committed section has to win for every contributor's run, local runs included: otherwise a contributor's personal section silently overrides what the project committed, and only in that contributor's local runs. Claude Code ranks project settings above user settings the same way ([Settings precedence](https://code.claude.com/docs/en/settings#settings-precedence)). The precedence is made by reordering the reads, and "Where overrides live" states it as what that order yields, rather than as a rule beside an unchanged order, so that the skills' "later files overriding earlier" sentences stay true of their own reads (#66).
 
 ### Sections
 
