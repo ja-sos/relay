@@ -25,8 +25,11 @@ routes 1 and 2 are the two ways the shipped defaults run; route 3 is neither.
 |---|---|
 | The request is for `## Repositories` alone, whether or not a backend file exists | Add or replace that one section in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Repositories` checks and Step 4's `## Repositories` checks, then stop. |
 | The request is for `## Assets` alone, whether or not a backend file exists | The same, for that section: add or replace it in `~/.claude/baton.md`, creating the file if absent and leaving every other section as it is. Run only Step 3's two `## Assets` checks, then stop. |
-| The request is for `## References` alone, whether or not a backend file exists | The same, for that section, in the file the paragraph below this table picks: add or replace it there, creating the file if absent and leaving every other section as it is. Run only Step 3's `## References` checks, then stop. |
-| The request is for any two or all three of `## Repositories`, `## Assets` and `## References`, whether or not a backend file exists | The rows above for each section named: write each section and run each one's checks. `## Repositories` and `## Assets` go in `~/.claude/baton.md`; `## References` goes in the file the paragraph below this table picks, which may be `.claude/baton.md`. |
+| The request is for `## References` alone, whether or not a backend file exists | The same, for that section, in the file the paragraph after this table picks: add or replace it there, creating the file if absent and leaving every other section as it is. Run only Step 3's `## References` checks, then stop. |
+| The request is for any two or all three of `## Repositories`, `## Assets` and `## References`, whether or not a backend file exists | The rows above for each section named: write each section and run each one's checks. `## Repositories` and `## Assets` go in `~/.claude/baton.md`; `## References` goes in the file the paragraph after this table picks, which may be `.claude/baton.md`. |
+| No backend file; route 1 or 2 selected | Stop, and tell the user the shipped defaults already apply, so there is no backend file to write. |
+| No backend file; route 3 | Step 2. |
+| A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
 
 Which file takes `## References` turns on its Documents. Where any Document is absolute, write
 `~/.claude/baton.md` without asking. Where every Document is relative, ask the user which of
@@ -34,9 +37,6 @@ Which file takes `## References` turns on its Documents. Where any Document is a
 question that a `## References` in `.claude/baton.md` hides every contributor's personal
 `## References` in this project (`defining-backends.md`, `## Where overrides live`). Never pick
 `.claude/baton.md` unasked.
-| No backend file; route 1 or 2 selected | Stop, and tell the user the shipped defaults already apply, so there is no backend file to write. |
-| No backend file; route 3 | Step 2. |
-| A backend file | Print it, name the sections it defines, and ask before continuing. Step 3 overwrites it. |
 
 ## Step 2 - Load the contract
 
