@@ -664,7 +664,7 @@ Re-read these steps rather than recalling them because a half-remembered checkli
 
 ### Step 1 - Contract
 
-The personal `doc-types.md` and `owners.md` are read before the project ones because the project's committed file has to win for every contributor, as Claude Code ranks project settings above user settings ([Settings precedence](https://code.claude.com/docs/en/settings#settings-precedence)). Doc-type contracts and owner maps follow the same order as backend sections so that one rule covers all three (#66).
+The personal `doc-types.md` and `owners.md` are read before the project ones because doc-type contracts and owner maps follow the backend sections' order, so that one rule covers all three (#66). Why that order makes the project file win is under `## reference/defining-backends.md` → `### Where overrides live`.
 
 ### Step 2 - Name the reader and what they already have
 
@@ -690,7 +690,7 @@ A CUT is deleted, never shortened, because a shortened section leaves the skelet
 
 ### Combining
 
-A project row replaces a personal row with the same `Fact`, rather than the other way round, because a committed owner map has to hold for every contributor's run, local runs included, for the reason `write-deliverables` Step 1 reads the project map last.
+A project row replaces a personal row with the same `Fact`, rather than the other way round, for the reason under `## reference/defining-backends.md` → `### Where overrides live`.
 
 ## reference/defining-backends.md
 
