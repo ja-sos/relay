@@ -144,8 +144,10 @@ can read what it resolves to.
 A handoff cites what it relies on by document file name, section heading and quoted clause,
 never by path (`write-handoff` Step 3).
 
-A section whose Documents are all relative may sit in the committed `.claude/baton.md`: its
-rows resolve the same in every clone, and the same from either file. A section with any
+A section whose Documents are all relative may sit in the committed `.claude/baton.md`: a row
+for the checkout's own repository resolves the same in every clone, and a row for another
+repository resolves wherever the contributor's `## Repositories` names that repository. Rows
+resolve the same from either file. A section with any
 absolute Document belongs in `~/.claude/baton.md`, whole, since an absolute path names one
 machine's drive. A `## References` in `.claude/baton.md` hides every contributor's personal
 `## References` in that project (`## Where overrides live`). The `cloud` launcher never reads

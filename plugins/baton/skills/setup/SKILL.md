@@ -162,7 +162,8 @@ Every row's Document must resolve, by the rules `defining-backends.md` gives for
 this from the checkout for each row, with the Document between the `DOC` lines exactly as the
 row writes it - the quoted heredoc keeps an apostrophe in the path from breaking the shell -
 `repo` set to the row's Repository, `here` to `verify-checkout`'s answer, and `target` to the
-file written:
+file written. Any `target` but `~/.claude/baton.md` or its `$HOME` form counts as the project
+file:
 
 ```
 doc=$(cat <<'DOC'
@@ -175,18 +176,21 @@ target='<.claude/baton.md or ~/.claude/baton.md>'
 f=
 case "$doc" in
   /*) case "$target" in
-        .claude/baton.md) echo "FAIL absolute Document in .claude/baton.md: $doc"; doc=;;
+        '~/.claude/baton.md'|"$HOME/.claude/baton.md") ;;
+        *) echo "FAIL absolute Document in $target: $doc"; doc=;;
       esac;;
   *) case "/$doc/" in
        */../*) echo "FAIL .. segment: $doc"; doc=;;
        *) lc() { printf %s "$1" | tr '[:upper:]' '[:lower:]'; }
           if [ "$(lc "$repo")" = "$(lc "$here")" ]; then
-            root=$(git rev-parse --show-toplevel)
+            root=$(git rev-parse --show-toplevel) || root=
+            miss="not run from a checkout of $here"
           else
-            root=$(awk -F'`' -v r="$(lc "$repo")" 'tolower($2) == r && $4 ~ /^\// {print $4; exit}' ~/.claude/baton.md 2>/dev/null)
+            root=$(awk -F'`' -v r="$(lc "$repo")" '/^## /{s = ($0 == "## Repositories")} s && tolower($2) == r && $4 ~ /^\// {print $4; exit}' ~/.claude/baton.md 2>/dev/null)
+            miss="no ## Repositories row for $repo"
           fi
           if [ -n "$root" ]; then doc=$root/$doc
-          else echo "FAIL no ## Repositories row for $repo: $doc"; doc=
+          else echo "FAIL $miss: $doc"; doc=
           fi;;
      esac;;
 esac

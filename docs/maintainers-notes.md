@@ -714,7 +714,7 @@ A backend an unattended run must use goes in `.claude/baton.md` because a cloud 
 
 The `cloud` launcher cannot resolve `## Assets` because it clones the repository and never sees a home directory.
 
-A `## References` section with any absolute Document stays in `~/.claude/baton.md` because an absolute path names one machine's shared drive. One whose Documents are all relative may sit in `.claude/baton.md` because a relative path resolves under its repository's checkout, the same in every clone (#67). It stays one section rather than a committed-only second one, because two headings differing only in path form would need a rule merging their rows. The `cloud` launcher never needs it: only `investigate-issue` reads it, and the runs it starts read the clauses the handoff quotes.
+A `## References` section with any absolute Document stays in `~/.claude/baton.md` because an absolute path names one machine's shared drive. One whose Documents are all relative may sit in `.claude/baton.md` because a relative path resolves under its repository's checkout: the same in every clone for the checkout's own repository, and through each contributor's `## Repositories` row for another (#67). It stays one section rather than a committed-only second one, because two headings differing only in path form would need a rule merging their rows. The `cloud` launcher never needs it: only `investigate-issue` reads it, and the runs it starts read the clauses the handoff quotes.
 
 ### Operations
 
