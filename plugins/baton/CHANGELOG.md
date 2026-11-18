@@ -3,6 +3,18 @@
 What changed in each baton version that a backend file, a restated section or a handoff
 written for an earlier version has to account for. Newest first.
 
+## 0.3.7
+
+- The project's `.claude/baton.md` now wins over `~/.claude/baton.md`. Every skill reads the
+  personal file first and the project file second, and for each `##` heading the later file's
+  section replaces the earlier one wholesale. In a project whose own file carries a backend
+  heading, a personal section under that same heading no longer applies there - including
+  entries the project section does not restate (#66).
+- Doc-type contracts and owner maps follow the same order. A personal `doc-types.md` contract
+  whose heading the project's `.claude/doc-types.md` also carries no longer applies in that
+  project, and a personal `owners.md` row whose `Fact` a project row repeats is replaced by the
+  project row (#66).
+
 ## 0.3.6
 
 - A new optional `## References` backend section, in `~/.claude/baton.md`, routes an issue to

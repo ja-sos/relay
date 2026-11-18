@@ -46,8 +46,8 @@ Load the contracts, later files overriding earlier by `##` heading:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/skills/write-deliverables/reference/doc-types.md
-cat .claude/doc-types.md 2>/dev/null
 cat ~/.claude/doc-types.md 2>/dev/null
+cat .claude/doc-types.md 2>/dev/null
 ```
 
 A listed type fills the first three lines of the Step 2 brief, and its must-include and
@@ -60,8 +60,8 @@ Adding a type: `reference/defining-doc-types.md`.
 Then load the owner map, if one exists:
 
 ```
-cat "$(git rev-parse --show-toplevel)/.claude/owners.md" 2>/dev/null
 cat ~/.claude/owners.md 2>/dev/null
+cat "$(git rev-parse --show-toplevel)/.claude/owners.md" 2>/dev/null
 ```
 
 Where either prints rows, read

@@ -32,8 +32,8 @@ Where neither route is available, `backend-github.md` says what that means. Eith
 project's own files load last:
 
 ```
-cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
+cat .claude/baton.md 2>/dev/null
 ```
 
 Then load the rule for every call this skill makes once per issue - `started`, `published` and

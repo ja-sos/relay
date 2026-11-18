@@ -662,6 +662,10 @@ What a reader could look up elsewhere is exactly what a mandated claim is often 
 
 Re-read these steps rather than recalling them because a half-remembered checklist is the failure this skill exists to prevent.
 
+### Step 1 - Contract
+
+The personal `doc-types.md` and `owners.md` are read before the project ones because doc-type contracts and owner maps follow the backend sections' order, so that one rule covers all three (#66). Why that order makes the project file win is under `## reference/defining-backends.md` → `### Where overrides live`.
+
 ### Step 2 - Name the reader and what they already have
 
 Every deletion below follows from the five lines.
@@ -682,11 +686,19 @@ Fixes introduce new violations - that is why the gate restarts at G1.
 
 A CUT is deleted, never shortened, because a shortened section leaves the skeleton behind.
 
+## skills/write-deliverables/reference/defining-owners.md
+
+### Combining
+
+A project row replaces a personal row with the same `Fact`, rather than the other way round, for the reason under `## reference/defining-backends.md` → `### Where overrides live`.
+
 ## reference/defining-backends.md
 
 ### Where overrides live
 
 A backend an unattended run must use goes in `.claude/baton.md` because a cloud or CI session clones the repo and never sees your home directory.
+
+`~/.claude/baton.md` is read before `.claude/baton.md`, so the project section of a heading replaces the personal one, because a committed section has to win for every contributor's run, local runs included: otherwise a contributor's personal section silently overrides what the project committed, and only in that contributor's local runs. Claude Code ranks project settings above user settings the same way ([Settings precedence](https://code.claude.com/docs/en/settings#settings-precedence)). The precedence is made by reordering the reads, and "Where overrides live" states it as what that order yields, rather than as a rule beside an unchanged order, so that the skills' "later files overriding earlier" sentences stay true of their own reads (#66).
 
 ### Sections
 
