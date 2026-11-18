@@ -662,6 +662,10 @@ What a reader could look up elsewhere is exactly what a mandated claim is often 
 
 Re-read these steps rather than recalling them because a half-remembered checklist is the failure this skill exists to prevent.
 
+### Step 1 - Contract
+
+The personal `doc-types.md` and `owners.md` are read before the project ones because the project's committed file has to win for every contributor, as Claude Code ranks project settings above user settings ([Settings precedence](https://code.claude.com/docs/en/settings#settings-precedence)). Doc-type contracts and owner maps follow the same order as backend sections so that one rule covers all three (#66).
+
 ### Step 2 - Name the reader and what they already have
 
 Every deletion below follows from the five lines.
@@ -682,11 +686,19 @@ Fixes introduce new violations - that is why the gate restarts at G1.
 
 A CUT is deleted, never shortened, because a shortened section leaves the skeleton behind.
 
+## skills/write-deliverables/reference/defining-owners.md
+
+### Combining
+
+A project row replaces a personal row with the same `Fact`, rather than the other way round, because a committed owner map has to hold for every contributor's run, local runs included, for the reason `write-deliverables` Step 1 reads the project map last.
+
 ## reference/defining-backends.md
 
 ### Where overrides live
 
 A backend an unattended run must use goes in `.claude/baton.md` because a cloud or CI session clones the repo and never sees your home directory.
+
+`~/.claude/baton.md` is read before `.claude/baton.md`, so the project section of a heading replaces the personal one, because a committed section has to win for every contributor's run, local runs included: otherwise a contributor's personal section silently overrides what the project committed, and only in that contributor's local runs. Claude Code ranks project settings above user settings the same way ([Settings precedence](https://code.claude.com/docs/en/settings#settings-precedence)). The rule is carried by the read order rather than stated beside it so that the skills' "later files overriding earlier" sentences stay true of their own reads (#66).
 
 ### Sections
 

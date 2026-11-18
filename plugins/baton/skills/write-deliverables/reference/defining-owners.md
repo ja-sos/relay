@@ -8,8 +8,8 @@ docs, and drifts from the file that defines it.
 ## Where maps live
 
 Put project rows in `.claude/owners.md`, committed so an unattended run sees them, and
-personal rows in `~/.claude/owners.md`. `SKILL.md` Step 1 loads the project map first and
-the personal map second.
+personal rows in `~/.claude/owners.md`. `SKILL.md` Step 1 loads the personal map first and
+the project map second.
 
 No map ships with the plugin. With neither file present, Step 4's search and G12 have nothing
 to act on, and a document passes exactly as it would without this file.
@@ -32,14 +32,15 @@ first comma.
 ## Combining
 
 Drop inactive rows first. A row whose `Owner` file does not exist in the current repository
-is inactive there: it replaces no project row, Step 4 searches nothing for it, and G12 does
-not fire on it. A personal map loads in every repository, so most of its rows are inactive in
-most of them.
+is inactive there: it replaces no row, Step 4 searches nothing for it, and G12 does not fire
+on it. A personal map loads in every repository, so most of its rows are inactive in most of
+them.
 
-The remaining rows combine across the two files. A personal row whose `Fact` cell matches a
-project row's `Fact` cell exactly - case counts, the cell's surrounding spaces do not -
-replaces that row; every other personal row is added. A personal map therefore adds rows
-without restating the project's, and overrides only the rows it names.
+The remaining rows combine across the two files. A project row whose `Fact` cell matches a
+personal row's `Fact` cell exactly - case counts, the cell's surrounding spaces do not -
+replaces that personal row; every other row of both maps is kept. A project map therefore
+adds rows without restating the personal map's, and in that project overrides exactly the
+personal rows whose `Fact` it repeats.
 
 ## Example
 
@@ -59,6 +60,6 @@ without restating the project's, and overrides only the rows it names.
 | Header | the table's header row names `Fact`, then `Owner` |
 | Owner exists | in `.claude/owners.md`, `test -e <path>` succeeds from the repository root for every `Owner` path |
 | Owner names a place | `Owner` adds a section, step or symbol wherever the file states more than one kind of fact; a line number is not one, since it drifts |
-| Override is exact | a personal row meant to replace a project row repeats its `Fact` cell exactly |
+| Override is exact | a project row meant to replace a personal row repeats its `Fact` cell exactly |
 
 The map is done when every row passes.

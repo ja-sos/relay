@@ -12,13 +12,19 @@ The skills read up to four files, in this order:
 ```
 ${CLAUDE_PLUGIN_ROOT}/reference/backend-github.md      shipped GitHub defaults, over the GitHub MCP tools
 ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md   the same three sections as `gh` commands; read only where that file's route check selects it
-.claude/baton.md                                        project backend; committed, so an unattended run sees it
 ~/.claude/baton.md                                      personal defaults across all projects
+.claude/baton.md                                        project backend; committed, so an unattended run sees it
 ```
 
-A `##` heading is the key, and a matching heading replaces the shipped section
-**wholesale** - not operation by operation. Overriding one entry of `## Tracker` means
-restating all of them; an omitted entry is undefined, not inherited.
+A `##` heading is the key. For each heading, a later file's section replaces that heading's
+section in every earlier file, **wholesale** - not operation by operation. So the project
+file's section replaces the personal file's, and either replaces the shipped default.
+Overriding one entry of `## Tracker` means restating all of them; an omitted entry is
+undefined, not inherited.
+
+A project section therefore hides the personal section of the same heading entirely,
+including every entry the project section does not restate. A personal section applies in a
+project only under a heading the project's own file does not carry.
 
 A backend an
 unattended run must use goes in `.claude/baton.md`.

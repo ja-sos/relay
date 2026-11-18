@@ -25,8 +25,8 @@ cat ${CLAUDE_PLUGIN_ROOT}/reference/backend-github-gh.md
 Then the project's own files:
 
 ```
-cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
+cat .claude/baton.md 2>/dev/null
 ```
 
 Two failures are stops, not fallbacks: an operation this skill names that no loaded file

@@ -36,8 +36,8 @@ Then the project's own files, the rule for every call this skill makes once per 
 `reviewed` and `stopped` - and the rule for a check that fails:
 
 ```
-cat .claude/baton.md 2>/dev/null
 cat ~/.claude/baton.md 2>/dev/null
+cat .claude/baton.md 2>/dev/null
 cat ${CLAUDE_PLUGIN_ROOT}/reference/per-issue-calls.md
 cat ${CLAUDE_PLUGIN_ROOT}/reference/fixing-check-failures.md
 ```
