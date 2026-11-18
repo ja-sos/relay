@@ -112,12 +112,25 @@ issues carrying that customer's label:
 - **Match** is `*`, which applies to every issue, or a value compared, ignoring case, with each
   label `view` prints for the issue, and with each component where the tracker's `view` prints
   components.
-- **Document** is an absolute path. Where its last segment holds `*` or `?`, it is a folder
-  and a file-name pattern, resolved to the one file this prints:
+- **Document** is an absolute path, or a path relative to the root of the checkout of the
+  row's Repository. A Document starting with `/` is absolute. One with no leading `/` is
+  relative, and its root is `git rev-parse --show-toplevel` where Repository is
+  `verify-checkout`'s repository, and that repository's `## Repositories` path otherwise. A
+  relative Document resolves to nothing where any of its segments is `..`, read off the path's
+  text as `write-handoff` Step 2's asset-path rule reads it, or where its Repository is another
+  repository with no `## Repositories` row. A symlink inside the repository is trusted as far as
+  the repository's contents are, as `## Assets` trusts its folder.
+
+  Where its last segment holds `*` or `?`, a Document is a folder and a file-name pattern,
+  resolved to the one file this prints:
 
   ```
   find "<folder>" -maxdepth 1 -type f -name '<pattern>' | sort -V | tail -1
   ```
+
+  For a relative pattern, `<folder>` is the pattern's folder under the root, and the root
+  itself where the pattern holds no `/`: `SRS_*.md` names the files matching `SRS_*.md` at the
+  repository's root.
 
   `-maxdepth 1` keeps files in subfolders, an `archive/` among them, out of the selection, so a
   new version saved into the folder needs no routing edit. Empty output means the row resolved
@@ -131,10 +144,15 @@ can read what it resolves to.
 A handoff cites what it relies on by document file name, section heading and quoted clause,
 never by path (`write-handoff` Step 3).
 
-The section belongs in `~/.claude/baton.md` rather than the committed `.claude/baton.md`:
-its paths name one machine's drive. The `cloud` launcher never reads it, and need not: only
-`investigate-issue` reads the section, and the runs it launches read the handoff's citations
-instead.
+A section whose Documents are all relative may sit in the committed `.claude/baton.md`: a row
+for the checkout's own repository resolves the same in every clone, and a row for another
+repository resolves wherever the contributor's `## Repositories` names that repository. Rows
+resolve the same from either file. A section with any
+absolute Document belongs in `~/.claude/baton.md`, whole, since an absolute path names one
+machine's drive. A `## References` in `.claude/baton.md` hides every contributor's personal
+`## References` in that project (`## Where overrides live`). The `cloud` launcher never reads
+it, and need not: only `investigate-issue` reads the section, and the runs it launches read the
+handoff's citations instead.
 
 ## Operations
 
