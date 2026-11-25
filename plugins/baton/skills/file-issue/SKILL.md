@@ -68,6 +68,18 @@ Drop a finding, and report it dropped, when:
 Exactly one category, from the backend's `## Categories` table. When code and docs
 disagree, decide which side is wrong and categorize that side.
 
+Before deciding which side is wrong, read the specification documents the backend's
+`## References` section routes the finding to, by the shared procedure:
+
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/reference-documents.md
+```
+
+The finding has no issue yet, so the issue set is that file's issue-less entry. Where a clause
+states the intended behaviour, it decides the side, and the body quotes it by file name, section
+heading and clause. With no section, no matching row, or no clause on the point, decide as
+above. A stop under that file ends the filing: report it, and file nothing.
+
 ## Step 4 - Body
 
 Run `baton:write-deliverables` per body, as a **Tracker issue**.

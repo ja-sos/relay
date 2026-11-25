@@ -77,6 +77,18 @@ from, where either exists. In order:
    was posted in. Any other issue found is context, named in the statement as not spec.
    Where none binds, the spec is the issues the pull request delivers, or the ones it only
    references where it delivers none.
+4. **The documents.** Read the specification documents the backend's `## References` section
+   routes the spec's issues to, by the shared procedure:
+
+   ```
+   cat ${CLAUDE_PLUGIN_ROOT}/reference/reference-documents.md
+   ```
+
+   The issue set is the spec's issues, each matched in its own repository with the labels and
+   components its `view` printed; where the spec holds no issue, it is that file's issue-less
+   entry. The documents read join the spec. With no section, or no matching row, the spec is
+   what items 1 to 3 resolved, as before. A stop under that file ends the run: report it, then
+   run `wrap-up` as `## Done` gives it.
 
 A `view` or `fetch-handoff` answering not-found - an issue that does not exist, a handoff since
 deleted - is that candidate's answer, not a backend failure: drop the candidate, name it in the
@@ -85,10 +97,11 @@ above. The statement names a dropped issue as not found or not readable with thi
 credentials.
 `has-handoff` can miss a handoff that has been delivered; an issue is a spec on its own.
 
-State the resolved spec - each issue id, and the binding handoff's locator, or the issue it
-sits on where the output carries no address - before collecting anything. Where nothing resolves, say "no spec found" and go on: this is a statement,
-not a question, and a pull request with no issue and no handoff is ruled against the code
-alone.
+State the resolved spec - each issue id, the binding handoff's locator, or the issue it
+sits on where the output carries no address, and each document read by its file name - before
+collecting anything. Where nothing resolves, say "no spec found" and go on: this is a statement,
+not a question, and a pull request with no issue, no handoff and no document is ruled against
+the code alone.
 
 ## Step 2 - Collect every surface
 
@@ -107,8 +120,18 @@ The inventory holds exactly the actionable candidates: every distinct ask from a
 every unresolved inline finding. Resolved threads are context for judging related rows, never
 rows themselves, and nothing in them is owed an action or a reply.
 
-Rule on each row against the spec - the issue the pull request delivers and the handoff it
-was built from - first, and the code second:
+Rule on each row against the spec first, and the code second. Within the spec the routed
+documents come first, then the issue the pull request delivers and the handoff it was built
+from:
+
+- A row a document's clause settles is ruled on that clause, and its verdict quotes it by file
+  name, section heading and clause.
+- Where a document and the issue or the handoff disagree on a row's point, the skill does not
+  settle it. The verdict quotes the clause and the passage it conflicts with, and the user rules
+  at this step's stop. A handoff that disagrees with a document is itself a finding against the
+  handoff, named in the verdict.
+
+Where no document bears on a row, it is ruled against the issue and the handoff:
 
 - A row asking to keep or restore behaviour the spec replaces is not valid, and its verdict
   quotes the passage that replaces it.

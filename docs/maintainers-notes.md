@@ -502,7 +502,7 @@ The `## Assets` root check is skipped where the user did not ask for the section
 
 A relative `root` resolves against whatever directory the run happens to start in.
 
-The `## References` checks resolve every row, file and pattern alike, and convert every resolved file that is not `.md` or `.txt`, because a row that resolves to nothing or that `pandoc` cannot read stops every investigation it matches, and that is better found while configuring than mid-investigation. Converting the file, rather than testing `command -v pandoc`, also fails a format `pandoc` has no reader for, `.pdf` among them, and decides by the resolved file's extension as `investigate-issue` does. The Document is read through a quoted heredoc because a path on a shared drive can hold an apostrophe, which a single-quoted assignment cannot.
+The `## References` checks resolve every row, file and pattern alike, and convert every resolved file that is not `.md` or `.txt`, because a row that resolves to nothing or that `pandoc` cannot read stops every attended skill it matches, and that is better found while configuring than mid-run. Converting the file, rather than testing `command -v pandoc`, also fails a format `pandoc` has no reader for, `.pdf` among them, and decides by the resolved file's extension as `reference-documents.md` does. The Document is read through a quoted heredoc because a path on a shared drive can hold an apostrophe, which a single-quoted assignment cannot.
 
 `setup` asks which file to write for an all-relative `## References`, rather than choosing `.claude/baton.md` from the Documents alone, because a committed section hides every contributor's personal `## References` in that project: one user routing a specification for themselves would otherwise change routing for everyone (#67). With any absolute Document there is nothing to ask, since that section is valid only in `~/.claude/baton.md`.
 
@@ -714,7 +714,7 @@ A backend an unattended run must use goes in `.claude/baton.md` because a cloud 
 
 The `cloud` launcher cannot resolve `## Assets` because it clones the repository and never sees a home directory.
 
-A `## References` section with any absolute Document stays in `~/.claude/baton.md` because an absolute path names one machine's shared drive. One whose Documents are all relative may sit in `.claude/baton.md` because a relative path resolves under its repository's checkout: the same in every clone for the checkout's own repository, and through each contributor's `## Repositories` row for another (#67). It stays one section rather than a committed-only second one, because two headings differing only in path form would need a rule merging their rows. The `cloud` launcher never needs it: only `investigate-issue` reads it, and the runs it starts read the clauses the handoff quotes.
+A `## References` section with any absolute Document stays in `~/.claude/baton.md` because an absolute path names one machine's shared drive. One whose Documents are all relative may sit in `.claude/baton.md` because a relative path resolves under its repository's checkout: the same in every clone for the checkout's own repository, and through each contributor's `## Repositories` row for another (#67). It stays one section rather than a committed-only second one, because two headings differing only in path form would need a rule merging their rows. The `cloud` launcher never needs it: the unattended runs never read it, and read the clauses the handoff quotes instead.
 
 ### Operations
 
@@ -859,6 +859,29 @@ the requested reviewer opened, and the collected threads are the only place it c
 The two judgements a round makes on its own take a disposition so neither reaches the reader as silence.
 
 Every finding carries its severity because an unresolved Critical and a Minor left alone are different news.
+
+## reference/reference-documents.md
+
+Moved from `investigate-issue` Step 4 (#71), so that `address-review`, `self-review`, `review-pr`
+and `file-issue` read the same documents by the same rules. One owning file was chosen over a
+copy in each skill so that a change to row matching or to `pandoc` reading lands in one place.
+Each caller keeps what is its own: the issue set it reads for, and what a stop ends.
+
+The issue-less entry matches only `*` rows because a caller with no issue has no labels to
+match, and a `*` row is the one that governs every issue in its repository.
+
+There is no `<references>` placeholder for `code-review`: the shipped entry, `skill: /code-review
+<target>`, takes no documents, so `self-review` and `review-pr` check the diff against the
+clauses themselves after it returns.
+
+`reviewing-run-output.md` carries no rule about documents because `review-handoff` loads it, and
+the unattended runs read no routed documents - a `## References` path may not resolve on the
+machine they run on. `self-review`'s document rule sits in its own text instead.
+
+`claim-audit` names the routed document as the authority rather than putting a handoff-only
+claim in a class of its own, because the claim-audit hook injects `claim-audit` into the
+unattended runs' subagents too, and a class that withheld ACCEPTED until a specification was
+checked would withhold it from every handoff-backed claim there.
 
 ## reference/per-issue-calls.md
 

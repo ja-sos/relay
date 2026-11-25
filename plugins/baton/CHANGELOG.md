@@ -3,6 +3,21 @@
 What changed in each baton version that a backend file, a restated section or a handoff
 written for an earlier version has to account for. Newest first.
 
+## 0.3.9
+
+- `address-review`, `self-review`, `review-pr` and `file-issue` now read the `## References`
+  documents routed to their issues before ruling on intended behaviour, as `investigate-issue`
+  does. The reading procedure moved out of `investigate-issue` Step 4 into the new
+  `reference/reference-documents.md`, which all five load. A caller with no issue matches only
+  `*` rows for `verify-checkout`'s repository (#71).
+- `address-review` rules a row a routed document settles on its clause, and quotes a conflict
+  between a document and the issue or handoff for the user to rule on. `self-review` and
+  `review-pr` report a diff that contradicts a routed clause as a finding quoting it.
+  `file-issue` decides the wrong side of a code/docs disagreement from a routed clause (#71).
+- `claim-audit`'s SPECIFIED class ranks a document read through `## References` in the session
+  above an issue or handoff: a target-state claim the document contradicts is CORRECTED (#71).
+- A backend with no `## References` section, or no matching row, sees no change.
+
 ## 0.3.8
 
 - A `## References` Document may now be a path relative to the root of its Repository's

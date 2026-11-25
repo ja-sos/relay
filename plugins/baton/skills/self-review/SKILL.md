@@ -64,6 +64,19 @@ With a pull request settled, collect its threads as the reference's "Collecting 
 threads" says. Where there is no pull request, or it carries no threads, this step collects
 nothing and Step 1 reviews the target above alone.
 
+Then read the specification documents the backend's `## References` section routes this work
+to, by the shared procedure:
+
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/reference-documents.md
+```
+
+With a pull request settled, the issue set is what `pr-issues` returns for it, each issue
+matched in its own repository with the labels and components `view` prints for it. Where there
+is no pull request, or it names no issue, it is that file's issue-less entry. With no section,
+or no matching row, Step 1 runs as it would without this paragraph. A stop under that file
+ends the review: report it, then run `wrap-up` as Step 5 gives it.
+
 ## Step 1 - Review
 
 Run `code-review` over the target Step 0 settled, with the pull request number as its
@@ -71,8 +84,14 @@ Run `code-review` over the target Step 0 settled, with the pull request number a
 provenance rule into it. Findings land as fixes in the working tree, never as comments on the
 pull request.
 
-Once it returns, check each thread Step 0 collected as the reference's "Checking the threads"
-says.
+Once it returns, and where Step 0 read documents, check the changed code against each clause
+in them that bears on it: `code-review` received none of them. Code that contradicts a clause
+is a finding quoting the clause by file name, section heading and clause, classed as the
+reference's "Severity" table classes a contradiction of an acceptance criterion the handoff
+set. Where the handoff and a document disagree, the finding is against the handoff, quotes
+both, and goes to the gate for the user to rule on.
+
+Then check each thread Step 0 collected as the reference's "Checking the threads" says.
 
 ## Step 2 - Close the run's open items
 

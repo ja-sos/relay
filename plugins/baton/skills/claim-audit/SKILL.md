@@ -27,7 +27,7 @@ inventory of current behaviour.
 | OBSERVED | You can cite the evidence from THIS session: the command and its output, or the `file:line` you read. |
 | INFERRED | One step from an OBSERVED base, and you can state observation, inference, and what would falsify it. |
 | RECALLED | Everything else - training knowledge, docs from memory, another session, "how these systems usually work". |
-| SPECIFIED | The target state, stated by the user in this session or by the issue, handoff or spec - quote it. Governs what *should be*, and carries nothing about what *is*. |
+| SPECIFIED | The target state, stated by the user in this session or by the issue, handoff or spec - quote it. Governs what *should be*, and carries nothing about what *is*. A specification document read through the backend's `## References` section in this session is the authority on target state: an issue or handoff yields to it where the two disagree. |
 
 A claim is **not** OBSERVED when:
 
@@ -46,7 +46,10 @@ A claim is **not** OBSERVED when:
 | INFERRED | yes | probe, then ACCEPTED or CORRECTED |
 | RECALLED | yes | probe, then ACCEPTED or CORRECTED; unprobeable gets LABELLED "unverified" visibly in the response |
 | RECALLED | no | RETRACTED - not worth probing means not worth asserting |
-| SPECIFIED | - | ACCEPTED for target state, with the quote; never cited as evidence about current behaviour |
+| SPECIFIED | - | ACCEPTED for target state, with the quote, unless a document read through `## References` in this session contradicts it - then CORRECTED to the document's clause, quoted by file name, section heading and clause; never cited as evidence about current behaviour |
+
+Where this session read no document through `## References`, a SPECIFIED claim the issue or
+handoff supports is ACCEPTED as before.
 
 A probe is the cheapest command that could falsify the claim, usually one command or one file
 read: send a crafted input through the real path, `git check-ignore` for glob semantics, a

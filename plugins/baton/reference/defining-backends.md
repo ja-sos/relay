@@ -41,7 +41,7 @@ unattended run must use goes in `.claude/baton.md`.
 | `## Workflow` | the steps the skills run around the work: posting and finding handoffs, reviewing, publishing |
 | `## Repositories` | local paths of the repositories one change spans. Optional |
 | `## Assets` | the local root of the one folder outside every repository that a handoff's `assets` line names paths under. Optional |
-| `## References` | the specification documents `investigate-issue` reads for an issue, chosen by its repository and its labels or components. Optional |
+| `## References` | the specification documents the attended skills read for an issue, chosen by its repository and its labels or components. Optional |
 
 Every `## Launcher` entry launches one of two skills, and takes two placeholders: `<skill>`,
 `implement-handoff` or `review-handoff`, and `<args>`, what that skill is started with - the
@@ -96,8 +96,10 @@ project's own that starts the run on the machine whose `~/.claude/baton.md` defi
 
 Runs treat the folder as read-only (`handoff-assets.md`, `## May not do`).
 
-`## References` is optional too. It routes an issue to the specification documents
-`investigate-issue` Step 4 reads before choosing an approach - a base requirements
+`## References` is optional too. It routes an issue to the specification documents five
+attended skills read before ruling on intended behaviour - `investigate-issue`,
+`address-review`, `self-review`, `review-pr` and `file-issue`, each through
+`reference-documents.md` - a base requirements
 specification that governs every issue, say, and a per-customer addendum that governs only the
 issues carrying that customer's label:
 
@@ -136,9 +138,9 @@ issues carrying that customer's label:
   new version saved into the folder needs no routing edit. Empty output means the row resolved
   to nothing.
 
-How a matched document is read, and which rows stop the investigation, is `investigate-issue`
-Step 4's. A Document that resolves to anything but a `.md` or `.txt` file - a `.docx`, say -
-needs `pandoc` on the machine; `setup` Step 3 checks that every row resolves and that `pandoc`
+How a matched document is read, and which rows stop the calling skill, is
+`reference-documents.md`'s; what that stop ends is each caller's. A Document that resolves to
+anything but a `.md` or `.txt` file - a `.docx`, say - needs `pandoc` on the machine; `setup` Step 3 checks that every row resolves and that `pandoc`
 can read what it resolves to.
 
 A handoff cites what it relies on by document file name, section heading and quoted clause,
@@ -151,8 +153,8 @@ resolve the same from either file. A section with any
 absolute Document belongs in `~/.claude/baton.md`, whole, since an absolute path names one
 machine's drive. A `## References` in `.claude/baton.md` hides every contributor's personal
 `## References` in that project (`## Where overrides live`). The `cloud` launcher never reads
-it, and need not: only `investigate-issue` reads the section, and the runs it launches read the
-handoff's citations instead.
+it, and need not: the unattended runs, `implement-handoff` and `review-handoff`, never read the
+section, and read the handoff's citations instead.
 
 ## Operations
 
