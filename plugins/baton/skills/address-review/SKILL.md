@@ -53,42 +53,30 @@ A pull request this side does not own is not this skill's. Stop and switch to
 `baton:review-pr`.
 
 Then resolve the **spec**: the issue the pull request delivers and the handoff it was built
-from, where either exists. In order:
+from, where either exists, by the shared procedure:
 
-1. **The issues.** Run `pr-issues` on the pull request. It returns each issue the pull request
-   names, with its repository, and whether the pull request delivers it or only references
-   it; how a pull request names its issues is the backend's to define (`defining-backends.md`).
-   Under `none` no issue is found. Run `view` on each issue returned, in the repository it
-   came with.
-2. **The handoff.** Run `has-handoff` on each issue found; where it resolves to `op: view`, the
-   `view` output already read answers it. Read no issue twice. Follow every pointer its output
-   carries - the marker with no fenced header - by running `fetch-handoff` on the locator the
-   pointer carries, and add the issue the pointer names to the issues found, running `view`
-   and `has-handoff` on it as on any other. An issue can carry a pointer and a handoff of its
-   own; collect both. Of the handoffs collected, the binding one is the handoff whose header
-   `branch` line equals the pull request's head branch, or, failing that, the head branch
-   with a trailing `-<6 hex>` removed - the name `implement-handoff` substitutes where the
-   handoff's branch already existed. Where several match on one issue, the one appearing last
-   in `has-handoff`'s output binds. Where the matches sit on different issues, bind none. Where none matches and exactly one handoff was collected, it binds, unless it
-   was reached only through an issue the pull request references rather than delivers.
-   Otherwise bind none, and name every handoff collected in the statement below.
-3. **What counts.** Where a handoff binds, the spec is that handoff and the issues its header
-   `issue` line names; run `view` on any of those not yet read, in the repository the handoff
-   was posted in. Any other issue found is context, named in the statement as not spec.
-   Where none binds, the spec is the issues the pull request delivers, or the ones it only
-   references where it delivers none.
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/resolving-the-spec.md
+```
 
-A `view` or `fetch-handoff` answering not-found - an issue that does not exist, a handoff since
-deleted - is that candidate's answer, not a backend failure: drop the candidate, name it in the
-statement, and go on. Any other failure, an access denial included, falls under the stop rule
-above. The statement names a dropped issue as not found or not readable with this session's
-credentials.
-`has-handoff` can miss a handoff that has been delivered; an issue is a spec on its own.
+Then read the specification documents the backend's `## References` section routes the spec's
+issues to, by the shared procedure:
 
-State the resolved spec - each issue id, and the binding handoff's locator, or the issue it
-sits on where the output carries no address - before collecting anything. Where nothing resolves, say "no spec found" and go on: this is a statement,
-not a question, and a pull request with no issue and no handoff is ruled against the code
-alone.
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/reference-documents.md
+```
+
+The issue set is the spec's issues, each matched in its own repository with the labels and
+components its `view` printed; where the spec holds no issue, it is that file's issue-less
+entry. The documents read join the spec. With no section, or no matching row, the spec is
+what `resolving-the-spec.md` resolved. A stop under `reference-documents.md` ends the run:
+report it, then run `wrap-up` as `## Done` gives it.
+
+State the resolved spec - each issue id, the binding handoff's locator, or the issue it
+sits on where the output carries no address, and each document read by its file name - before
+collecting anything. Where nothing resolves, say "no spec found" and go on: this is a statement,
+not a question, and a pull request with no issue, no handoff and no document is ruled against
+the code alone.
 
 ## Step 2 - Collect every surface
 
@@ -107,8 +95,18 @@ The inventory holds exactly the actionable candidates: every distinct ask from a
 every unresolved inline finding. Resolved threads are context for judging related rows, never
 rows themselves, and nothing in them is owed an action or a reply.
 
-Rule on each row against the spec - the issue the pull request delivers and the handoff it
-was built from - first, and the code second:
+Rule on each row against the spec first, and the code second. Within the spec the routed
+documents come first, then the issue the pull request delivers and the handoff it was built
+from:
+
+- A row a document's clause settles is ruled on that clause, and its verdict quotes it by file
+  name, section heading and clause.
+- Where a document and the issue or the handoff disagree on a row's point, the skill does not
+  settle it. The verdict quotes the clause and the passage it conflicts with, and the user rules
+  at this step's stop. A handoff that disagrees with a document is itself a finding against the
+  handoff, named in the verdict.
+
+Where no document bears on a row, it is ruled against the issue and the handoff:
 
 - A row asking to keep or restore behaviour the spec replaces is not valid, and its verdict
   quotes the passage that replaces it.
@@ -118,9 +116,11 @@ was built from - first, and the code second:
   code.
 
 The code still decides whether a factual claim about current behaviour holds. Where the pull
-request's body records a deviation from the spec on a row's point, the spec's passage there no
-longer settles the row, and neither does the body. Name the deviation in the
-verdict and rule the row against the code.
+request's body records a deviation from the issue or the handoff on a row's point, that passage
+no longer settles the row, and neither does the body. Name the deviation in the verdict and rule
+the row against the code. Where the body records a deviation from a document's clause, the skill
+does not settle it: the verdict quotes the clause and the deviation, and the user rules at this
+step's stop.
 
 Present the inventory with a verdict on each row - valid or not, and the authority it rests
 on - and the action proposed, as the **final message of the turn**. End the turn there with no

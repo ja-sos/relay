@@ -502,7 +502,7 @@ The `## Assets` root check is skipped where the user did not ask for the section
 
 A relative `root` resolves against whatever directory the run happens to start in.
 
-The `## References` checks resolve every row, file and pattern alike, and convert every resolved file that is not `.md` or `.txt`, because a row that resolves to nothing or that `pandoc` cannot read stops every investigation it matches, and that is better found while configuring than mid-investigation. Converting the file, rather than testing `command -v pandoc`, also fails a format `pandoc` has no reader for, `.pdf` among them, and decides by the resolved file's extension as `investigate-issue` does. The Document is read through a quoted heredoc because a path on a shared drive can hold an apostrophe, which a single-quoted assignment cannot.
+The `## References` checks resolve every row, file and pattern alike, and convert every resolved file that is not `.md` or `.txt`, because a row that resolves to nothing or that `pandoc` cannot read stops every attended skill it matches, and that is better found while configuring than mid-run. Converting the file, rather than testing `command -v pandoc`, also fails a format `pandoc` has no reader for, `.pdf` among them, and decides by the resolved file's extension as `reference-documents.md` does. The Document is read through a quoted heredoc because a path on a shared drive can hold an apostrophe, which a single-quoted assignment cannot.
 
 `setup` asks which file to write for an all-relative `## References`, rather than choosing `.claude/baton.md` from the Documents alone, because a committed section hides every contributor's personal `## References` in that project: one user routing a specification for themselves would otherwise change routing for everyone (#67). With any absolute Document there is nothing to ask, since that section is valid only in `~/.claude/baton.md`.
 
@@ -553,14 +553,6 @@ The resolved target is stated before anything else runs against it so the user c
 A pull request this side does not own goes to `baton:review-pr` because someone else's code takes comments, not commits.
 
 The spec is resolved because a review row asking for behaviour the pull request was opened to replace finds that behaviour still in the code wherever the change has not reached yet, so the code argues for the row; the spec is what says it was replaced.
-
-Where several handoffs match on one issue, the one appearing last binds because rework is posted as a second handoff rather than an edit to the first.
-
-Where the matches sit on different issues, none binds because no order across issues is defined.
-
-Other issues found are context, not spec: a follow-up `baton:self-review` filed from a finding is one the pull request references too.
-
-A dropped issue is named as not found or not readable with this session's credentials because a backend can answer not-found for an issue the session cannot read.
 
 The resolved spec is stated before collecting anything so the user can correct it too.
 
@@ -636,13 +628,21 @@ The pull request URL and head branch come from Step 1's `pr-view` because the pu
 
 Never run a command this backend does not define, because an improvised equivalent writes to a tracker the project did not choose.
 
-### Step 0 - Collect the review threads
+### Step 0 - Collect the threads and the spec
 
 With no pull request, the target is the full branch diff against the merge target so every commit on the branch is covered rather than only uncommitted edits.
 
+The spec is resolved because the shipped `code-review` entry passes only `<target>` (`backend-github.md`, `## Workflow`), so `code-review` never sees what the issue and handoff ask for.
+
+With no pull request there is no spec, because `resolving-the-spec.md` reaches issues only through `pr-issues`.
+
 ### Step 1 - Review
 
-`<locator>` is empty because this skill takes a branch rather than a handoff.
+`<locator>` is empty because it carries the handoff between `investigate-issue`, `implement-handoff` and `review-handoff`, and this skill is not one of them. Step 1 checks the diff against the spec itself.
+
+A change to a routed document that the spec does not ask for is Critical because the document check reads the changed clause, so it cannot report code that contradicts the original.
+
+Documents are read as the working tree holds them, not at the pull request's base, because a pull request may be the one that updates a document; the spec says whether it may.
 
 Findings land as fixes, never as comments on the pull request, because the branch is yours to fix, not yours to have written.
 
@@ -714,7 +714,7 @@ A backend an unattended run must use goes in `.claude/baton.md` because a cloud 
 
 The `cloud` launcher cannot resolve `## Assets` because it clones the repository and never sees a home directory.
 
-A `## References` section with any absolute Document stays in `~/.claude/baton.md` because an absolute path names one machine's shared drive. One whose Documents are all relative may sit in `.claude/baton.md` because a relative path resolves under its repository's checkout: the same in every clone for the checkout's own repository, and through each contributor's `## Repositories` row for another (#67). It stays one section rather than a committed-only second one, because two headings differing only in path form would need a rule merging their rows. The `cloud` launcher never needs it: only `investigate-issue` reads it, and the runs it starts read the clauses the handoff quotes.
+A `## References` section with any absolute Document stays in `~/.claude/baton.md` because an absolute path names one machine's shared drive. One whose Documents are all relative may sit in `.claude/baton.md` because a relative path resolves under its repository's checkout: the same in every clone for the checkout's own repository, and through each contributor's `## Repositories` row for another (#67). It stays one section rather than a committed-only second one, because two headings differing only in path form would need a rule merging their rows. The `cloud` launcher never needs it: the unattended runs never read it, and read the clauses the handoff quotes instead.
 
 ### Operations
 
@@ -859,6 +859,41 @@ the requested reviewer opened, and the collected threads are the only place it c
 The two judgements a round makes on its own take a disposition so neither reaches the reader as silence.
 
 Every finding carries its severity because an unresolved Critical and a Minor left alone are different news.
+
+## reference/reference-documents.md
+
+Moved from `investigate-issue` Step 4 (#71), so that `address-review`, `self-review`, `review-pr`
+and `file-issue` read the same documents by the same rules. One owning file was chosen over a
+copy in each skill so that a change to row matching or to `pandoc` reading lands in one place.
+Each caller keeps what is its own: the issue set it reads for, and what a stop ends.
+
+The issue-less entry matches only `*` rows because a caller with no issue has no labels to
+match, and a `*` row is the one that governs every issue in its repository.
+
+There is no `<references>` placeholder for `code-review`: the shipped entry, `skill: /code-review
+<target>`, takes no documents, so `self-review` and `review-pr` check the diff against the
+clauses themselves after it returns.
+
+`reviewing-run-output.md` carries no rule about documents because `review-handoff` loads it, and
+the unattended runs read no routed documents - a `## References` path may not resolve on the
+machine they run on. `self-review`'s document rule sits in its own text instead.
+
+`claim-audit` names the routed document as the authority rather than putting a handoff-only
+claim in a class of its own, because the claim-audit hook injects `claim-audit` into the
+unattended runs' subagents too, and a class that withheld ACCEPTED until a specification was
+checked would withhold it from every handoff-backed claim there.
+
+## reference/resolving-the-spec.md
+
+Moved from `address-review` Step 1 (#71), so that `self-review` resolves the same spec by the same rules. Each caller keeps what is its own: reading the routed documents, and stating the spec, which names those documents too.
+
+Where several handoffs match on one issue, the one appearing last binds because rework is posted as a second handoff rather than an edit to the first.
+
+Where the matches sit on different issues, none binds because no order across issues is defined.
+
+Other issues found are context, not spec: a follow-up `baton:self-review` filed from a finding is one the pull request references too.
+
+A dropped issue is named as not found or not readable with this session's credentials because a backend can answer not-found for an issue the session cannot read.
 
 ## reference/per-issue-calls.md
 

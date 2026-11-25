@@ -57,9 +57,27 @@ A pull request the user authored is not this skill's. Stop, tell the user so, an
 `code-review` operation directly for one they wrote by hand - and let them choose. This skill
 never picks for them.
 
+Then read the specification documents the backend's `## References` section routes the pull
+request's issues to, by the shared procedure:
+
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/reference-documents.md
+```
+
+The issue set is the issues `pr-issues` returns as delivered by the pull request, or the ones it
+returns as only referenced where it returns none delivered, each matched in its own repository
+with the labels and components `view` prints for it; where the pull request names no issue, it
+is that file's issue-less entry. With no section, or no matching row, Step 2 runs as it would
+without this paragraph. A stop under that file ends the review: report it, then run `wrap-up`
+as Step 5 gives it.
+
 ## Step 2 - Review
 
 Run `code-review` with the pull request number as its `<target>` and `<locator>` empty.
+
+Where Step 1 read documents, check the diff against each clause in them that bears on it:
+`code-review` received none of them. A diff that contradicts a clause is a finding, and its
+inline comment quotes the clause by file name, section heading and clause.
 
 Every claim in the pull request body is an unverified assertion. What was tested, why an approach
 was chosen, which edge cases are covered: check each against the diff. A body never resolves a

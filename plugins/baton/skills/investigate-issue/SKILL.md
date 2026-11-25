@@ -127,42 +127,21 @@ separately and keep it out of this investigation.
 
 Read the specification documents the backend routes this issue to, so that Step 5 chooses
 against them as well as against the issue text. The routing is the backend's `## References`
-section, taken from the backend files already loaded (`defining-backends.md`, `## Sections`).
+section, taken from the backend files already loaded, and the reading is the shared procedure:
 
-**A backend with no `## References` section leaves this step with nothing to do.** Go on to
-Step 5; no other step depends on this one.
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/reference-documents.md
+```
 
-Select the rows that match this issue, and resolve each one's Document to a file, by the rules
-`defining-backends.md` gives for `## References` under `## Sections`: Repository against the
-issue's repository, Match against the labels and components `view` printed in Step 1, and a
-pattern Document through its `find ... | sort -V | tail -1` command. Read every document a
-matching row names, and no document of a row that does not match.
+Apply it with this issue as the issue set, its labels and components as `view` printed them in
+Step 1, and read the sections that bear on the issue and on the change Step 5 chooses. With no
+section, or no matching row, go on to Step 5; no other step depends on this one.
 
-**Where the section exists and no row matches, say so.** Tell the user in one line that no
-`## References` row matched, naming the issue's repository, labels and components, then go on
-to Step 5.
+A stop under that file ends the investigation as Step 2's stops do: run `wrap-up` as the last
+action of the run, with the arguments Step 7 gives it.
 
-Read each document by its extension:
-
-- `.md` or `.txt`: the file itself.
-- Any other extension: convert it with `pandoc -t gfm "<file>" -o "<scratch dir>/<file name>.md"`,
-  outside every checkout, and read the file it writes. Where `command -v pandoc` fails, stop
-  the investigation and name the document; never skip it.
-
-List that file's headings with `grep -n '^#' "<file>"` first, then read the sections that bear
-on the issue and on the change Step 5 chooses, not the whole document. Where it lists no
-headings, read the file whole.
-
-**A matching row whose file does not exist, whose pattern selects nothing, or whose read is
-denied or fails stops the investigation**, naming the row as the section writes it. Report it
-to the user rather than choosing an approach without the specification.
-
-A stop here, the missing-`pandoc` one included, ends the investigation as Step 2's stops do:
-run `wrap-up` as the last action of the run, with the arguments Step 7 gives it.
-
-Keep, for Step 5, each document's file name - the last segment of the resolved path, which for
-a pattern row carries the version it selected - and the sections it reads. Its path stays here:
-the handoff never names it (`write-handoff` Step 3).
+Keep, for Step 5, each document's file name and the sections it reads, as that file says. Its
+path stays here: the handoff never names it (`write-handoff` Step 3).
 
 ## Step 5 - Approach
 
