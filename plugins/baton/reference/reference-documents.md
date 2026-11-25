@@ -62,5 +62,6 @@ its `wrap-up` included, where it runs one.
 Keep each document's file name - the last segment of the resolved path, which for a pattern row
 carries the version it selected - and the sections read.
 
-Any text that leaves the session - a handoff, an issue body, a review comment, a reply - names a document by its file name, the heading of the section the
-clause sits under, and the clause quoted. Never by its path.
+Any text that leaves the session - a handoff, an issue body, a review comment, a reply - names a
+document by its file name, the heading of the section the clause sits under, and the clause
+quoted. Never by its path.

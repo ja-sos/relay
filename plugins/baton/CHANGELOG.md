@@ -11,13 +11,21 @@ written for an earlier version has to account for. Newest first.
   `reference/reference-documents.md`, which all five load. A caller with no issue matches only
   `*` rows for `verify-checkout`'s repository (#71).
 - `address-review` rules a row a routed document settles on its clause, and quotes a conflict
-  between a document and the issue or handoff for the user to rule on. `self-review` and
-  `review-pr` report a diff that contradicts a routed clause as a finding quoting it.
+  between a document and the issue or handoff, or a deviation from a clause the pull request's
+  body records, for the user to rule on. `self-review` and `review-pr` report a diff that
+  contradicts a routed clause as a finding quoting it. `review-pr` reads documents for the
+  issues the pull request delivers, or the ones it references where it delivers none.
   `file-issue` decides the wrong side of a code/docs disagreement from a routed clause (#71).
 - `claim-audit`'s SPECIFIED class ranks a document read through `## References` in the session
-  above an issue or handoff: a target-state claim the document contradicts is CORRECTED, unless the user ruled on
-  that disagreement in the session (#71).
-- A backend with no `## References` section, or no matching row, sees no change.
+  above an issue or handoff: a target-state claim resting on an issue or handoff that the
+  document contradicts is CORRECTED, unless the user stated a target state on that point in the
+  session (#71).
+- `self-review` resolves the pull request's spec - its issues and the binding handoff -
+  through the new `reference/resolving-the-spec.md`, which holds the rules
+  `address-review` Step 1 held, and checks the diff against it after `code-review` returns. A
+  change to a routed document that the spec does not ask for is a Critical finding. With no pull
+  request there is no spec (#71).
+- With no `## References` section, or no matching row, no skill reads a document.
 
 ## 0.3.8
 

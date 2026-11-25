@@ -58,11 +58,11 @@ Four sections are optional, each defined in `reference/defining-backends.md`:
 - `## References` routes an issue by its repository and its labels or components to the
   specification documents `investigate-issue`, `address-review`, `self-review`, `review-pr` and
   `file-issue` read, through `reference/reference-documents.md`, before ruling on intended
-  behaviour. A section
-  naming any absolute path goes in `~/.claude/baton.md`; one whose documents are all paths
-  relative to their repository's checkout may be committed in `.claude/baton.md` instead,
-  where it hides each contributor's personal `## References` in that project. A `.docx` is
-  read through `pandoc`. Cloud runs never read it; the handoff carries the clauses it cites.
+  behaviour. A section naming any absolute path goes in `~/.claude/baton.md`; one whose
+  documents are all paths relative to their repository's checkout may be committed in
+  `.claude/baton.md` instead, where it hides each contributor's personal `## References` in
+  that project. A `.docx` is read through `pandoc`. Cloud runs never read it; the handoff
+  carries the clauses it cites.
 
 ## Document contracts
 

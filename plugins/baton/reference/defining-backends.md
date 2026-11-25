@@ -340,17 +340,20 @@ what happened and moves nothing, which is what the shipped entry does.
 
 `has-handoff` returns the text of an issue's comments, in the order they were posted: callers
 test it for the handoff marker and read what each marker sits in, so a yes/no is not enough.
-`address-review` reads that order to bind the last of several matching handoffs on one issue.
-Its default runs `view`; an entry that cannot return comment text is one to leave at that
-default.
+`resolving-the-spec.md`, which `address-review` and `self-review` load, reads that order to
+bind the last of several matching handoffs on one issue. Its default runs `view`; an entry that
+cannot return comment text is one to leave at that default.
 
 `pr-issues` returns the issues a pull request names, each with its `<owner>`, `<repo>` and
 `<id>`, and whether the pull request delivers it or only references it. How a pull request names
 its issues is the project's workflow - closing keywords in the body, a ticket key in the title,
-a prefix on the branch - so the entry decides what counts, and `address-review` Step 1 reads
-only its answer to find the spec it rules review rows against. Under `none` no issue is found,
-and `address-review` rules on the code alone. An entry may be `op: pr-view <id>` with notes
-saying how the caller reads the issues out of it, as the shipped ones are (`backend-github.md`).
+a prefix on the branch - so the entry decides what counts. `resolving-the-spec.md` reads only
+its answer to find the spec `address-review` rules review rows against and `self-review` checks
+the diff against, and `review-pr` reads it to match `## References` rows. Under `none` no issue
+is found: neither `address-review` nor `self-review` finds a spec, and all three match only the
+`*` rows `reference-documents.md` gives a caller with no issue. An entry may be
+`op: pr-view <id>` with notes saying how the caller reads the issues out of it, as the shipped
+ones are (`backend-github.md`).
 
 `code-review` substitutes two placeholders. `<target>` is what to review - a pull request
 number, a branch, or empty for the working tree. `<locator>` is the handoff the work came from,

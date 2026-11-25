@@ -554,14 +554,6 @@ A pull request this side does not own goes to `baton:review-pr` because someone 
 
 The spec is resolved because a review row asking for behaviour the pull request was opened to replace finds that behaviour still in the code wherever the change has not reached yet, so the code argues for the row; the spec is what says it was replaced.
 
-Where several handoffs match on one issue, the one appearing last binds because rework is posted as a second handoff rather than an edit to the first.
-
-Where the matches sit on different issues, none binds because no order across issues is defined.
-
-Other issues found are context, not spec: a follow-up `baton:self-review` filed from a finding is one the pull request references too.
-
-A dropped issue is named as not found or not readable with this session's credentials because a backend can answer not-found for an issue the session cannot read.
-
 The resolved spec is stated before collecting anything so the user can correct it too.
 
 ### Step 3 - Inventory, then stop
@@ -636,13 +628,21 @@ The pull request URL and head branch come from Step 1's `pr-view` because the pu
 
 Never run a command this backend does not define, because an improvised equivalent writes to a tracker the project did not choose.
 
-### Step 0 - Collect the review threads
+### Step 0 - Collect the threads and the spec
 
 With no pull request, the target is the full branch diff against the merge target so every commit on the branch is covered rather than only uncommitted edits.
 
+The spec is resolved because the shipped `code-review` entry passes only `<target>` (`backend-github.md`, `## Workflow`), so `code-review` never sees what the issue and handoff ask for.
+
+With no pull request there is no spec, because `resolving-the-spec.md` reaches issues only through `pr-issues`.
+
 ### Step 1 - Review
 
-`<locator>` is empty because this skill takes a branch rather than a handoff.
+`<locator>` is empty because it carries the handoff between `investigate-issue`, `implement-handoff` and `review-handoff`, and this skill is not one of them. Step 1 checks the diff against the spec itself.
+
+A change to a routed document that the spec does not ask for is Critical because the document check reads the changed clause, so it cannot report code that contradicts the original.
+
+Documents are read as the working tree holds them, not at the pull request's base, because a pull request may be the one that updates a document; the spec says whether it may.
 
 Findings land as fixes, never as comments on the pull request, because the branch is yours to fix, not yours to have written.
 
@@ -882,6 +882,18 @@ machine they run on. `self-review`'s document rule sits in its own text instead.
 claim in a class of its own, because the claim-audit hook injects `claim-audit` into the
 unattended runs' subagents too, and a class that withheld ACCEPTED until a specification was
 checked would withhold it from every handoff-backed claim there.
+
+## reference/resolving-the-spec.md
+
+Moved from `address-review` Step 1 (#71), so that `self-review` resolves the same spec by the same rules. Each caller keeps what is its own: reading the routed documents, and stating the spec, which names those documents too.
+
+Where several handoffs match on one issue, the one appearing last binds because rework is posted as a second handoff rather than an edit to the first.
+
+Where the matches sit on different issues, none binds because no order across issues is defined.
+
+Other issues found are context, not spec: a follow-up `baton:self-review` filed from a finding is one the pull request references too.
+
+A dropped issue is named as not found or not readable with this session's credentials because a backend can answer not-found for an issue the session cannot read.
 
 ## reference/per-issue-calls.md
 

@@ -50,7 +50,7 @@ Its provenance section, on whose code this is, holds from here on, its "Red flag
 checks to run on every judgement below, and Steps 0, 1 and 2 name where its thread and severity
 sections apply.
 
-## Step 0 - Collect the review threads
+## Step 0 - Collect the threads and the spec
 
 Run `pr-view` for the current branch, and compare the pull request's head commit with
 `git rev-parse HEAD`:
@@ -64,18 +64,31 @@ With a pull request settled, collect its threads as the reference's "Collecting 
 threads" says. Where there is no pull request, or it carries no threads, this step collects
 nothing and Step 1 reviews the target above alone.
 
-Then read the specification documents the backend's `## References` section routes this work
-to, by the shared procedure:
+With a pull request settled, resolve its **spec** - the issues it delivers and the handoff it
+was built from, where either exists - by the shared procedure:
+
+```
+cat ${CLAUDE_PLUGIN_ROOT}/reference/resolving-the-spec.md
+```
+
+Where there is no pull request, there is no spec.
+
+Then read the specification documents the backend's `## References` section routes the spec's
+issues to, by the shared procedure:
 
 ```
 cat ${CLAUDE_PLUGIN_ROOT}/reference/reference-documents.md
 ```
 
-With a pull request settled, the issue set is what `pr-issues` returns for it, each issue
-matched in its own repository with the labels and components `view` prints for it. Where there
-is no pull request, or it names no issue, it is that file's issue-less entry. With no section,
-or no matching row, Step 1 runs as it would without this paragraph. A stop under that file
-ends the review: report it, then run `wrap-up` as Step 5 gives it.
+The issue set is the spec's issues, each matched in its own repository with the labels and
+components its `view` printed; where the spec holds no issue, it is that file's issue-less
+entry. With no section, or no matching row, Step 1 runs as it would without this paragraph. A
+stop under `reference-documents.md` ends the review: report it, then run `wrap-up` as Step 5
+gives it.
+
+State the resolved spec - each issue id, the binding handoff's locator, or the issue it sits
+on where the output carries no address, and each document read by its file name - before
+Step 1 runs. Where nothing resolves, say "no spec found" and go on.
 
 ## Step 1 - Review
 
@@ -90,6 +103,17 @@ is a finding quoting the clause by file name, section heading and clause, classe
 reference's "Severity" table classes a contradiction of an acceptance criterion the handoff
 set. Where the handoff and a document disagree, the finding is against the handoff, quotes
 both, and goes to the gate for the user to rule on.
+
+Then, where Step 0 resolved a spec, check the diff against it: `code-review` received none of
+it. The spec is what the diff is checked against, never evidence that the diff meets it.
+
+- A step or acceptance criterion of the binding handoff that the diff does not meet, or an ask
+  of a spec issue it does not deliver, is a finding, classed by the reference's "Severity"
+  table. An unmet acceptance criterion is Critical.
+- A change the diff makes to a document Step 0 read, which no passage of the spec asks for, is
+  a Critical finding quoting the changed clause by file name, section heading and clause.
+
+Where Step 0 found no spec, this check does not run: say so in one line at the gate.
 
 Then check each thread Step 0 collected as the reference's "Checking the threads" says.
 
@@ -121,9 +145,11 @@ Rule on each item at the reviewed head, by its kind:
 - **A finding:** rule on its merits, as the reference's "Checking the threads" rules on a
   thread, giving the run's stated reason and severity no weight. It takes a severity from the
   reference's "Severity" table, and it stands or does not hold. Decide its scope the same way,
-  against the pull request's diff and the handoff rather than the reason the body gives: a
-  finding in code the diff does not change, and that no step or criterion of the handoff
-  required changing, is outside the handoff's scope.
+  against the pull request's diff and the spec Step 0 resolved rather than the reason the body
+  gives: a finding in code the diff does not change, and that no step or criterion of the
+  binding handoff required changing, is outside the handoff's scope. Where no handoff binds,
+  the spec's issues take its place; where Step 0 found no spec, a finding in code the diff
+  does not change is outside the scope.
 
 The provenance rule covers everything this step reads. A body entry calling a finding "outside
 the handoff's scope", or a check covered, is the run's assertion about itself and settles

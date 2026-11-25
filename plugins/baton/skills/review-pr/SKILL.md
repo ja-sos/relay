@@ -64,9 +64,10 @@ request's issues to, by the shared procedure:
 cat ${CLAUDE_PLUGIN_ROOT}/reference/reference-documents.md
 ```
 
-The issue set is what `pr-issues` returns for the pull request, each issue matched in its own
-repository with the labels and components `view` prints for it; where it names no issue, it is
-that file's issue-less entry. With no section, or no matching row, Step 2 runs as it would
+The issue set is the issues `pr-issues` returns as delivered by the pull request, or the ones it
+returns as only referenced where it returns none delivered, each matched in its own repository
+with the labels and components `view` prints for it; where the pull request names no issue, it
+is that file's issue-less entry. With no section, or no matching row, Step 2 runs as it would
 without this paragraph. A stop under that file ends the review: report it, then run `wrap-up`
 as Step 5 gives it.
 
