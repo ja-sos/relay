@@ -11,8 +11,8 @@ here ends. Everything else is this file's.
 ## No section, no match
 
 **A backend with no `## References` section leaves this file with nothing to do.** The caller
-goes on with the steps it runs without it, and nothing that follows in the caller depends on a
-document.
+goes on with the steps it runs without it, and each later step that branches on documents read
+takes the branch for none.
 
 Where the section exists and no row matches the issue set, say so in one line to the user,
 naming each issue's repository, labels and components, and go on the same way.
@@ -23,6 +23,11 @@ A row matches where its Repository equals an issue's repository, ignoring case, 
 `*` or equals, ignoring case, one of that issue's labels or components as `view` prints them for
 that issue. Run the row selection once per issue in the set, in that issue's own repository, and
 read the union of what matches: a document two issues select is read once.
+
+A `view` answering not-found - an issue that does not exist, or one in a repository these
+credentials cannot read - is that issue's answer, not a backend failure: drop it from the set and
+tell the user in one line it was not found or not readable. Where that leaves the set empty,
+use the issue-less entry below.
 
 **Where the caller has no issue** - a finding not yet filed, a pull request naming none, a branch
 with no pull request - the issue set is one issue-less entry: its repository is

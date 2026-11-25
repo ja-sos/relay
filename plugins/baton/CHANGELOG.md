@@ -15,7 +15,8 @@ written for an earlier version has to account for. Newest first.
   `review-pr` report a diff that contradicts a routed clause as a finding quoting it.
   `file-issue` decides the wrong side of a code/docs disagreement from a routed clause (#71).
 - `claim-audit`'s SPECIFIED class ranks a document read through `## References` in the session
-  above an issue or handoff: a target-state claim the document contradicts is CORRECTED (#71).
+  above an issue or handoff: a target-state claim the document contradicts is CORRECTED, unless the user ruled on
+  that disagreement in the session (#71).
 - A backend with no `## References` section, or no matching row, sees no change.
 
 ## 0.3.8
