@@ -9,8 +9,9 @@ written for an earlier version has to account for. Newest first.
   whose fix lands in this repository is within the handoff's scope where the diff changes its
   code or the handoff required changing it, where the finding rests on a clause of a document
   Step 0 read that governs behaviour the diff adds or changes, or where the finding is that a
-  doc or instruction file states something the diff makes false. A fix landing in another repository, a branch below the base, or work the
-  spec assigns to another pull request stays outside. `review-handoff` is unchanged (#73).
+  doc or instruction file states something the diff makes false. A fix landing in another
+  repository, the base branch or a branch below it, or work the spec assigns to another pull
+  request stays outside. `review-handoff` is unchanged (#73).
 
 ## 0.3.9
 

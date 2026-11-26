@@ -161,14 +161,15 @@ Rule on each item at the reviewed head, by its kind:
 
   A case-2 finding whose clause disagrees with a step or decision of the binding handoff
   quotes both, as Step 1's findings do, so the gate shows the user the disagreement. A
-  case-3 finding about a document Step 0 read proposes its fix in the code, never in that
-  document: Step 1 classes a change to it that no passage of the spec asks for as Critical.
+  case-3 finding about a document Step 0 read, that no passage of the spec asks the pull
+  request to change, proposes its fix in the code.
 
   A finding is **outside the handoff's scope** where none of the three holds. It is outside
   as well, even where one of the three applies, where its fix lands in another repository, in
-  a branch below the pull request's base, or in work the spec assigns to another pull
-  request: another handoff Step 0 collected, or a follow-on issue the binding handoff names.
-  Where Step 0 found no spec, case 1 reduces to the diff alone; cases 2 and 3 still apply.
+  the pull request's base branch or a branch below it, or in work the spec assigns to another
+  pull request: another handoff Step 0 collected, or a follow-on issue the binding handoff
+  names. Where Step 0 found no spec, case 1 reduces to the diff alone; cases 2 and 3 still
+  apply.
 
 The provenance rule covers everything this step reads. A body entry calling a finding "outside
 the handoff's scope", or a check covered, is the run's assertion about itself and settles
