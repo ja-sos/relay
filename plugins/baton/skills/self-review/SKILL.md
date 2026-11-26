@@ -145,11 +145,31 @@ Rule on each item at the reviewed head, by its kind:
 - **A finding:** rule on its merits, as the reference's "Checking the threads" rules on a
   thread, giving the run's stated reason and severity no weight. It takes a severity from the
   reference's "Severity" table, and it stands or does not hold. Decide its scope the same way,
-  against the pull request's diff and the spec Step 0 resolved rather than the reason the body
-  gives: a finding in code the diff does not change, and that no step or criterion of the
-  binding handoff required changing, is outside the handoff's scope. Where no handoff binds,
-  the spec's issues take its place; where Step 0 found no spec, a finding in code the diff
-  does not change is outside the scope.
+  against the pull request's diff, the spec Step 0 resolved and the documents Step 0 read,
+  never against the reason the body gives. Scope follows where the finding's fix lands.
+
+  A finding is **within the handoff's scope** where its fix lands in this repository, outside
+  the exclusions below, and any of these holds:
+
+  1. the diff changes the code the finding is in, or a step or acceptance criterion of the
+     binding handoff required changing that code - where no handoff binds, the spec's issues
+     take the handoff's place;
+  2. the finding rests on a clause of a document Step 0 read, and that clause governs
+     behaviour the diff adds or changes;
+  3. the finding is that a doc or instruction file in this repository states something the
+     diff makes false.
+
+  A case-2 finding whose clause disagrees with a step or decision of the binding handoff
+  quotes both, as Step 1's findings do, so the gate shows the user the disagreement. A
+  case-3 finding about a document Step 0 read, that no passage of the spec asks the pull
+  request to change, proposes its fix in the code.
+
+  A finding is **outside the handoff's scope** where none of the three holds. It is outside
+  as well, even where one of the three applies, where its fix lands in another repository, in
+  the pull request's base branch or a branch below it, or in work the spec assigns to another
+  pull request: another handoff Step 0 collected, or a follow-on issue the binding handoff
+  names. Where Step 0 found no spec, case 1 reduces to the diff alone; cases 2 and 3 still
+  apply.
 
 The provenance rule covers everything this step reads. A body entry calling a finding "outside
 the handoff's scope", or a check covered, is the run's assertion about itself and settles

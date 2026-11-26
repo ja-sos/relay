@@ -281,6 +281,12 @@ The handoff's commands run after each fixing round and `verify` once before the 
 A check fix made at item 2 stays uncommitted with the round's other fixes because item 4 reviews
 only the working tree: committing it early hands that review an empty diff.
 
+The test that rules a finding outside the handoff's scope stays bound to the diff alone, unlike
+`self-review` Step 2's, because the unattended runs never read the `## References` section and
+read the handoff's citations instead (`defining-backends.md`). A finding this run defers still
+reaches the pull request body as a standing finding, and `self-review` Step 2 re-rules it by
+where its fix lands (#73).
+
 ### Step 5 - Push and update the pull request
 
 A push landing while the review ran is a stop because pushing over it - or merging it in, or
@@ -645,6 +651,12 @@ A change to a routed document that the spec does not ask for is Critical because
 Documents are read as the working tree holds them, not at the pull request's base, because a pull request may be the one that updates a document; the spec says whether it may.
 
 Findings land as fixes, never as comments on the pull request, because the branch is yours to fix, not yours to have written.
+
+### Step 2 - Close the run's open items
+
+A standing finding's scope follows where its fix lands, not whether the diff or a handoff step touches the code, because a handoff is an investigation's output and can miss a constraint. A test bound to the diff and the handoff's steps turned each such miss - a routed document clause governing the new behaviour, a repo doc the change leaves false - into a deferral in the pull request that caused it (#73). Naming those two kinds as exceptions was rejected: a miss of a third kind would still be deferred.
+
+A fix landing in another repository, in the pull request's base branch or a branch below it, or in work the spec assigns to another pull request stays outside the scope even where the change makes it necessary, because that fix belongs to another repository's or another pull request's change.
 
 ### Step 3 - The gate
 
