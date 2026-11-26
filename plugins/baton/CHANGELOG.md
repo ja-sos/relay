@@ -7,9 +7,9 @@ written for an earlier version has to account for. Newest first.
 
 - `self-review` Step 2 decides a standing finding's scope by where its fix lands. A finding
   whose fix lands in this repository is within the handoff's scope where the diff changes its
-  code or the handoff required changing it, where a clause of a document Step 0 read governs
-  behaviour the diff adds or changes, or where a doc or instruction file states something the
-  diff makes false. A fix landing in another repository, a branch below the base, or work the
+  code or the handoff required changing it, where the finding rests on a clause of a document
+  Step 0 read that governs behaviour the diff adds or changes, or where the finding is that a
+  doc or instruction file states something the diff makes false. A fix landing in another repository, a branch below the base, or work the
   spec assigns to another pull request stays outside. `review-handoff` is unchanged (#73).
 
 ## 0.3.9
