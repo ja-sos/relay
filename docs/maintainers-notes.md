@@ -282,8 +282,8 @@ A check fix made at item 2 stays uncommitted with the round's other fixes becaus
 only the working tree: committing it early hands that review an empty diff.
 
 The test that rules a finding outside the handoff's scope stays bound to the diff and the
-handoff's steps, unlike `self-review` Step 2's, because the unattended runs rely on the handoff
-and read no routed documents (`defining-backends.md`). A finding this run defers still reaches
+handoff's steps, unlike `self-review` Step 2's, because the unattended runs never read the
+`## References` section and read the handoff's citations instead (`defining-backends.md`). A finding this run defers still reaches
 the pull request body as a standing finding, and `self-review` Step 2 re-rules it by where its
 fix lands (#73).
 
